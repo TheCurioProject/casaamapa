@@ -162,7 +162,7 @@ export function Stairs() {
 
         <aside className="relative z-2 flex flex-col gap-[1vh] md:mt-[14vh] max-md:text-center max-md:items-center shrink-0">
           <p className="kicker kicker-light max-md:text-[0.75rem]">La arquitectura</p>
-          <h2 className="text-[clamp(2.2rem,7vw,5rem)] md:text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
+          <h2 className="text-[clamp(2.5rem,9.5vw,5rem)] md:text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
           <p className="lede mt-1 max-md:text-[0.85rem] max-md:leading-snug opacity-80 max-md:max-w-[40ch] md:js-fade max-md:text-balance">
             Un caracol de estuco rosa que abraza la belleza de lo imperfecto y lo orgánico. No es solo una escalera: es el corazón de la casa, donde la textura manual y la luz natural celebran la esencia de la filosofía Wabi-Sabi.
           </p>
