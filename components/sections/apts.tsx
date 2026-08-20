@@ -130,7 +130,7 @@ export function Apts() {
         ScrollTrigger.create({
           trigger: mobSection,
           start: 'bottom bottom',
-          end: '+=150%',
+          end: '+=100%',
           pin: true,
           pinSpacing: true,
         });
@@ -185,8 +185,8 @@ export function Apts() {
 
         <header className="px-[var(--spacing-pad-x)] flex flex-col gap-[2.6vh] mb-[9vh]">
           <p className="kicker">{c.kicker}</p>
-          <h2 className="font-display text-[clamp(2.8rem,9vw,3.2rem)] js-lines">{c.introT}</h2>
-          <p className="lede js-fade">{c.introL}</p>
+          <h2 className="font-display text-[clamp(2.8rem,9vw,3.2rem)]">{c.introT}</h2>
+          <p className="lede">{c.introL}</p>
         </header>
 
         <MobileBlock apt={c.tierra} onOpen={() => setSelectedApt(c.tierra)} />
