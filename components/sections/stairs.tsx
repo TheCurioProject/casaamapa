@@ -107,7 +107,7 @@ export function Stairs() {
     >
       {/* Universal Pinned Version */}
       <div
-        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[8vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[12vh] md:pt-[12vh]"
+        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1.1fr_0.9fr] gap-[2vh] md:gap-[4vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[12vh] md:pt-0"
         style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
       >
 
@@ -161,7 +161,7 @@ export function Stairs() {
           </div>
         </div>
 
-        <aside className="relative z-2 flex flex-col gap-[1vh] mt-[-2vh] md:mt-[2vh] max-md:text-center max-md:items-center">
+        <aside className="relative z-2 flex flex-col gap-[1vh] mt-[-2vh] md:mt-0 max-md:text-center max-md:items-center">
           <p className="kicker kicker-light">La arquitectura</p>
           <h2 className="text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
           <p className="lede mt-1 max-md:text-[0.95rem] opacity-80 max-md:max-w-[40ch] md:js-fade max-md:text-balance">

@@ -63,7 +63,7 @@ export function Header() {
   return (
     <>
       <motion.header 
-        className="fixed top-0 left-0 right-0 p-[var(--spacing-pad-x)] z-[110] flex justify-between items-start pointer-events-none"
+        className="fixed top-0 left-0 right-0 px-[var(--spacing-pad-x)] pt-[clamp(20px,3vh,48px)] pb-0 z-[110] flex justify-between items-start pointer-events-none"
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1.2, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
@@ -117,7 +117,7 @@ export function Header() {
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
             style={{ transformOrigin: 'calc(100% - 21px) -10px' }}
-            className="fixed top-[calc(var(--spacing-pad-x)+54px)] right-[var(--spacing-pad-x)] w-[min(320px,calc(100vw-var(--spacing-pad-x)*2))] bg-[var(--color-rose-3)] p-[3.5vh_4vw_3vh] rounded-[20px] flex flex-col gap-[2.5vh] shadow-[0_20px_60px_rgba(20,8,20,0.4)] z-[105] border border-[rgba(61,36,56,0.06)]"
+            className="fixed top-[calc(clamp(20px,3vh,48px)+54px)] right-[var(--spacing-pad-x)] w-[min(320px,calc(100vw-var(--spacing-pad-x)*2))] bg-[var(--color-rose-3)] p-[3.5vh_4vw_3vh] rounded-[20px] flex flex-col gap-[2.5vh] shadow-[0_20px_60px_rgba(20,8,20,0.4)] z-[105] border border-[rgba(61,36,56,0.06)]"
           >
             <nav className="flex flex-col gap-[0.6vh]">
               {[
