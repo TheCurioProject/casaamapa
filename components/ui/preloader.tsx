@@ -20,44 +20,44 @@ export function Preloader() {
     if (archPath) {
       const length = archPath.getTotalLength();
       gsap.set(archPath, { strokeDasharray: length, strokeDashoffset: length });
-      tl.to(archPath, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, 0.2);
+      tl.to(archPath, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0);
     }
 
     // 2. Brand text fade in
     tl.fromTo('.preloader-text',
       { opacity: 0, y: 10 },
-      { opacity: 1, y: 0, duration: 0.8 },
-      0.6
+      { opacity: 1, y: 0, duration: 0.6 },
+      0.2
     );
 
     // 3. Progress line
     tl.fromTo('.preloader-line-container',
       { opacity: 0 },
-      { opacity: 1, duration: 0.5 },
-      1.2
+      { opacity: 1, duration: 0.4 },
+      0.5
     );
     tl.fromTo('.preloader-line',
       { width: "0%" },
-      { width: "100%", duration: 1.0, ease: "power2.inOut" },
-      1.2
+      { width: "100%", duration: 0.6, ease: "power2.inOut" },
+      0.5
     );
 
-    // After 2.4s, start the exit
-    tl.to('.preloader-content', { opacity: 0, y: -30, duration: 0.6, ease: "power2.out" }, 2.4);
+    // After 1.2s, start the exit
+    tl.to('.preloader-content', { opacity: 0, y: -20, duration: 0.4, ease: "power2.out" }, 1.2);
 
-    // Exit SVG morph (Framer motion easing [0.85, 0, 0.15, 1] is similar to power3.inOut or CustomEase, we'll split into power2.in and power2.out)
+    // Exit SVG morph
     tl.to('.preloader-svg-path', {
       attr: { d: targetPath },
-      duration: 0.7,
+      duration: 0.5,
       ease: "power2.in"
-    }, 2.4);
+    }, 1.2);
     
     tl.to('.preloader-svg-path', {
       attr: { d: finalPath },
-      duration: 0.7,
+      duration: 0.5,
       ease: "power2.out",
       onComplete: () => setIsUnmounted(true)
-    }, 3.1);
+    }, 1.7);
 
   }, { scope: containerRef });
 
