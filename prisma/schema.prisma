@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Unit {
+  id          String    @id // e.g. 'tierra', 'aire', 'agua', 'amapa'
+  name        String
+  price       Int       // Base price in MXN
+  isWholeHouse Boolean  @default(false) @map("is_whole_house")
+  icalUrls    String[]  @default([]) @map("ical_urls")
+  bookings    Booking[]
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("units")
+}
+
+model Booking {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apartmentId            String   @map("apartment_id")
+  unit                   Unit     @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  checkIn                DateTime @map("check_in") @db.Date
+  checkOut               DateTime @map("check_out") @db.Date
+  status                 String   @default("pending")
+  stripePaymentIntentId  String?  @map("stripe_payment_intent_id")
+  guestName              String   @map("guest_name")
+  guestEmail             String   @map("guest_email")
+  guestPhone             String   @map("guest_phone")
+  guests                 Int      @default(2)
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("bookings")
+}
+
+model AdminUser {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("admin_users")
+}
+
+model Settings {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  depositPercentage Int      @default(50) @map("deposit_percentage")
+  isFullPayment     Boolean  @default(false) @map("is_full_payment")
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("settings")
+}

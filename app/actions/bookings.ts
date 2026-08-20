@@ -1,0 +1,79 @@
+'use server';
+
+import { prisma } from '@/lib/db';
+import { revalidatePath } from 'next/cache';
+
+export async function checkAvailability(apartmentId: string, startDate: Date, endDate: Date) {
+  try {
+    const overlappingBookings = await prisma.booking.findMany({
+      where: {
+        apartmentId,
+        status: { in: ['pending', 'confirmed'] },
+        AND: [
+          { checkIn: { lt: endDate } },
+          { checkOut: { gt: startDate } }
+        ]
+      }
+    });
+
+    return { available: overlappingBookings.length === 0, overlapping: overlappingBookings };
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    return { error: 'Failed to check availability' };
+  }
+}
+
+export async function createPendingBooking(data: {
+  apartmentId: string;
+  checkIn: Date;
+  checkOut: Date;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  guests: number;
+}) {
+  try {
+    const booking = await prisma.$transaction(async (tx) => {
+      // Determine which units to check for overlaps
+      let idsToCheck = [data.apartmentId];
+      if (data.apartmentId === 'amapa') {
+        idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+      } else {
+        idsToCheck = [data.apartmentId, 'amapa'];
+      }
+
+      // Check overlapping bookings
+      const overlapping = await tx.booking.findFirst({
+        where: {
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          AND: [
+            { checkIn: { lt: data.checkOut } },
+            { checkOut: { gt: data.checkIn } }
+          ]
+        }
+      });
+
+      if (overlapping) {
+        throw new Error('overlap');
+      }
+
+      // Create the booking
+      return await tx.booking.create({
+        data: {
+          ...data,
+          status: 'pending'
+        }
+      });
+    });
+
+    revalidatePath('/');
+    return { success: true, booking };
+  } catch (error: any) {
+    if (error.message === 'overlap' || error.code === 'P2010') {
+      return { error: 'Las fechas seleccionadas ya no están disponibles.' };
+    }
+    console.error('Error creating booking:', error);
+    return { error: 'Ocurrió un error al procesar la reserva.' };
+  }
+}

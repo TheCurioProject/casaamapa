@@ -1,26 +1,155 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme inline {
+  /* Paleta Rosa Arquitectónico (Base: #D98BA0) */
+  --color-rose-1: #F1D0D9;
+  --color-rose-2: #E6B3C0;
+  --color-rose-3: #D98BA0;
+  --color-sand: #F8E8EC;
+  --color-cream: #FCF3F6;
+  --color-ink: #42242C;
+  --color-ink-2: #603943;
+  --color-green: #36171F; /* Adaptado a borgoña ultra oscuro para contrastes */
+  --color-coral: #D0496C;
+
+  /* Fuentes (se inyectarán mediante next/font) */
+  --font-display: var(--font-italiana), Georgia, serif;
+  --font-body: var(--font-montserrat), system-ui, sans-serif;
+
+  /* Animaciones y easings */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.65, 0.05, 0.36, 1);
+
+  /* Espaciado responsivo (como en el diseño original) */
+  --spacing-pad-x: clamp(20px, 6vw, 96px);
+  --spacing-overlap: var(--radius-curve-v);
+  
+  /* Curvas */
+  --radius-curve-v: clamp(64px, 11vw, 150px);
+  --radius-arch-img: clamp(120px, 24vw, 320px);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --background: var(--color-cream);
+  --foreground: var(--color-ink);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* El sitio original invierte los colores según el atributo data-theme,
+       por ahora mantendremos el esquema claro como base o invertiremos
+       si el usuario prefiere dark mode a nivel sistema. */
+    --background: var(--color-ink);
+    --foreground: var(--color-sand);
   }
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Base resets para tipografía */
+p, h1, h2, h3, h4, span, li {
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-cream);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-rose-3);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Utilidades Tipográficas Generales */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 0.98;
+  }
+  
+  .kicker {
+    font-size: 14px;
+    letter-spacing: 0.36em;
+    text-transform: uppercase;
+    color: var(--color-rose-3);
+    font-weight: 500;
+  }
+  
+  .kicker-light {
+    color: var(--color-cream);
+    opacity: 0.8;
+  }
+  
+  .lede {
+    font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+    color: inherit;
+    opacity: 0.85;
+    max-width: 48ch;
+  }
+}
+
+/* React Day Picker Custom Styles (Mobile First & Premium) */
+.rdp-root {
+  --rdp-accent-color: var(--color-rose-3);
+  --rdp-accent-background-color: var(--color-rose-1);
+  --rdp-range_start-date-background-color: var(--color-rose-3);
+  --rdp-range_start-date-color: var(--color-cream);
+  --rdp-range_end-date-background-color: var(--color-rose-3);
+  --rdp-range_end-date-color: var(--color-cream);
+  --rdp-range_middle-background-color: var(--color-rose-1);
+  --rdp-range_middle-color: var(--color-ink);
+  
+  --rdp-day-height: 48px;
+  --rdp-day-width: 48px;
+  
+  font-family: var(--font-body);
+  margin: 0 auto;
+}
+
+.rdp-day_button:hover {
+  background-color: var(--color-sand) !important;
+  color: var(--color-ink) !important;
+}
+
+.rdp-selected {
+  font-weight: 600;
+}
+
+.rdp-range_start .rdp-day_button,
+.rdp-range_end .rdp-day_button {
+  background-color: var(--color-rose-3) !important;
+  color: var(--color-cream) !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s var(--ease-soft);
+}
+
+.rdp-range_middle .rdp-day_button {
+  background-color: var(--color-rose-1) !important;
+  color: var(--color-ink) !important;
+  border-radius: 0 !important;
+}
+
+.rdp-day_disabled {
+  opacity: 0.2 !important;
+  text-decoration: line-through;
+}
+
