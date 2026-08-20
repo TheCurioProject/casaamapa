@@ -33,7 +33,7 @@ export async function createPendingBooking(data: {
   guests: number;
 }) {
   try {
-    const booking = await prisma.$transaction(async (tx) => {
+    const booking = await prisma.$transaction(async (tx: any) => {
       // Determine which units to check for overlaps
       let idsToCheck = [data.apartmentId];
       if (data.apartmentId === 'amapa') {

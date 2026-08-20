@@ -30,7 +30,7 @@ export async function GET(
 
     let icalContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Casa Amapa//Booking System//ES\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n`;
 
-    bookings.forEach((booking) => {
+    bookings.forEach((booking: any) => {
       icalContent += `BEGIN:VEVENT\r\n`;
       icalContent += `UID:${booking.id}@casaamapa.com\r\n`;
       icalContent += `DTSTAMP:${formatICalDate(booking.createdAt)}\r\n`;

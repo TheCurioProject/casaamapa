@@ -30,7 +30,7 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[rgba(94,58,80,0.1)]">
           <p className="kicker text-[0.6rem] mb-2 opacity-70">Ingresos Potenciales</p>
           <p className="font-display text-4xl">
-            ${bookings.reduce((acc, curr) => acc + (curr.unit?.price || 0), 0).toLocaleString()} <span className="text-sm opacity-50">MXN</span>
+            ${bookings.reduce((acc: any, curr: any) => acc + (curr.unit?.price || 0), 0).toLocaleString()} <span className="text-sm opacity-50">MXN</span>
           </p>
         </div>
         <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[rgba(94,58,80,0.1)]">
@@ -59,7 +59,7 @@ export default async function AdminDashboard() {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center opacity-50">No hay reservas recientes.</td>
                 </tr>
-              ) : bookings.map(b => (
+              ) : bookings.map((b: any) => (
                 <tr key={b.id} className="hover:bg-[rgba(94,58,80,0.02)] transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-[var(--color-ink)]">{b.guestName}</div>

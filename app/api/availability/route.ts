@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     });
 
     // We can map these to a list of { from, to } objects representing disabled date ranges
-    const disabledRanges = bookings.map(b => ({
+    const disabledRanges = bookings.map((b: any) => ({
       from: b.checkIn.toISOString(),
       to: b.checkOut.toISOString(),
     }));

@@ -33,7 +33,7 @@ export default async function AdminUnitsPage() {
       </header>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {units.map(unit => (
+        {units.map((unit: any) => (
           <div key={unit.id} className="bg-white rounded-[24px] p-8 shadow-sm border border-[rgba(94,58,80,0.1)] relative overflow-hidden">
             {unit.isWholeHouse && (
               <div className="absolute top-0 right-0 bg-[var(--color-rose-3)] text-white text-[0.6rem] uppercase tracking-widest px-4 py-2 rounded-bl-[16px] font-medium">

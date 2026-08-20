@@ -25,8 +25,8 @@ export default async function AdminCalendarPage() {
         <p className="opacity-70 mb-8">Esta sección integrará una vista de grilla (estilo Cloudbeds) para administrar las fechas de Tierra, Aire, Agua y Amapa. Próximamente se conectará con el arrastrar-y-soltar (Drag & Drop).</p>
 
         <div className="space-y-6">
-          {units.map(unit => {
-            const unitBookings = bookings.filter(b => b.apartmentId === unit.id);
+          {units.map((unit: any) => {
+            const unitBookings = bookings.filter((b: any) => b.apartmentId === unit.id);
             return (
               <div key={unit.id} className="border border-[rgba(94,58,80,0.1)] rounded-2xl p-6">
                 <h2 className="font-display text-2xl mb-4 flex items-center justify-between">
@@ -38,7 +38,7 @@ export default async function AdminCalendarPage() {
                 
                 {unitBookings.length > 0 ? (
                   <div className="grid gap-3">
-                    {unitBookings.map(b => (
+                    {unitBookings.map((b: any) => (
                       <div key={b.id} className="flex justify-between items-center bg-[rgba(94,58,80,0.02)] p-4 rounded-xl">
                         <div>
                           <p className="font-medium text-sm">{b.guestName}</p>
