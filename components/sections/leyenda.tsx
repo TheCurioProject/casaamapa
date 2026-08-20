@@ -110,7 +110,7 @@ export function Leyenda() {
 
           <div className="kicker kicker-light opacity-70 mb-4 md:mb-8">La Leyenda de la Amapa</div>
 
-          <div className="relative w-[55vmin] h-[55vmin] md:w-[50vmin] md:h-[50vmin] flex-shrink-0">
+          <div className="relative w-[85vmin] h-[85vmin] md:w-[50vmin] md:h-[50vmin] flex-shrink-0">
             
             {/* The Stage */}
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100">
