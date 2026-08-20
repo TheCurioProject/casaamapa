@@ -1,14 +1,19 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { useBookingStore } from '@/lib/store';
 import { createPendingBooking } from '@/app/actions/bookings';
-import { DayPicker, DateRange } from 'react-day-picker';
+import dynamic from 'next/dynamic';
 import { es } from 'date-fns/locale';
 import { isWithinInterval, parseISO } from 'date-fns';
 import 'react-day-picker/dist/style.css';
-import { StripePayment } from './stripe-payment';
 import { createPaymentIntent } from '@/app/actions/payments';
+import type { DateRange } from 'react-day-picker';
+
+// Lazy load heavy components
+const DayPicker = dynamic(() => import('react-day-picker').then(mod => mod.DayPicker), { ssr: false, loading: () => <div className="h-[300px] w-[300px] bg-white/20 animate-pulse rounded-2xl" /> });
+const StripePayment = dynamic(() => import('./stripe-payment').then(mod => mod.StripePayment), { ssr: false, loading: () => <div className="h-[200px] w-full bg-white/20 animate-pulse rounded-lg" /> });
 
 export function BookingModal() {
   const { isOpen, closeBooking } = useBookingStore();
@@ -30,8 +35,10 @@ export function BookingModal() {
   const [clientSecret, setClientSecret] = useState('');
   const [chargeAmount, setChargeAmount] = useState(0);
 
-  useEffect(() => {
-    if (isOpen) {
+  const { contextSafe } = useGSAP({ scope: overlayRef });
+
+  const toggleModal = contextSafe((open: boolean) => {
+    if (open) {
       document.body.style.overflow = 'hidden';
       gsap.set(overlayRef.current, { display: 'flex' });
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.5 });
@@ -55,6 +62,10 @@ export function BookingModal() {
       }});
       gsap.to(wrapRef.current, { y: 20, autoAlpha: 0, duration: 0.4, ease: 'power2.in' });
     }
+  });
+
+  useEffect(() => {
+    toggleModal(isOpen);
   }, [isOpen]);
 
   useEffect(() => {
@@ -122,7 +133,7 @@ export function BookingModal() {
 
   return (
     <div ref={overlayRef} className="fixed inset-0 z-50 bg-[rgba(20,8,20,0.85)] hidden place-items-center p-[var(--spacing-pad-x)] backdrop-blur-sm">
-      <div ref={wrapRef} className="bg-[var(--color-cream)] w-full max-w-[500px] rounded-[24px] p-[clamp(2rem,5vw,3rem)] shadow-2xl relative text-[var(--color-ink)]">
+      <div ref={wrapRef} className="bg-[var(--color-cream)] w-full max-w-[500px] rounded-[24px] p-[clamp(2rem,5vw,3rem)] shadow-2xl relative text-[var(--color-ink)] will-change-transform">
         <button onClick={closeBooking} className="absolute top-4 right-4 w-10 h-10 grid place-items-center rounded-full bg-[rgba(94,58,80,0.06)] hover:bg-[rgba(94,58,80,0.12)] transition-colors" aria-label="Cerrar">✕</button>
         
         {success ? (
@@ -134,12 +145,14 @@ export function BookingModal() {
         ) : step === 3 ? (
            <>
              <h2 className="font-display text-[2rem] mb-6 leading-tight">Completar Pago</h2>
-             <StripePayment 
-               clientSecret={clientSecret} 
-               bookingId={bookingId} 
-               chargeAmount={chargeAmount} 
-               onSuccess={() => setSuccess(true)} 
-             />
+             {isOpen && (
+               <StripePayment 
+                 clientSecret={clientSecret} 
+                 bookingId={bookingId} 
+                 chargeAmount={chargeAmount} 
+                 onSuccess={() => setSuccess(true)} 
+               />
+             )}
            </>
         ) : step === 1 ? (
           <>
@@ -160,15 +173,17 @@ export function BookingModal() {
             <h2 className="font-display text-[2rem] mb-6 leading-tight">Detalles ({apartmentId})</h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex justify-center mb-4">
-                <DayPicker
-                  mode="range"
-                  selected={range}
-                  onSelect={setRange}
-                  locale={es}
-                  disabled={[{ before: new Date() }, ...disabledDates]}
-                  numberOfMonths={1}
-                  className="bg-white/50 rounded-2xl p-4 shadow-sm border border-[rgba(94,58,80,0.1)]"
-                />
+                {isOpen && (
+                  <DayPicker
+                    mode="range"
+                    selected={range}
+                    onSelect={setRange}
+                    locale={es}
+                    disabled={[{ before: new Date() }, ...disabledDates]}
+                    numberOfMonths={1}
+                    className="bg-white/50 rounded-2xl p-4 shadow-sm border border-[rgba(94,58,80,0.1)]"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-[0.8rem] mb-1 opacity-80">Nombre completo</label>

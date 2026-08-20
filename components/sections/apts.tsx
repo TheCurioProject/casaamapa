@@ -173,13 +173,13 @@ export function Apts() {
       ref={container}
       className="bg-[var(--color-sand)] text-[var(--color-ink)] relative z-4 -mt-[var(--spacing-overlap)]"
       id="apartamentos"
+      data-theme="light"
       style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
     >
       {/* Mobile Version */}
       <section 
         className="py-[14vh] pb-[20vh] md:hidden"
         id="apartamentos-m"
-        data-theme="light"
       >
 
 
@@ -197,8 +197,6 @@ export function Apts() {
       {/* Desktop Version */}
       <section 
         className="max-md:hidden"
-        id="apartamentos"
-        data-theme="light"
       >
 
 

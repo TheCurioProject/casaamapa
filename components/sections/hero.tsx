@@ -1,41 +1,85 @@
 'use client';
 import Image from 'next/image';
 import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import ScrollTrigger from 'gsap/dist/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function Hero() {
   const container = useRef<HTMLElement>(null);
 
-  // Parallax effect using Framer Motion
-  const { scrollYProgress } = useScroll({
-    target: container,
-    offset: ["start start", "end start"]
-  });
+  useGSAP(() => {
+    // Parallax effect using GSAP ScrollTrigger
+    gsap.to('.hero-img-inner', {
+      y: "30%",
+      ease: "none",
+      scrollTrigger: {
+        trigger: container.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true
+      }
+    });
 
-  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    // Content scrolls up and fades out
+    gsap.to('.hero-content-wrapper', {
+      y: "-30%",
+      ease: "none",
+      scrollTrigger: {
+        trigger: container.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+    
+    gsap.to('.hero-content-wrapper', {
+      opacity: 0,
+      ease: "none",
+      scrollTrigger: {
+        trigger: container.current,
+        start: "top top",
+        end: "50% top",
+        scrub: true
+      }
+    });
 
-  // Entrance variants for text elements
-  const itemVariants: any = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 1.2, ease: "easeOut" } 
-    },
-  };
+    // Background breathing effect
+    gsap.to('.hero-bg-scale', {
+      scale: 1.05,
+      duration: 10, // 20s for full cycle, so 10s up, 10s down
+      ease: "power1.inOut",
+      yoyo: true,
+      repeat: -1
+    });
+
+    // Entrance animation timeline
+    const tl = gsap.timeline({ delay: 2.6 });
+    
+    // Draw SVG path (starts at 2.8s)
+    const archPath = document.querySelector('.hero-arc path') as SVGPathElement;
+    if (archPath) {
+      const length = archPath.getTotalLength();
+      gsap.set(archPath, { strokeDasharray: length, strokeDashoffset: length });
+      gsap.to(archPath, { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut", delay: 0.2 });
+    }
+
+    // Stagger text items
+    tl.fromTo('.hero-text-item', 
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 1.2, ease: "power2.out", stagger: 0.15 }
+    );
+
+  }, { scope: container });
 
   return (
     <section ref={container} className="relative h-[calc(100svh+var(--spacing-overlap))] overflow-hidden bg-[var(--color-ink)]" id="llegada" data-theme="dark" style={{ zIndex: 1 }}>
       
       {/* Background breathing & parallax (Image always there) */}
-      <motion.div 
-        className="absolute inset-0 will-change-transform"
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <motion.div className="absolute inset-0 will-change-transform" style={{ y: imgY }}>
+      <div className="hero-bg-scale absolute inset-0 will-change-transform" style={{ transform: 'translateZ(0)' }}>
+        <div className="hero-img-inner absolute inset-0 will-change-transform" style={{ transform: 'translateZ(0)' }}>
           <Image 
             src="/images/hero.webp" 
             alt="Fachada rosa de Casa Amapa con escalera caracol"
@@ -50,40 +94,30 @@ export function Hero() {
             className="h-[108%] object-cover object-[50%_90%] md:hidden"
             priority
           />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
       
       <div className="absolute inset-0 z-2 bg-gradient-to-t from-[rgba(61,36,56,0.52)] to-transparent to-48% pointer-events-none" />
       
       {/* Content wrapper with staggering */}
-      <motion.div 
-        className="absolute z-4 left-[var(--spacing-pad-x)] right-[var(--spacing-pad-x)] bottom-[calc(22vh+var(--spacing-overlap))] max-md:bottom-[calc(20vh+var(--spacing-overlap))] flex flex-col gap-[2vh] items-start"
-        style={{ y: contentY, opacity: contentOpacity }}
-        initial="hidden"
-        animate="visible"
-        transition={{ staggerChildren: 0.15, delayChildren: 2.6 }}
-      >
-        <motion.svg variants={itemVariants} className="w-[min(300px,56vw)] stroke-[var(--color-sand)] fill-none stroke-[1.5] opacity-90 [stroke-linecap:round] hero-arc" viewBox="0 0 320 60" aria-hidden="true">
-          <motion.path 
-            d="M4 56 C 90 6, 230 6, 316 56" 
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 2.2, ease: [0.65, 0, 0.35, 1], delay: 2.8 }}
-          />
-        </motion.svg>
+      <div className="hero-content-wrapper absolute z-4 left-[var(--spacing-pad-x)] right-[var(--spacing-pad-x)] bottom-[calc(22vh+var(--spacing-overlap))] max-md:bottom-[calc(20vh+var(--spacing-overlap))] flex flex-col gap-[2vh] items-start will-change-transform" style={{ transform: 'translateZ(0)' }}>
         
-        <motion.p variants={itemVariants} className="text-[var(--color-sand)] tracking-[0.42em] max-md:tracking-[0.3em] text-[11px] uppercase">
+        <svg className="hero-text-item w-[min(300px,56vw)] stroke-[var(--color-sand)] fill-none stroke-[1.5] opacity-90 [stroke-linecap:round] hero-arc opacity-0" viewBox="0 0 320 60" aria-hidden="true" style={{ transform: 'translateZ(0)' }}>
+          <path d="M4 56 C 90 6, 230 6, 316 56" />
+        </svg>
+        
+        <p className="hero-text-item text-[var(--color-sand)] tracking-[0.42em] max-md:tracking-[0.3em] text-[11px] uppercase opacity-0" style={{ transform: 'translateZ(0)' }}>
           Playa Chacala · Nayarit · México
-        </motion.p>
+        </p>
         
-        <motion.h1 variants={itemVariants} className="text-[var(--color-cream)] text-[clamp(3.4rem,10.5vw,9.5rem)] max-md:text-[clamp(2.7rem,13.5vw,4.8rem)] overflow-hidden font-display">
+        <h1 className="hero-text-item text-[var(--color-cream)] text-[clamp(3.4rem,10.5vw,9.5rem)] max-md:text-[clamp(2.7rem,13.5vw,4.8rem)] overflow-hidden font-display opacity-0" style={{ transform: 'translateZ(0)' }}>
           Casa Amapa
-        </motion.h1>
+        </h1>
         
-        <motion.p variants={itemVariants} className="text-[var(--color-sand)] text-[clamp(0.95rem,1.3vw,1.15rem)] opacity-92 max-w-[40ch]">
+        <p className="hero-text-item text-[var(--color-sand)] text-[clamp(0.95rem,1.3vw,1.15rem)] opacity-92 max-w-[40ch] opacity-0" style={{ transform: 'translateZ(0)' }}>
           Una casa que ya te estaba esperando.
-        </motion.p>
-      </motion.div>
+        </p>
+      </div>
       
     </section>
   );

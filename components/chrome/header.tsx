@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
@@ -8,10 +8,18 @@ export function Header() {
   const { openBooking } = useBookingStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const [headerTheme, setHeaderTheme] = useState('dark');
+  const headerThemeRef = useRef('dark');
   const [showScrollHint, setShowScrollHint] = useState(false);
 
   // Simplest way for now to observe the current theme set by sections
   useEffect(() => {
+    // Initial theme setup in case it's already set on body
+    const initialTheme = document.body.dataset.theme || 'dark';
+    setTheme(initialTheme);
+    setHeaderTheme(initialTheme);
+    headerThemeRef.current = initialTheme;
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'data-theme') {
@@ -22,6 +30,25 @@ export function Header() {
     
     observer.observe(document.body, { attributes: true });
     
+    const checkHeaderTheme = () => {
+      // Find what element is visually behind the header right now
+      const elements = document.elementsFromPoint(window.innerWidth / 2, 30);
+      for (const el of elements) {
+        const themeEl = el.closest('[data-theme]');
+        if (themeEl) {
+          const t = themeEl.getAttribute('data-theme');
+          if (t && t !== headerThemeRef.current) {
+            setHeaderTheme(t);
+            headerThemeRef.current = t;
+          }
+          break; // Found the topmost layer that defines a theme
+        }
+      }
+    };
+
+    // Run once on mount
+    setTimeout(checkHeaderTheme, 100);
+
     // Inactivity scroll hint logic
     let timeout: NodeJS.Timeout;
     const checkAndShow = (delay: number) => {
@@ -36,9 +63,18 @@ export function Header() {
       }, delay);
     };
 
+    let ticking = false;
     const onScroll = () => {
       setShowScrollHint(false);
       checkAndShow(800);
+
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          checkHeaderTheme();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     
     // Initial timeout
@@ -69,12 +105,12 @@ export function Header() {
         transition={{ duration: 1.2, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link href="#llegada" className={`font-display text-[clamp(1.6rem,3vw,2.3rem)] leading-none transition-colors duration-300 ${theme === 'light' ? 'text-[var(--color-coral)]' : 'text-[var(--color-cream)]'}`}>
+          <Link href="#llegada" className={`font-display text-[clamp(1.6rem,3vw,2.3rem)] leading-none transition-colors duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>
             Casa Amapa
           </Link>
-          <div className={`absolute top-full left-0 mt-3 flex items-center gap-2 text-[0.75rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${showScrollHint ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-             <span className={theme === 'light' ? 'text-[var(--color-coral)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
-             <span className={`animate-bounce ${theme === 'light' ? 'text-[var(--color-coral)]' : 'text-[var(--color-cream)]'}`}>↓</span>
+          <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.75rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${showScrollHint ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+             <span className={headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
+             <span className={`animate-bounce ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
           </div>
         </div>
         
@@ -102,8 +138,8 @@ export function Header() {
             aria-label="Abrir menú"
             aria-expanded={menuOpen}
           >
-            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && theme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? 'translate-y-[2.75px] rotate-45' : ''}`}></i>
-            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && theme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? '-translate-y-[2.75px] -rotate-45' : ''}`}></i>
+            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && headerTheme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? 'translate-y-[2.75px] rotate-45' : ''}`}></i>
+            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && headerTheme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? '-translate-y-[2.75px] -rotate-45' : ''}`}></i>
           </button>
         </div>
       </motion.header>

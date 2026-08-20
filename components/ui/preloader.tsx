@@ -1,104 +1,101 @@
 'use client';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useState, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 export function Preloader() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isUnmounted, setIsUnmounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  useGSAP(() => {
+    const isMobile = window.innerWidth < 768;
+    const initialPath = `M 0 0 L 100 0 L 100 100 Q 50 100 0 100 Z`;
+    const targetPath = isMobile ? `M 0 0 L 100 0 L 100 0 Q 50 8 0 0 Z` : `M 0 0 L 100 0 L 100 0 Q 50 20 0 0 Z`;
+    const finalPath = `M 0 0 L 100 0 L 100 0 Q 50 0 0 0 Z`;
 
-  useEffect(() => {
-    // Artificial delay to show the elegant loading animation
-    // The total time should be around 2.4s before it starts exiting
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2400);
+    const tl = gsap.timeline();
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Full screen SVG path that covers the screen (y=0 to 100)
-  const initialPath = `M 0 0 L 100 0 L 100 100 Q 50 100 0 100 Z`;
-  // The path curves upwards (less pronounced)
-  const [targetPath, setTargetPath] = useState(`M 0 0 L 100 0 L 100 0 Q 50 20 0 0 Z`);
-
-  useEffect(() => {
-    // Adjust curve depth based on screen size (even shallower on mobile)
-    if (window.innerWidth < 768) {
-      setTargetPath(`M 0 0 L 100 0 L 100 0 Q 50 8 0 0 Z`);
+    // 1. Arch vector draw (using stroke-dashoffset trick)
+    const archPath = document.querySelector('.preloader-arch path') as SVGPathElement;
+    if (archPath) {
+      const length = archPath.getTotalLength();
+      gsap.set(archPath, { strokeDasharray: length, strokeDashoffset: length });
+      tl.to(archPath, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, 0.2);
     }
-  }, []);
-  // Finally it flattens
-  const finalPath = `M 0 0 L 100 0 L 100 0 Q 50 0 0 0 Z`;
+
+    // 2. Brand text fade in
+    tl.fromTo('.preloader-text',
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.8 },
+      0.6
+    );
+
+    // 3. Progress line
+    tl.fromTo('.preloader-line-container',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5 },
+      1.2
+    );
+    tl.fromTo('.preloader-line',
+      { width: "0%" },
+      { width: "100%", duration: 1.0, ease: "power2.inOut" },
+      1.2
+    );
+
+    // After 2.4s, start the exit
+    tl.to('.preloader-content', { opacity: 0, y: -30, duration: 0.6, ease: "power2.out" }, 2.4);
+
+    // Exit SVG morph (Framer motion easing [0.85, 0, 0.15, 1] is similar to power3.inOut or CustomEase, we'll split into power2.in and power2.out)
+    tl.to('.preloader-svg-path', {
+      attr: { d: targetPath },
+      duration: 0.7,
+      ease: "power2.in"
+    }, 2.4);
+    
+    tl.to('.preloader-svg-path', {
+      attr: { d: finalPath },
+      duration: 0.7,
+      ease: "power2.out",
+      onComplete: () => setIsUnmounted(true)
+    }, 3.1);
+
+  }, { scope: containerRef });
+
+  if (isUnmounted) return null;
 
   return (
-    <AnimatePresence>
-      {isLoading && (
-        <motion.div 
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 1 }} // We don't fade out the container, the SVG path does the exit
+    <div 
+      ref={containerRef}
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none"
+    >
+      <svg 
+        className="absolute inset-0 w-full h-full will-change-transform" 
+        viewBox="0 0 100 100" 
+        preserveAspectRatio="none"
+      >
+        <path 
+          className="preloader-svg-path"
+          fill="var(--color-rose-3)"
+          d="M 0 0 L 100 0 L 100 100 Q 50 100 0 100 Z"
+        />
+      </svg>
+
+      <div className="preloader-content relative z-10 flex flex-col items-center justify-center text-white will-change-transform">
+        <svg 
+          className="preloader-arch w-16 h-20 mb-6 stroke-white stroke-[2px] fill-none overflow-visible" 
+          viewBox="0 0 100 120"
         >
-          {/* The curved background curtain */}
-          <motion.svg 
-            className="absolute inset-0 w-full h-full" 
-            viewBox="0 0 100 100" 
-            preserveAspectRatio="none"
-          >
-            <motion.path 
-              fill="var(--color-rose-3)"
-              initial={{ d: initialPath }}
-              exit={{ 
-                d: [initialPath, targetPath, finalPath],
-                transition: { duration: 1.4, times: [0, 0.5, 1], ease: [0.85, 0, 0.15, 1] }
-              }}
-            />
-          </motion.svg>
+          <path d="M 20 120 L 20 50 A 30 30 0 0 1 80 50 L 80 120" />
+        </svg>
 
-          {/* Content inside the preloader */}
-          <motion.div 
-            className="relative z-10 flex flex-col items-center justify-center text-white"
-            exit={{ opacity: 0, y: -30, transition: { duration: 0.6, ease: "easeOut" } }}
-          >
-            {/* Arch Vector Animation */}
-            <svg 
-              className="w-16 h-20 mb-6 stroke-white stroke-[2px] fill-none overflow-visible" 
-              viewBox="0 0 100 120"
-            >
-              <motion.path 
-                d="M 20 120 L 20 50 A 30 30 0 0 1 80 50 L 80 120"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.2, ease: "easeInOut", delay: 0.2 }}
-              />
-            </svg>
+        <h2 className="preloader-text font-display text-4xl md:text-5xl tracking-wide mb-6 opacity-0 will-change-transform">
+          Casa Amapa
+        </h2>
 
-            {/* Brand Text */}
-            <motion.h2 
-              className="font-display text-4xl md:text-5xl tracking-wide mb-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              Casa Amapa
-            </motion.h2>
-
-            {/* Progress Line */}
-            <motion.div 
-              className="w-[120px] h-[2px] bg-white/20 rounded-full overflow-hidden relative"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
-            >
-              <motion.div 
-                className="absolute top-0 left-0 bottom-0 bg-white"
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 1.0, ease: "easeInOut", delay: 1.2 }}
-              />
-            </motion.div>
-          </motion.div>
-
-        </motion.div>
-      )}
-    </AnimatePresence>
+        <div className="preloader-line-container w-[120px] h-[2px] bg-white/20 rounded-full overflow-hidden relative opacity-0">
+          <div className="preloader-line absolute top-0 left-0 bottom-0 bg-white w-0" />
+        </div>
+      </div>
+    </div>
   );
 }

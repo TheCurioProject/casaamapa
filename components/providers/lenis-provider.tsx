@@ -49,7 +49,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     const sections = document.querySelectorAll('section[data-theme], footer[data-theme]');
     const themeObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        // If the section occupies at least 50% of the screen or is currently intersecting
+        // Trigger theme change when the section hits the middle part of the screen
         if (entry.isIntersecting) {
           const theme = entry.target.getAttribute('data-theme');
           if (theme) {
@@ -57,7 +57,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
           }
         }
       });
-    }, { threshold: 0.3 }); // Use 0.3 to trigger slightly earlier as user scrolls
+    }, { rootMargin: "-30% 0px -30% 0px" }); // Use rootMargin instead of threshold for very tall/pinned sections
 
     sections.forEach(sec => themeObserver.observe(sec));
 
