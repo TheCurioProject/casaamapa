@@ -23,7 +23,7 @@ export function Location() {
         
         <div className="flex-1 flex flex-col gap-[3vh]">
           <p className="kicker kicker-light">Ubicación</p>
-          <h2 className="font-display text-[clamp(2.6rem,5vw,4.5rem)] js-lines-loc leading-[1.1]">
+          <h2 className="font-display text-[clamp(3.2rem,9vw,4.5rem)] md:text-[clamp(2.6rem,5vw,4.5rem)] js-lines-loc leading-[1.1]">
             El mar a tus pies
           </h2>
           <p className="lede js-fade-loc">

@@ -68,7 +68,7 @@ export function Apts() {
         <Image src={apt.imgMain} alt={`Departamento ${apt.name}`} fill className="object-cover h-[118%] will-change-transform" />
       </figure>
       <div className="p-[5vh_var(--spacing-pad-x)_0] flex flex-col gap-[2.6vh]">
-        <h3 className="font-display text-[2rem]">
+        <h3 className="font-display text-[2.6rem]">
           {apt.name} <em className="italic text-[var(--color-rose-3)] text-[0.62em] font-display">— {apt.tag.toLowerCase()}</em>
         </h3>
         <p className="opacity-80">{apt.shortDesc}</p>
@@ -185,7 +185,7 @@ export function Apts() {
 
         <header className="px-[var(--spacing-pad-x)] flex flex-col gap-[2.6vh] mb-[9vh]">
           <p className="kicker">{c.kicker}</p>
-          <h2 className="font-display text-[clamp(2.2rem,8.4vw,3.2rem)] js-lines">{c.introT}</h2>
+          <h2 className="font-display text-[clamp(2.8rem,9vw,3.2rem)] js-lines">{c.introT}</h2>
           <p className="lede js-fade">{c.introL}</p>
         </header>
 

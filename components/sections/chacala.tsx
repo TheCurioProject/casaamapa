@@ -55,7 +55,7 @@ export function Chacala() {
       <div className="max-w-[1000px] mx-auto px-[var(--spacing-pad-x)] relative z-10 text-center flex flex-col items-center pt-24 pb-4 md:py-32">
         <p className="kicker kicker-light opacity-80 js-fade-chacala">Descubre Chacala</p>
 
-        <h2 className="font-display text-[clamp(2.8rem,6vw,5.5rem)] js-lines-chacala leading-tight mb-8">
+        <h2 className="font-display text-[clamp(3.2rem,9vw,5.5rem)] md:text-[clamp(2.8rem,6vw,5.5rem)] js-lines-chacala leading-tight mb-8">
           Entre la jungla <br />y el <span className="italic text-[var(--color-rose-3)]">mar salado</span>
         </h2>
 
@@ -66,7 +66,7 @@ export function Chacala() {
           <p>
             Aquí no hay prisa. La bahía en forma de medialuna ofrece aguas tranquilas perfectas para nadar o hacer paddleboard, mientras que la densa jungla que la rodea esconde cascadas y petroglifos antiguos. Es el balance perfecto entre el verde profundo y el azul infinito.
           </p>
-          <p className="pt-4 font-display italic text-2xl text-[var(--color-rose-3)]">
+          <p className="pt-4 font-display italic text-[2rem] md:text-2xl text-[var(--color-rose-3)]">
             El verdadero lujo es la calma.
           </p>
         </div>
