@@ -105,14 +105,13 @@ export function Stairs() {
       data-theme="rose"
       style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
     >
-      {/* Universal Pinned Version */}
       <div
-        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[12vh] md:pt-0"
+        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[12vh] pb-[8vh] md:py-0"
         style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
       >
 
-        <div className="relative h-[34vh] md:h-[80vh] w-full flex justify-center items-center mt-[-4vh] md:mt-0">
-          <div className="relative w-[clamp(220px,65vw,34vh)] md:w-[min(70vh,38vw)] aspect-square">
+        <div className="relative h-[28vh] md:h-[80vh] w-full flex justify-center items-center mt-0">
+          <div className="relative w-[clamp(180px,50vw,28vh)] md:w-[min(70vh,38vw)] aspect-square shrink-0">
             <div className="spiral-mask absolute inset-0 rounded-full overflow-hidden will-change-transform shadow-[0_40px_120px_rgba(20,8,20,0.45)] z-2">
               <div className="spiral-imgwrap absolute inset-0 will-change-transform">
                 <Image
@@ -161,19 +160,19 @@ export function Stairs() {
           </div>
         </div>
 
-        <aside className="relative z-2 flex flex-col gap-[1vh] mt-[-2vh] md:mt-[14vh] max-md:text-center max-md:items-center">
-          <p className="kicker kicker-light">La arquitectura</p>
-          <h2 className="text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
-          <p className="lede mt-1 max-md:text-[0.95rem] opacity-80 max-md:max-w-[40ch] md:js-fade max-md:text-balance">
+        <aside className="relative z-2 flex flex-col gap-[1vh] md:mt-[14vh] max-md:text-center max-md:items-center shrink-0">
+          <p className="kicker kicker-light max-md:text-[0.75rem]">La arquitectura</p>
+          <h2 className="text-[clamp(2.2rem,7vw,5rem)] md:text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
+          <p className="lede mt-1 max-md:text-[0.85rem] max-md:leading-snug opacity-80 max-md:max-w-[40ch] md:js-fade max-md:text-balance">
             Un caracol de estuco rosa que abraza la belleza de lo imperfecto y lo orgánico. No es solo una escalera: es el corazón de la casa, donde la textura manual y la luz natural celebran la esencia de la filosofía Wabi-Sabi.
           </p>
-          <div className="relative h-[160px] md:h-[260px] mt-[2vh] md:mt-2 w-full max-w-[400px]">
+          <div className="relative h-[120px] md:h-[260px] mt-[1vh] md:mt-2 w-full max-w-[400px]">
             {steps.map((s, i) => (
-              <div key={i} className={`spiral-step absolute inset-0 flex flex-col md:grid md:grid-cols-[auto_1fr] gap-[1vh] md:gap-[1.8vw] content-start ${i === 0 ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-                <span className="font-display text-[1.4rem] md:text-[1.8rem] xl:text-[2rem] text-[var(--color-cream)] opacity-60 md:mt-1">{s.n}</span>
+              <div key={i} className={`spiral-step absolute inset-0 flex flex-col md:grid md:grid-cols-[auto_1fr] gap-[0.5vh] md:gap-[1.8vw] content-start ${i === 0 ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                <span className="font-display text-[1.2rem] md:text-[1.8rem] xl:text-[2rem] text-[var(--color-cream)] opacity-60 md:mt-1">{s.n}</span>
                 <div>
-                  <h3 className="font-display text-[2rem] md:text-[2.6rem] xl:text-[3.2rem] font-normal mb-[0.2em] leading-tight">{s.t}</h3>
-                  <p className="opacity-80 max-w-[38ch] text-[1.05rem] md:text-[1.25rem] xl:text-[1.4rem] leading-snug font-medium">{s.d}</p>
+                  <h3 className="font-display text-[1.8rem] md:text-[2.6rem] xl:text-[3.2rem] font-normal mb-[0.1em] leading-tight">{s.t}</h3>
+                  <p className="opacity-80 max-w-[38ch] text-[0.9rem] md:text-[1.25rem] xl:text-[1.4rem] leading-tight font-medium">{s.d}</p>
                 </div>
               </div>
             ))}
