@@ -20,6 +20,7 @@ export function Preloader() {
     if (archPath) {
       const length = archPath.getTotalLength();
       gsap.set(archPath, { strokeDasharray: length, strokeDashoffset: length });
+      tl.set('.preloader-arch', { opacity: 1 }, 0);
       tl.to(archPath, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0);
     }
 
@@ -82,7 +83,7 @@ export function Preloader() {
 
       <div className="preloader-content relative z-10 flex flex-col items-center justify-center text-white will-change-transform">
         <svg 
-          className="preloader-arch w-16 h-20 mb-6 stroke-white stroke-[2px] fill-none overflow-visible" 
+          className="preloader-arch w-16 h-20 mb-6 stroke-white stroke-[2px] fill-none overflow-visible opacity-0" 
           viewBox="0 0 100 120"
         >
           <path d="M 20 120 L 20 50 A 30 30 0 0 1 80 50 L 80 120" />
