@@ -285,6 +285,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
 
                 <button 
                   onClick={() => {
+                    onClose();
                     useBookingStore.getState().openBooking(localApt.name.toLowerCase());
                   }}
                   className="bg-[var(--color-ink)] text-[var(--color-sand)] px-8 py-4 rounded-full uppercase tracking-widest text-sm hover:bg-black transition-colors w-full md:w-auto"
