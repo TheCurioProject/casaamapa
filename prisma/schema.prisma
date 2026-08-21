@@ -18,6 +18,7 @@ model Unit {
   isWholeHouse Boolean  @default(false) @map("is_whole_house")
   icalUrls    String[]  @default([]) @map("ical_urls")
   bookings    Booking[]
+  blockedDates BlockedDate[]
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -55,7 +56,22 @@ model Settings {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   depositPercentage Int      @default(50) @map("deposit_percentage")
   isFullPayment     Boolean  @default(false) @map("is_full_payment")
+  adminEmail        String?  @map("admin_email")
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("settings")
+}
+
+model BlockedDate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apartmentId String   @map("apartment_id")
+  unit        Unit     @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  startDate   DateTime @map("start_date") @db.Date
+  endDate     DateTime @map("end_date") @db.Date
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([startDate, endDate])
+  @@index([apartmentId])
+  @@map("blocked_dates")
 }
