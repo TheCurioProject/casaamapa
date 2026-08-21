@@ -65,13 +65,19 @@ export function BookingModal() {
 
   const toggleModal = contextSafe((open: boolean) => {
     if (open) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = useBookingStore.getState().isAptModalOpen ? 'hidden' : '';
       gsap.set(overlayRef.current, { display: 'flex' });
-      gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.5 });
+      gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.4 });
+      if (scrollContainerRef.current) {
+        gsap.fromTo(scrollContainerRef.current, { y: '100%' }, { y: 0, duration: 0.5, ease: 'power3.out' });
+      }
     } else {
       document.body.style.overflow = useBookingStore.getState().isAptModalOpen ? 'hidden' : '';
+      if (scrollContainerRef.current) {
+        gsap.to(scrollContainerRef.current, { y: '100%', duration: 0.4, ease: 'power3.in' });
+      }
       gsap.to(overlayRef.current, {
-        autoAlpha: 0, duration: 0.4, onComplete: () => {
+        autoAlpha: 0, duration: 0.4, delay: 0.1, onComplete: () => {
           gsap.set(overlayRef.current, { display: 'none' });
           // Reset state after close
           setTimeout(() => {
@@ -277,7 +283,7 @@ export function BookingModal() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="bg-[var(--color-cream)] w-full h-[88vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
+        className="bg-[var(--color-cream)] w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
       >
 
         {/* Drag handle pill (Mobile only) */}

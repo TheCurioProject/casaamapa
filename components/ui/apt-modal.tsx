@@ -191,7 +191,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         style={{ backgroundColor, color: textColor }}
-        className="w-full h-[88vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl overflow-y-auto relative flex flex-col shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain transform-gpu"
+        className="w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl overflow-y-auto relative flex flex-col shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain transform-gpu"
       >
         {/* Custom Animated Scrollbar */}
         <motion.div
