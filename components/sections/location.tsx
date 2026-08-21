@@ -1,12 +1,10 @@
 'use client';
-import { useRef, useState } from 'react';
-import Image from 'next/image';
+import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import { linesReveal, fadeReveal } from '@/lib/animations';
 
 export function Location() {
   const container = useRef<HTMLElement>(null);
-  const [showMap, setShowMap] = useState(false);
 
   useGSAP(() => {
     linesReveal('.js-lines-loc');
@@ -44,45 +42,17 @@ export function Location() {
 
         <div className="flex-1 w-full js-fade-loc">
           <div className="aspect-[4/3] w-full rounded-[calc(var(--radius-arch-img)*0.8)_calc(var(--radius-arch-img)*0.8)_20px_20px] overflow-hidden shadow-[0_30px_60px_rgba(30,40,25,0.2)] relative">
-            {showMap ? (
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1695.3379879990634!2d-105.22397193705399!3d21.16651790084265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8420d9d7f1f6da3b%3A0x14abc5b696fa57ee!2sCasa%20Amapa!5e0!3m2!1ses!2smx!4v1787084922270!5m2!1ses!2smx" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen={false} 
-                loading="eager" 
-                referrerPolicy="no-referrer-when-downgrade"
-                className="grayscale-[0.2] contrast-[1.1] absolute inset-0"
-                title="Ubicación de Casa Amapa en Google Maps"
-              ></iframe>
-            ) : (
-              <button
-                onClick={() => setShowMap(true)}
-                className="absolute inset-0 w-full h-full cursor-pointer group"
-                aria-label="Cargar mapa interactivo de Google Maps"
-              >
-                {/* Static map preview via Google Static Maps API */}
-                <Image
-                  src="https://maps.googleapis.com/maps/api/staticmap?center=21.16651,-105.22397&zoom=17&size=800x600&maptype=roadmap&markers=color:red%7C21.16651,-105.22397&style=feature:all%7Csaturation:-80&key="
-                  alt="Vista previa del mapa — Casa Amapa, Playa Chacala"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover grayscale-[0.3]"
-                  unoptimized
-                />
-                {/* Fallback gradient overlay */}
-                <div className="absolute inset-0 bg-[var(--color-green)]/60 flex flex-col items-center justify-center gap-4 transition-all group-hover:bg-[var(--color-green)]/40">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-cream)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-300">
-                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  <span className="text-[var(--color-cream)] text-sm tracking-[0.2em] uppercase font-medium opacity-80 group-hover:opacity-100 transition-opacity">
-                    Ver mapa interactivo
-                  </span>
-                </div>
-              </button>
-            )}
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1695.3379879990634!2d-105.22397193705399!3d21.16651790084265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8420d9d7f1f6da3b%3A0x14abc5b696fa57ee!2sCasa%20Amapa!5e0!3m2!1ses!2smx!4v1787084922270!5m2!1ses!2smx" 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0 }} 
+              allowFullScreen={false} 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+              className="grayscale-[0.2] contrast-[1.1] absolute inset-0"
+              title="Ubicación de Casa Amapa en Google Maps"
+            ></iframe>
           </div>
         </div>
 
