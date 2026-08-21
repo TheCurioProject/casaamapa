@@ -116,7 +116,7 @@ export function Header() {
         
         <div className="flex items-center gap-[10px] pointer-events-auto">
           <button 
-            onClick={openBooking}
+            onClick={() => openBooking()}
             className={`
               max-md:hidden h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium
               ${theme === 'rose' 
@@ -208,7 +208,7 @@ export function Header() {
       </AnimatePresence>
       {/* Mobile Floating Booking Button */}
       <button 
-        onClick={openBooking}
+        onClick={() => openBooking()}
         className={`
           md:hidden fixed bottom-6 right-[var(--spacing-pad-x)] z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
           ${theme === 'rose' 

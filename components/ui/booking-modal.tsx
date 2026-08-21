@@ -221,7 +221,7 @@ export function BookingModal() {
   // Animation variants
   const variants = {
     initial: { opacity: 0, x: 20, scale: 0.98 },
-    animate: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+    animate: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
     exit: { opacity: 0, x: -20, scale: 0.98, transition: { duration: 0.3 } }
   };
 
