@@ -211,12 +211,13 @@ export function Header() {
       <button 
         onClick={() => openBooking()}
         className={`
-          md:hidden fixed bottom-6 right-[var(--spacing-pad-x)] z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
+          md:hidden fixed z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
           ${theme === 'rose' 
             ? 'bg-[var(--color-ink)] text-[var(--color-cream)] active:bg-[var(--color-cream)] active:text-[var(--color-ink)]' 
             : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] active:bg-[var(--color-ink)]'}
           ${isOpen ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}
         `}
+        style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom, 1.5rem))', right: 'var(--spacing-pad-x)' }}
       >
         Reservar
       </button>

@@ -6,14 +6,18 @@ export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only run on non-touch devices
+    // Only run on non-touch, non-reduced-motion devices
     if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     
     setIsVisible(true);
 
     let rafId: number;
     let targetX = -100;
     let targetY = -100;
+    let currentX = -100;
+    let currentY = -100;
+    const LERP = 0.15; // Smooth trailing factor — lower = more lag, higher = snappier
 
     const onMouseMove = (e: MouseEvent) => {
       targetX = e.clientX;
@@ -25,16 +29,20 @@ export function Cursor() {
       
       if (dotRef.current) {
         if (isHovering) {
-          dotRef.current.className = 'w-[8px] h-[8px] rounded-full transition-all duration-300 scale-[2.5] bg-[var(--color-rose-1)] opacity-70';
+          dotRef.current.className = 'w-[8px] h-[8px] rounded-full transition-[background-color,transform] duration-300 scale-[2.5] bg-[var(--color-rose-1)] opacity-70';
         } else {
-          dotRef.current.className = 'w-[8px] h-[8px] rounded-full transition-all duration-300 scale-100 bg-[var(--color-rose-3)]';
+          dotRef.current.className = 'w-[8px] h-[8px] rounded-full transition-[background-color,transform] duration-300 scale-100 bg-[var(--color-rose-3)]';
         }
       }
     };
 
     const animate = () => {
+      // Lerp interpolation for smooth trailing
+      currentX += (targetX - currentX) * LERP;
+      currentY += (targetY - currentY) * LERP;
+
       if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${targetX}px, ${targetY}px) translateZ(0)`; // translateZ(0) forces GPU
+        dotRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
       }
       rafId = requestAnimationFrame(animate);
     };
@@ -56,8 +64,8 @@ export function Cursor() {
     >
       <div 
         ref={dotRef}
-        className="w-[8px] h-[8px] rounded-full transition-all duration-300 scale-100 bg-[var(--color-rose-3)]"
-        style={{ transform: 'translate(-100px, -100px) translateZ(0)' }}
+        className="w-[8px] h-[8px] rounded-full transition-[background-color,transform] duration-300 scale-100 bg-[var(--color-rose-3)]"
+        style={{ transform: 'translate3d(-100px, -100px, 0)' }}
       />
     </div>
   );

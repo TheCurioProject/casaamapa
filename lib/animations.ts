@@ -4,10 +4,21 @@ import SplitType from 'split-type';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Check if user prefers reduced motion */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export const linesReveal = (selector: string | HTMLElement | NodeList | HTMLElement[], start = 'top 82%') => {
   const elements = typeof selector === 'string' ? document.querySelectorAll(selector) : Array.isArray(selector) || selector instanceof NodeList ? selector : [selector];
   
   elements.forEach((el) => {
+    if (prefersReducedMotion()) {
+      // Show content immediately without animation
+      gsap.set(el, { opacity: 1, visibility: 'visible' });
+      return;
+    }
+
     const text = new SplitType(el as HTMLElement, { types: 'lines', lineClass: 'rl' });
     
     gsap.from(text.lines, {
@@ -29,6 +40,11 @@ export const fadeReveal = (selector: string | HTMLElement | NodeList | HTMLEleme
   const elements = typeof selector === 'string' ? document.querySelectorAll(selector) : Array.isArray(selector) || selector instanceof NodeList ? selector : [selector];
   
   elements.forEach((el) => {
+    if (prefersReducedMotion()) {
+      gsap.set(el, { opacity: 1, visibility: 'visible' });
+      return;
+    }
+
     gsap.from(el, {
       y: 26,
       autoAlpha: 0,
@@ -44,6 +60,8 @@ export const fadeReveal = (selector: string | HTMLElement | NodeList | HTMLEleme
 };
 
 export const parallaxAll = (selector = '[data-parallax]') => {
+  if (prefersReducedMotion()) return;
+
   const elements = document.querySelectorAll(selector);
   
   elements.forEach((fig) => {
@@ -69,7 +87,14 @@ export const parallaxAll = (selector = '[data-parallax]') => {
 
 export const drawPath = (path: SVGPathElement | null, trigger: HTMLElement | null, start = 'top 85%') => {
   if (!path || !path.getTotalLength) return null;
+
   const L = path.getTotalLength();
+
+  if (prefersReducedMotion()) {
+    gsap.set(path, { strokeDasharray: L, strokeDashoffset: 0 });
+    return L;
+  }
+
   gsap.set(path, { strokeDasharray: L, strokeDashoffset: L });
   gsap.to(path, {
     strokeDashoffset: 0,

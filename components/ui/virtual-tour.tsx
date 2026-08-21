@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence, useInView } from 'framer-motion';
 import { Maximize, Minimize } from 'lucide-react';
 import tourDataRaw from '@/public/data/tours.json';
 
@@ -11,6 +11,7 @@ interface VirtualTourProps {
 
 export function VirtualTour({ aptId }: VirtualTourProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: true, margin: "200px 0px" });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Storage for preloaded image elements
@@ -32,6 +33,8 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
 
   useEffect(() => {
     let isCancelled = false;
+
+    if (!isInView) return;
 
     async function loadTour() {
       setIsReady(false);
@@ -142,7 +145,7 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
     return () => {
       isCancelled = true;
     };
-  }, [aptId, motionProgress]);
+  }, [aptId, motionProgress, isInView]);
 
   // Canvas drawing loop based on scrubber progress
   useEffect(() => {

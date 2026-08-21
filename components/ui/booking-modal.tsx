@@ -13,6 +13,17 @@ import 'react-day-picker/dist/style.css';
 import { createPaymentIntent } from '@/app/actions/payments';
 import type { DateRange } from 'react-day-picker';
 
+interface BookingUnit {
+  id: string;
+  name: string;
+  price: number;
+}
+
+interface BookingDateInfo {
+  checkIn: string;
+  checkOut: string;
+}
+
 // Lazy load heavy components
 const DayPicker = dynamic(() => import('react-day-picker').then(mod => mod.DayPicker), { ssr: false, loading: () => <div className="h-[300px] w-full flex justify-center items-center"><div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" /></div> });
 const StripePayment = dynamic(() => import('./stripe-payment').then(mod => mod.StripePayment), { ssr: false, loading: () => <div className="h-[200px] w-full flex justify-center items-center"><div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" /></div> });
@@ -33,12 +44,12 @@ export function BookingModal() {
 
   // State
   const [step, setStep] = useState(1);
-  const [units, setUnits] = useState<any[]>([]);
+  const [units, setUnits] = useState<BookingUnit[]>([]);
   const [isLoadingUnits, setIsLoadingUnits] = useState(true);
   const [unitsError, setUnitsError] = useState<string | null>(null);
 
   // Selections
-  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [selectedUnit, setSelectedUnit] = useState<BookingUnit | null>(null);
   const [range, setRange] = useState<DateRange | undefined>();
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [cleaningDates, setCleaningDates] = useState<Date[]>([]);
@@ -145,7 +156,7 @@ export function BookingModal() {
           if (res && res.bookings) {
             const booked: Date[] = [];
             const cleaning: Date[] = [];
-            res.bookings.forEach((b: any) => {
+            res.bookings.forEach((b: BookingDateInfo) => {
               const checkIn = new Date(b.checkIn);
               const checkOut = new Date(b.checkOut);
               checkIn.setHours(12, 0, 0, 0);
@@ -194,7 +205,7 @@ export function BookingModal() {
     const checkOutDate = range.to || new Date(range.from.getTime() + 24 * 60 * 60 * 1000); // Check out next day if 1 night selected
 
     const res = await createPendingBooking({
-      apartmentId: selectedUnit.id,
+      apartmentId: selectedUnit!.id,
       checkIn: range.from,
       checkOut: checkOutDate,
       guestName,
@@ -277,7 +288,7 @@ export function BookingModal() {
   };
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 z-[10000] bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark">
+    <div ref={overlayRef} className="fixed inset-0 z-[10000] bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark" role="dialog" aria-modal="true" aria-label="Reservar en Casa Amapa">
       <div
         ref={scrollContainerRef}
         onTouchStart={handleTouchStart}
@@ -308,7 +319,7 @@ export function BookingModal() {
           </button>
         </div>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" aria-live="polite" aria-atomic="true" role="status">
           <AnimatePresence mode="wait">
             {success ? (
               <motion.div key="success" variants={variants} initial="initial" animate="animate" exit="exit" className="text-center py-12 flex flex-col items-center">
@@ -328,7 +339,7 @@ export function BookingModal() {
                   </div>
                 ) : units.length > 0 ? (
                   <div className="grid gap-3">
-                    {units.map((unit: any) => (
+                    {units.map((unit: BookingUnit) => (
                       <button
                         key={unit.id}
                         onClick={() => { setSelectedUnit(unit); setStep(2); }}

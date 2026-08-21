@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function checkAvailability(apartmentId: string, startDate: Date, endDate: Date) {
@@ -33,7 +34,7 @@ export async function createPendingBooking(data: {
   guests: number;
 }) {
   try {
-    const booking = await prisma.$transaction(async (tx: any) => {
+    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Determine which units to check for overlaps
       let idsToCheck = [data.apartmentId];
       if (data.apartmentId === 'amapa') {
@@ -69,8 +70,9 @@ export async function createPendingBooking(data: {
 
     revalidatePath('/');
     return { success: true, booking };
-  } catch (error: any) {
-    if (error.message === 'overlap' || error.code === 'P2010') {
+  } catch (error) {
+    const err = error as Error & { code?: string };
+    if (err.message === 'overlap' || err.code === 'P2010') {
       return { error: 'Las fechas seleccionadas ya no están disponibles.' };
     }
     console.error('Error creating booking:', error);

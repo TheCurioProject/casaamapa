@@ -84,17 +84,18 @@ export function Hero() {
             src="/images/hero.webp" 
             alt="Fachada rosa de Casa Amapa con escalera caracol"
             fill
-            sizes="100vw"
+            sizes="(max-width: 767px) 0px, 100vw"
             className="h-[108%] object-cover object-[50%_42%] max-md:hidden"
             priority
+            fetchPriority="high"
           />
           <Image 
             src="/images/mobile-hero.webp" 
             alt="Fachada rosa de Casa Amapa con escalera caracol"
             fill
-            sizes="100vw"
+            sizes="(max-width: 767px) 100vw, 0px"
             className="h-[108%] object-cover object-[50%_90%] md:hidden"
-            priority
+            loading="eager"
           />
         </div>
       </div>
@@ -104,19 +105,19 @@ export function Hero() {
       {/* Content wrapper with staggering */}
       <div className="hero-content-wrapper absolute z-4 left-[var(--spacing-pad-x)] right-[var(--spacing-pad-x)] bottom-[calc(22vh+var(--spacing-overlap))] max-md:bottom-[calc(20vh+var(--spacing-overlap))] flex flex-col gap-[2vh] items-start will-change-transform" style={{ transform: 'translateZ(0)' }}>
         
-        <svg className="hero-text-item w-[min(300px,56vw)] stroke-[var(--color-sand)] fill-none stroke-[1.5] opacity-90 [stroke-linecap:round] hero-arc opacity-0" viewBox="0 0 320 60" aria-hidden="true" style={{ transform: 'translateZ(0)' }}>
+        <svg className="hero-text-item w-[min(300px,56vw)] stroke-[var(--color-sand)] fill-none stroke-[1.5] opacity-90 [stroke-linecap:round] hero-arc opacity-0" viewBox="0 0 320 60" aria-hidden="true">
           <path d="M4 56 C 90 6, 230 6, 316 56" />
         </svg>
         
-        <p className="hero-text-item text-[var(--color-sand)] tracking-[0.42em] max-md:tracking-[0.3em] text-[11px] uppercase opacity-0" style={{ transform: 'translateZ(0)' }}>
+        <p className="hero-text-item text-[var(--color-sand)] tracking-[0.42em] max-md:tracking-[0.3em] text-[11px] uppercase opacity-0">
           Playa Chacala · Nayarit · México
         </p>
         
-        <h1 className="hero-text-item text-[var(--color-cream)] text-[clamp(3.4rem,10.5vw,9.5rem)] max-md:text-[clamp(2.7rem,13.5vw,4.8rem)] overflow-hidden font-display opacity-0" style={{ transform: 'translateZ(0)' }}>
+        <h1 className="hero-text-item text-[var(--color-cream)] text-[clamp(3.4rem,10.5vw,9.5rem)] max-md:text-[clamp(2.7rem,13.5vw,4.8rem)] overflow-hidden font-display opacity-0">
           Casa Amapa
         </h1>
         
-        <p className="hero-text-item text-[var(--color-sand)] text-[clamp(0.95rem,1.3vw,1.15rem)] opacity-92 max-w-[40ch] opacity-0" style={{ transform: 'translateZ(0)' }}>
+        <p className="hero-text-item text-[var(--color-sand)] text-[clamp(0.95rem,1.3vw,1.15rem)] opacity-92 max-w-[40ch] opacity-0">
           Una casa que ya te estaba esperando.
         </p>
       </div>

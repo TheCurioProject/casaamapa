@@ -6,8 +6,12 @@ import Image from 'next/image';
 import { motion, AnimatePresence, useScroll, useSpring, useTransform } from 'framer-motion';
 import { VirtualTour } from '@/components/ui/virtual-tour';
 import { X, ChevronLeft, ChevronRight, Users, BedDouble, Square, Bath, Wifi, Calendar as CalendarIcon, Utensils, ArrowRightLeft } from 'lucide-react';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/dist/style.css';
+import dynamic from 'next/dynamic';
+
+const DayPicker = dynamic(
+  () => import('react-day-picker').then(mod => mod.DayPicker),
+  { ssr: false, loading: () => <div className="h-[300px] w-full flex justify-center items-center"><div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" /></div> }
+);
 import { es } from 'date-fns/locale';
 import { getApartmentBookings } from '@/app/actions/bookings';
 import { useBookingStore } from '@/lib/store';
