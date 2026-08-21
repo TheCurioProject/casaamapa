@@ -29,7 +29,7 @@ export const BookingConfirmationEmail = ({
         <Section style={detailsContainer}>
           <Text style={detailsText}><strong>Llegada:</strong> {checkIn.toLocaleDateString('es-MX')}</Text>
           <Text style={detailsText}><strong>Salida:</strong> {checkOut.toLocaleDateString('es-MX')}</Text>
-          <Text style={detailsText}><strong>Total pagado (MXN):</strong> ${amount}</Text>
+          <Text style={detailsText}><strong>Total pagado (MXN):</strong> {amount} MXN</Text>
         </Section>
         <Hr style={hr} />
         <Text style={footer}>

@@ -340,7 +340,7 @@ export function BookingModal() {
                         </div>
                         <div className="mt-3 md:mt-0 md:text-right">
                           <span className="block font-sans font-bold text-xl md:text-2xl text-[var(--color-rose-3)] group-hover:scale-105 transition-transform origin-right">
-                            ${unit.price.toLocaleString('es-MX')}
+                            {unit.price.toLocaleString('es-MX')} MXN
                           </span>
                           <span className="block opacity-50 text-xs tracking-widest uppercase mt-1">Por noche</span>
                         </div>
@@ -364,7 +364,7 @@ export function BookingModal() {
               <motion.div key="step2" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full pb-8">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 2 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-2 leading-none">Tus fechas</h2>
-                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit.name}</strong> (${selectedUnit.price.toLocaleString()} MXN / noche)</p>
+                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit.name}</strong> ({selectedUnit.price.toLocaleString()} MXN / noche)</p>
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
                   {isLoadingDates && (
@@ -429,7 +429,7 @@ export function BookingModal() {
                   {(smartHint.status === 'complete' || smartHint.status === 'partial') && (
                     <div className="flex justify-between items-end mt-2 pt-2 border-t border-[rgba(94,58,80,0.1)]">
                       <span className="text-xs uppercase tracking-widest opacity-60">Total</span>
-                      <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">${totalPrice.toLocaleString('es-MX')} MXN</span>
+                      <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{totalPrice.toLocaleString('es-MX')} MXN</span>
                     </div>
                   )}
                 </div>
@@ -510,7 +510,7 @@ export function BookingModal() {
                   </div>
                   <div className="flex justify-between items-end pt-2">
                     <span className="opacity-70 text-xs uppercase tracking-widest">Total a pagar</span>
-                    <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">${totalPrice.toLocaleString('es-MX')} MXN</span>
+                    <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{totalPrice.toLocaleString('es-MX')} MXN</span>
                   </div>
                 </div>
 
