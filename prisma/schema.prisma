@@ -69,6 +69,8 @@ model BlockedDate {
   startDate   DateTime @map("start_date") @db.Date
   endDate     DateTime @map("end_date") @db.Date
   reason      String?  @db.Text
+  isOtaBlock  Boolean  @default(false) @map("is_ota_block")
+  otaSource   String?  @map("ota_source") @db.Text
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([startDate, endDate])

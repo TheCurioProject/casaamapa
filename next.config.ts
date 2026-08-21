@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['node-ical'],
   async headers() {
     return [
       {
