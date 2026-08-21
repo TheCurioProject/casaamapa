@@ -12,7 +12,7 @@ export const metadata = {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
-      <body className="min-h-screen bg-[var(--color-cream)] flex text-[var(--color-ink)]">
+      <body className="min-h-screen !bg-[var(--color-cream)] flex text-[var(--color-ink)]">
         {/* Sidebar */}
         <aside className="w-64 bg-[var(--color-ink)] text-[var(--color-sand)] flex flex-col fixed inset-y-0 left-0 z-10 rounded-r-[24px] shadow-2xl overflow-y-auto">
           <div className="p-8">
