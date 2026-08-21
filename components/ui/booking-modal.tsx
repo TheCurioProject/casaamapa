@@ -461,27 +461,27 @@ export function BookingModal() {
                   <div className="relative">
                     <label className="block text-xs uppercase tracking-widest mb-2 opacity-70">Teléfono</label>
                     <div className="flex gap-2 relative">
-                      <button type="button" onClick={() => setShowLadaMenu(!showLadaMenu)} className="flex items-center gap-2 border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-3 bg-white/50 hover:bg-white transition-colors">
+                      <button type="button" onClick={() => setShowLadaMenu(!showLadaMenu)} className="flex items-center gap-1 md:gap-2 border border-[rgba(94,58,80,0.2)] rounded-xl px-2 md:px-3 py-3 bg-white/50 hover:bg-white transition-colors shrink-0">
                         <span>{lada.flag}</span>
-                        <span className="text-sm font-medium">{lada.code}</span>
-                        <ChevronDown className="w-4 h-4 opacity-50" />
+                        <span className="text-[0.8rem] md:text-sm font-medium">{lada.code}</span>
+                        <ChevronDown className="w-3 h-3 md:w-4 md:h-4 opacity-50 shrink-0" />
                       </button>
 
                       <AnimatePresence>
                         {showLadaMenu && (
-                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-[calc(100%+8px)] md:top-[calc(100%+8px)] md:bottom-auto left-0 w-[280px] bg-white rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] border border-black/5 z-20 py-2 flex flex-col max-h-48 overflow-y-auto">
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-[calc(100%+8px)] md:top-[calc(100%+8px)] md:bottom-auto left-0 w-[280px] max-w-[calc(100vw-4rem)] bg-white rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] border border-black/5 z-20 py-2 flex flex-col max-h-48 overflow-y-auto">
                             {LADAS.map(l => (
                               <button key={l.code} type="button" onClick={() => { setLada(l); setShowLadaMenu(false); }} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-sand)] text-left transition-colors">
-                                <span>{l.flag}</span>
-                                <span className="font-medium">{l.code}</span>
-                                <span className="text-sm opacity-60 ml-auto">{l.country}</span>
+                                <span className="shrink-0">{l.flag}</span>
+                                <span className="font-medium shrink-0">{l.code}</span>
+                                <span className="text-sm opacity-60 ml-auto truncate">{l.country}</span>
                               </button>
                             ))}
                           </motion.div>
                         )}
                       </AnimatePresence>
 
-                      <input type="tel" required maxLength={10} value={guestPhone} onChange={e => setGuestPhone(e.target.value.replace(/\D/g, ''))} placeholder="123 456 7890" className="flex-1 border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-white/50 focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none" />
+                      <input type="tel" required maxLength={10} value={guestPhone} onChange={e => setGuestPhone(e.target.value.replace(/\D/g, ''))} placeholder="123 456 7890" className="flex-1 min-w-0 border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-white/50 focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none" />
                     </div>
                   </div>
 
