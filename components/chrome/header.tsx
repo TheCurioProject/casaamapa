@@ -105,7 +105,7 @@ export function Header() {
         transition={{ duration: 1.2, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-colors duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>
+          <Link href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
             Casa Amapa
           </Link>
           <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.85rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${(showScrollHint && !isOpen && !isAptModalOpen) ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>

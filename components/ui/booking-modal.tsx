@@ -69,7 +69,7 @@ export function BookingModal() {
       gsap.set(overlayRef.current, { display: 'flex' });
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.5 });
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = useBookingStore.getState().isAptModalOpen ? 'hidden' : '';
       gsap.to(overlayRef.current, {
         autoAlpha: 0, duration: 0.4, onComplete: () => {
           gsap.set(overlayRef.current, { display: 'none' });
@@ -271,13 +271,13 @@ export function BookingModal() {
   };
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 z-50 bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark">
+    <div ref={overlayRef} className="fixed inset-0 z-[10000] bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark">
       <div
         ref={scrollContainerRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="bg-[var(--color-cream)] w-full h-[90vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
+        className="bg-[var(--color-cream)] w-full h-[88vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
       >
 
         {/* Drag handle pill (Mobile only) */}

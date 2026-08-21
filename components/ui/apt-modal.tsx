@@ -252,8 +252,8 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
 
           {/* Virtual Tour Section */}
           <div className="mb-24 relative">
-            <div className="flex items-center justify-between mb-8 border-b border-[rgba(94,58,80,0.1)] pb-4">
-              <h3 className="font-display text-4xl md:text-5xl">Recorrido Virtual</h3>
+            <div className="flex items-center justify-center md:justify-between mb-2 md:mb-8 border-b-0 md:border-b border-[rgba(94,58,80,0.1)] pb-0 md:pb-4">
+              <h3 className="font-display text-4xl md:text-5xl text-center md:text-left w-full md:w-auto">Recorrido Virtual</h3>
             </div>
             
             <div className="-mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full">
@@ -285,7 +285,6 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
 
                 <button 
                   onClick={() => {
-                    onClose();
                     useBookingStore.getState().openBooking(localApt.name.toLowerCase());
                   }}
                   className="bg-[var(--color-ink)] text-[var(--color-sand)] px-8 py-4 rounded-full uppercase tracking-widest text-sm hover:bg-black transition-colors w-full md:w-auto"
