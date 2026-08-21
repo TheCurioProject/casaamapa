@@ -102,7 +102,7 @@ export function Header() {
         className="fixed top-0 left-0 right-0 px-[var(--spacing-pad-x)] pt-[clamp(20px,3vh,48px)] pb-0 z-[110] flex justify-between items-start pointer-events-none"
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1.2, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 1.2, delay: 2.0, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
           <Link href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>

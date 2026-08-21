@@ -56,14 +56,14 @@ export function Hero() {
     });
 
     // Entrance animation timeline
-    const tl = gsap.timeline({ delay: 2.6 });
+    const tl = gsap.timeline({ delay: 1.2 });
     
-    // Draw SVG path (starts at 2.8s)
+    // Draw SVG path (starts at 1.4s)
     const archPath = document.querySelector('.hero-arc path') as SVGPathElement;
     if (archPath) {
       const length = archPath.getTotalLength();
       gsap.set(archPath, { strokeDasharray: length, strokeDashoffset: length });
-      gsap.to(archPath, { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut", delay: 0.2 });
+      gsap.to(archPath, { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut", delay: 1.4 });
     }
 
     // Stagger text items
