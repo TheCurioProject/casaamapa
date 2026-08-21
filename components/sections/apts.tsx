@@ -8,10 +8,21 @@ import { linesReveal, fadeReveal, parallaxAll } from '@/lib/animations';
 
 gsap.registerPlugin(ScrollTrigger);
 import { AptModal, AptData } from '@/components/ui/apt-modal';
+import { useBookingStore } from '@/lib/store';
 
 export function Apts() {
   const container = useRef<HTMLElement>(null);
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
+  const setAptModalOpen = useBookingStore(state => state.setAptModalOpen);
+  
+  const handleOpenApt = (apt: AptData) => {
+    setSelectedApt(apt);
+    setAptModalOpen(true);
+  };
+  const handleCloseApt = () => {
+    setSelectedApt(null);
+    setAptModalOpen(false);
+  };
   const c = {
     kicker: 'Los departamentos',
     introT: 'Tres maneras de habitar la calma',
@@ -235,9 +246,9 @@ export function Apts() {
             <p className="lede">{c.introL}</p>
           </header>
 
-          <MobileBlock apt={c.tierra} onOpen={() => setSelectedApt(c.tierra)} />
-          <MobileBlock apt={c.agua} onOpen={() => setSelectedApt(c.agua)} />
-          <MobileBlock apt={c.aire} onOpen={() => setSelectedApt(c.aire)} />
+          <MobileBlock apt={c.tierra} onOpen={() => handleOpenApt(c.tierra)} />
+          <MobileBlock apt={c.agua} onOpen={() => handleOpenApt(c.agua)} />
+          <MobileBlock apt={c.aire} onOpen={() => handleOpenApt(c.aire)} />
         </section>
 
         {/* Desktop Version */}
@@ -255,7 +266,7 @@ export function Apts() {
                 <p className="text-[0.7rem] tracking-[0.34em] uppercase opacity-55 mt-[2vh]">Continúa →</p>
               </header>
 
-              <DesktopPanel apt={c.tierra} onOpen={() => setSelectedApt(c.tierra)} />
+              <DesktopPanel apt={c.tierra} onOpen={() => handleOpenApt(c.tierra)} />
 
               <div className="flex-[0_0_35vw] grid place-items-center text-center">
                 <div>
@@ -264,7 +275,7 @@ export function Apts() {
                 </div>
               </div>
 
-              <DesktopPanel apt={c.agua} onOpen={() => setSelectedApt(c.agua)} />
+              <DesktopPanel apt={c.agua} onOpen={() => handleOpenApt(c.agua)} />
 
               <div className="flex-[0_0_35vw] grid place-items-center text-center">
                 <div>
@@ -273,7 +284,7 @@ export function Apts() {
                 </div>
               </div>
 
-              <DesktopPanel apt={c.aire} onOpen={() => setSelectedApt(c.aire)} />
+              <DesktopPanel apt={c.aire} onOpen={() => handleOpenApt(c.aire)} />
               <div className="flex-[0_0_8vw]"></div>
             </div>
 
@@ -286,7 +297,7 @@ export function Apts() {
       <AptModal
         apt={selectedApt}
         isOpen={!!selectedApt}
-        onClose={() => setSelectedApt(null)}
+        onClose={handleCloseApt}
       />
     </>
   );

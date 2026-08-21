@@ -265,3 +265,33 @@ p, h1, h2, h3, h4, span, li {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(94,58,80,0.05);
 }
+
+/* Mobile Optimizations for Calendar */
+@media (max-width: 768px) {
+  .custom-neumorphic-calendar {
+    --rdp-cell-size: 11vw;
+    padding: 1rem 0.5rem;
+    border-radius: 1rem;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+  
+  .custom-neumorphic-calendar table {
+    border-spacing: 2px;
+  }
+
+  .custom-neumorphic-calendar .rdp-day {
+    font-size: 1.1rem;
+    margin: 1px;
+    border-radius: 10px;
+  }
+  
+  .custom-neumorphic-calendar .rdp-caption_label {
+    font-size: 1.35rem;
+  }
+  
+  .custom-neumorphic-calendar .rdp-head_cell {
+    font-size: 0.75rem;
+  }
+}

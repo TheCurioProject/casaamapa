@@ -272,8 +272,8 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
           }`}
           style={{ pointerEvents: isReady ? 'auto' : 'none' }}
         >
-          {/* Controls Group: Instruction (Left) & Fullscreen (Right) */}
-          <div className="flex justify-between items-end mb-1 px-1">
+          {/* Controls Group: Instruction (Left) */}
+          <div className="flex justify-between items-end mb-0 px-1 relative z-10 translate-y-1">
             <motion.div 
               className="flex items-center gap-2 md:gap-3 text-white/80 pointer-events-none"
               initial={{ opacity: 1, y: 0 }}

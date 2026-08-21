@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 
 export function Header() {
-  const { openBooking, isOpen } = useBookingStore();
+  const { openBooking, isOpen, isAptModalOpen } = useBookingStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [headerTheme, setHeaderTheme] = useState('dark');
@@ -105,10 +105,10 @@ export function Header() {
         transition={{ duration: 1.2, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link href="#llegada" className={`font-display text-[clamp(1.6rem,3vw,2.3rem)] leading-none transition-colors duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>
+          <Link href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-colors duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>
             Casa Amapa
           </Link>
-          <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.75rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${showScrollHint ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+          <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.85rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${(showScrollHint && !isOpen && !isAptModalOpen) ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
              <span className={headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
              <span className={`animate-bounce ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
           </div>
@@ -130,10 +130,11 @@ export function Header() {
           
           <button 
             className={`
-              w-[46px] h-[46px] rounded-full grid place-items-center content-center gap-[5px] transition-colors duration-300
+              w-[46px] h-[46px] rounded-full grid place-items-center content-center gap-[5px] transition-all duration-300
               ${theme === 'rose'
                 ? 'bg-[var(--color-ink)] hover:bg-[var(--color-cream)]'
                 : 'bg-[var(--color-rose-3)] hover:bg-[var(--color-ink)]'}
+              ${(isOpen || isAptModalOpen) ? 'max-md:opacity-0 max-md:pointer-events-none max-md:scale-90' : 'max-md:opacity-100 max-md:scale-100'}
             `}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Abrir menú"
