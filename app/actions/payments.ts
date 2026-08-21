@@ -5,8 +5,8 @@ import { prisma } from '@/lib/db';
 import { Resend } from 'resend';
 import { BookingConfirmationEmail } from '@/components/emails/booking-confirmation';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2026-07-29.dahlia' as any });
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || 'sk_test_dummy') as string, { apiVersion: '2026-07-29.dahlia' as any });
+const resend = new Resend((process.env.RESEND_API_KEY || 're_dummy') as string);
 
 export async function createPaymentIntent(amount: number, currency: string = 'mxn') {
   try {

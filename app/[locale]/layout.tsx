@@ -14,6 +14,7 @@ import { Footer } from '@/components/chrome/footer';
 import { LenisProvider } from '@/components/providers/lenis-provider';
 import { BookingModal } from '@/components/ui/booking-modal';
 import { Preloader } from '@/components/ui/preloader';
+import { GlobalLoader } from '@/components/ui/global-loader';
 
 const montserratAlternates = Montserrat_Alternates({
   variable: "--font-montserrat",
@@ -52,6 +53,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <LenisProvider>
             <Preloader />
+            <GlobalLoader />
             <Cursor />
             <Header />
             <Progress />

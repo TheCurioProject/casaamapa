@@ -39,6 +39,7 @@ export function Amenities() {
                 src="/images/terrazasat.webp" 
                 alt="Vista panorámica desde la terraza" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover !h-[120%] !top-[-10%] !w-full !max-w-none will-change-transform" 
               />
             </figure>
@@ -47,6 +48,7 @@ export function Amenities() {
                 src="/images/amenidades.webp" 
                 alt="Terraza con piscina de vista infinita en el roof" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover !h-[120%] !top-[-10%] !w-full !max-w-none will-change-transform" 
               />
             </figure>

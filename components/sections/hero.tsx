@@ -84,6 +84,7 @@ export function Hero() {
             src="/images/hero.webp" 
             alt="Fachada rosa de Casa Amapa con escalera caracol"
             fill
+            sizes="100vw"
             className="h-[108%] object-cover object-[50%_42%] max-md:hidden"
             priority
           />
@@ -91,6 +92,7 @@ export function Hero() {
             src="/images/mobile-hero.webp" 
             alt="Fachada rosa de Casa Amapa con escalera caracol"
             fill
+            sizes="100vw"
             className="h-[108%] object-cover object-[50%_90%] md:hidden"
             priority
           />

@@ -118,18 +118,22 @@ export function Stairs() {
                   src="/images/la-arquitectura.webp"
                   alt="Escalera caracol de estuco rosa vista desde abajo"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover img-arq absolute inset-0 z-[1]"
+                  priority
                 />
                 <Image
                   src="/images/la-luz.webp"
                   alt="La luz en la escalera caracol"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover img-luz absolute inset-0 z-[2] opacity-0 invisible"
                 />
                 <Image
                   src="/images/el-cielo.webp"
                   alt="El cielo desde la escalera caracol"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover img-cielo absolute inset-0 z-[3] opacity-0 invisible"
                 />
               </div>

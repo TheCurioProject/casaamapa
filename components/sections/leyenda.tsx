@@ -24,8 +24,10 @@ export function Leyenda() {
 
     // Initial states for SVG elements to avoid transform origin bugs
     gsap.set('.tree-flower', { scale: 0, transformOrigin: '50% 50%' });
-    gsap.set('.cosmos', { scale: 0.8, transformOrigin: '50% 50%' });
-    gsap.set('.season-sun, .season-leaf1, .season-leaf2, .season-snow', { scale: 0.5, transformOrigin: '50% 50%' });
+    gsap.set('.cosmos, .season-snow', { scale: 0.8, svgOrigin: '50 50' });
+    gsap.set('.season-sun', { scale: 0.5, svgOrigin: '50 30' });
+    gsap.set('.season-leaf1', { scale: 0.5, svgOrigin: '30 55' });
+    gsap.set('.season-leaf2', { scale: 0.5, svgOrigin: '70 55' });
 
 
 
@@ -100,7 +102,7 @@ export function Leyenda() {
       }, "<")
       .to({}, { duration: 0.4 }); // Extended end buffer to account for the extra 100vh scroll
 
-  }, { scope: container });
+  }, { scope: container, dependencies: [isHydrated, isMobile] });
 
   return (
     <section 
@@ -124,7 +126,7 @@ export function Leyenda() {
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100">
                
                {/* 1. Cosmos */}
-               <g className="cosmos opacity-0 will-change-transform" stroke="var(--color-cream)" strokeWidth="0.5" fill="none" style={{ transform: 'translateZ(0)' }}>
+               <g className="cosmos opacity-0 will-change-transform" stroke="var(--color-cream)" strokeWidth="0.5" fill="none">
                  <circle cx="50" cy="50" r="18" stroke="var(--color-sand)"/>
                  <circle cx="50" cy="50" r="28" strokeDasharray="1 3" stroke="var(--color-cream)"/>
                  <path d="M50 15 L50 85 M15 50 L85 50 M25 25 L75 75 M25 75 L75 25" stroke="var(--color-rose-1)" opacity="0.6"/>
@@ -132,22 +134,22 @@ export function Leyenda() {
 
                {/* 2. Seasons */}
                <g className="seasons" strokeWidth="1" fill="none">
-                 <g className="season-sun opacity-0 will-change-transform" style={{ transform: 'translateZ(0)' }}>
+                 <g className="season-sun opacity-0 will-change-transform">
                    <circle cx="50" cy="30" r="6" fill="var(--color-sand)" stroke="none"/>
                    <path d="M50 15 L50 20 M50 40 L50 45 M35 30 L40 30 M60 30 L65 30 M39 19 L43 23 M61 41 L57 37 M61 19 L57 23 M39 41 L43 37" stroke="var(--color-sand)" strokeWidth="1.5" strokeLinecap="round"/>
                  </g>
-                 <g className="season-leaf1 opacity-0 will-change-transform" style={{ transform: 'translateZ(0)' }}>
+                 <g className="season-leaf1 opacity-0 will-change-transform">
                    <path d="M30 70 C15 55, 15 45, 30 45 C45 45, 45 55, 30 70 Z" stroke="var(--color-cream)" strokeWidth="1.2"/>
                    <path d="M30 45 L30 70 M25 55 L30 50 M35 55 L30 50" stroke="var(--color-cream)" strokeLinecap="round"/>
                  </g>
-                 <g className="season-leaf2 opacity-0 will-change-transform" style={{ transform: 'translateZ(0)' }}>
+                 <g className="season-leaf2 opacity-0 will-change-transform">
                    <path d="M70 70 C55 55, 55 45, 70 45 C85 45, 85 55, 70 70 Z" stroke="var(--color-sand)" strokeWidth="1.2"/>
                    <path d="M70 45 L70 70 M65 55 L70 50 M75 55 L70 50" stroke="var(--color-sand)" strokeLinecap="round"/>
                  </g>
                </g>
 
                {/* 3. Winter */}
-               <g className="season-snow opacity-0 will-change-transform" stroke="var(--color-rose-1)" strokeWidth="1" fill="none" style={{ transform: 'translateZ(0)' }}>
+               <g className="season-snow opacity-0 will-change-transform" stroke="var(--color-rose-1)" strokeWidth="1" fill="none">
                  <path d="M50 15 L50 85 M15 50 L85 50 M25 25 L75 75 M25 75 L75 25" strokeLinecap="round"/>
                  <path d="M45 25 L50 20 L55 25 M45 75 L50 80 L55 75 M25 45 L20 50 L25 55 M75 45 L80 50 L75 55" strokeLinecap="round"/>
                  <circle cx="50" cy="50" r="3" fill="var(--color-ink)" stroke="var(--color-rose-1)"/>
@@ -194,7 +196,7 @@ export function Leyenda() {
                     [10,12], [8,14], [11,15], [7,11], [12,10],
                     [90,12], [92,14], [89,15], [93,11], [88,10],
                   ].map(([x,y], i) => (
-                    <circle key={i} className="tree-flower opacity-0 will-change-transform" cx={x} cy={y} r={((i * 13) % 15) / 10 + 2} style={{ transform: 'translateZ(0)' }} />
+                    <circle key={i} className="tree-flower opacity-0 will-change-transform" cx={x} cy={y} r={((i * 13) % 15) / 10 + 2} />
                   ))}
                </g>
             </svg>

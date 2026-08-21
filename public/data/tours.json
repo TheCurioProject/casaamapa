@@ -1,0 +1,20 @@
+{
+  "agua": {
+    "publicId": "amapa/tours/agua",
+    "url": "https://res.cloudinary.com/yqxjvhgh/video/upload/v1787265226/amapa/tours/agua.mov",
+    "duration": 11.1,
+    "format": "mov"
+  },
+  "aire": {
+    "publicId": "amapa/tours/aire",
+    "url": "https://res.cloudinary.com/yqxjvhgh/video/upload/v1787265220/amapa/tours/aire.mov",
+    "duration": 10.266667,
+    "format": "mov"
+  },
+  "tierra": {
+    "publicId": "amapa/tours/tierra",
+    "url": "https://res.cloudinary.com/yqxjvhgh/video/upload/v1787265239/amapa/tours/tierra.mov",
+    "duration": 20.233333,
+    "format": "mov"
+  }
+}

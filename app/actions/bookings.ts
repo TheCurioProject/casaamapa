@@ -77,3 +77,36 @@ export async function createPendingBooking(data: {
     return { error: 'Ocurrió un error al procesar la reserva.' };
   }
 }
+
+export async function getApartmentBookings(apartmentId: string) {
+  try {
+    const bookings = await prisma.booking.findMany({
+      where: {
+        apartmentId,
+        status: { in: ['pending', 'confirmed'] },
+        checkOut: { gte: new Date() } // Sólo reservas actuales y futuras
+      },
+      select: {
+        checkIn: true,
+        checkOut: true,
+      }
+    });
+
+    return { bookings };
+  } catch (error) {
+    console.error(`Error fetching bookings for ${apartmentId}:`, error);
+    return { error: 'Failed to fetch bookings' };
+  }
+}
+
+export async function getUnits() {
+  try {
+    const units = await prisma.unit.findMany({
+      orderBy: { price: 'asc' }
+    });
+    return { units };
+  } catch (error) {
+    console.error('Error fetching units:', error);
+    return { error: 'Failed to fetch units' };
+  }
+}

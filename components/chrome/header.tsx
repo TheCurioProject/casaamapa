@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 
 export function Header() {
-  const { openBooking } = useBookingStore();
+  const { openBooking, isOpen } = useBookingStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [headerTheme, setHeaderTheme] = useState('dark');
@@ -118,10 +118,11 @@ export function Header() {
           <button 
             onClick={openBooking}
             className={`
-              max-md:hidden h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-colors duration-300 font-medium
+              max-md:hidden h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium
               ${theme === 'rose' 
                 ? 'bg-[var(--color-ink)] text-[var(--color-cream)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)]' 
                 : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] hover:bg-[var(--color-ink)]'}
+              ${isOpen ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}
             `}
           >
             Reservar
@@ -209,10 +210,11 @@ export function Header() {
       <button 
         onClick={openBooking}
         className={`
-          md:hidden fixed bottom-6 right-[var(--spacing-pad-x)] z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-colors duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
+          md:hidden fixed bottom-6 right-[var(--spacing-pad-x)] z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
           ${theme === 'rose' 
             ? 'bg-[var(--color-ink)] text-[var(--color-cream)] active:bg-[var(--color-cream)] active:text-[var(--color-ink)]' 
             : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] active:bg-[var(--color-ink)]'}
+          ${isOpen ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}
         `}
       >
         Reservar
