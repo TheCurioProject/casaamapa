@@ -24,7 +24,7 @@ export function Amenities() {
       <div className="max-w-[1200px] mx-auto px-[var(--spacing-pad-x)]">
         <header className="flex flex-col gap-[2.6vh] mb-[8vh] max-w-[600px]">
           <p className="kicker kicker-light">Las amenidades</p>
-          <h2 className="font-display text-[clamp(2.6rem,5vw,4.5rem)] js-lines-amenities leading-[1.1]">
+          <h2 className="font-display text-[clamp(3.5rem,10vw,5rem)] md:text-[clamp(2.6rem,5vw,4.5rem)] js-lines-amenities leading-[1.1]">
             El descanso elevado
           </h2>
           <p className="lede js-fade-amenities">
@@ -56,15 +56,15 @@ export function Amenities() {
           
           <div className="flex flex-col gap-[6vh] js-fade-amenities">
             <div>
-              <h3 className="font-display text-[2.6rem] md:text-[2rem] text-white mb-[1.5vh]">Casa Amapa</h3>
+              <h3 className="font-display text-[3.2rem] md:text-[2rem] text-white mb-[1.5vh]">Casa Amapa</h3>
               <p className="opacity-90">La propiedad entera tiene una capacidad máxima de 12 personas, ideal para grandes familias y grupos buscando exclusividad.</p>
             </div>
             <div>
-              <h3 className="font-display text-[2.6rem] md:text-[2rem] text-white mb-[1.5vh]">Terraza Roof</h3>
+              <h3 className="font-display text-[3.2rem] md:text-[2rem] text-white mb-[1.5vh]">Terraza Roof</h3>
               <p className="opacity-90">Piscina de vista infinita (no climatizada), perfecta para refrescarse bajo el sol de Nayarit mientras el océano se extiende frente a ti.</p>
             </div>
             <div>
-              <h3 className="font-display text-[2.6rem] md:text-[2rem] text-white mb-[1.5vh]">Espacios Comunes</h3>
+              <h3 className="font-display text-[3.2rem] md:text-[2rem] text-white mb-[1.5vh]">Espacios Comunes</h3>
               <p className="opacity-90">Áreas de descanso con sombra, tumbonas para tomar el sol y un ambiente de total privacidad y calma.</p>
             </div>
 

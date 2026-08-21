@@ -55,7 +55,7 @@ export function Chacala() {
       <div className="max-w-[1000px] mx-auto px-[var(--spacing-pad-x)] relative z-10 text-center flex flex-col items-center pt-24 pb-4 md:py-32">
         <p className="kicker kicker-light opacity-80 js-fade-chacala">Descubre Chacala</p>
 
-        <h2 className="font-display text-[clamp(3.2rem,9vw,5.5rem)] md:text-[clamp(2.8rem,6vw,5.5rem)] js-lines-chacala leading-tight mb-8">
+        <h2 className="font-display text-[clamp(4rem,11vw,6rem)] md:text-[clamp(2.8rem,6vw,5.5rem)] js-lines-chacala leading-tight mb-8">
           Entre la jungla <br />y el <span className="font-sans font-medium italic text-[var(--color-rose-3)] tracking-tight">mar salado</span>
         </h2>
 

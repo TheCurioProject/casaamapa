@@ -79,8 +79,8 @@ export function Apts() {
         <Image src={apt.imgMain} alt={`Departamento ${apt.name}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover h-[118%] will-change-transform" />
       </figure>
       <div className="p-[5vh_var(--spacing-pad-x)_0] flex flex-col gap-[2.6vh]">
-        <h3 className="font-display text-[2.6rem]">
-          {apt.name} <em className="italic text-[var(--color-rose-3)] text-[0.62em] font-display">— {apt.tag.toLowerCase()}</em>
+        <h3 className="font-display text-[3.2rem] md:text-[2.6rem]">
+          {apt.name} <em className="italic text-[var(--color-rose-3)] text-[0.4em] md:text-[0.62em] font-sans font-medium tracking-wide align-middle">— {apt.tag.toLowerCase()}</em>
         </h3>
         <p className="opacity-80">{apt.shortDesc}</p>
         <ul className="flex flex-wrap gap-[8px]">
@@ -105,8 +105,8 @@ export function Apts() {
     <article className="flex-[0_0_84vw] grid grid-cols-[0.85fr_1.15fr] gap-[4vw] items-center">
       <div>
         <span className="font-display text-[var(--color-rose-3)] text-[1rem]">{apt.num}</span>
-        <h3 className="text-[clamp(3rem,6vw,6rem)] font-display m-[0.1em_0]">{apt.name}</h3>
-        <p className="font-display italic text-[1.3rem] text-[var(--color-rose-3)] mb-[1.6vh]">{apt.tag}</p>
+        <h3 className="text-[clamp(3.5rem,6vw,6rem)] font-display m-[0.1em_0]">{apt.name}</h3>
+        <p className="font-sans font-medium italic tracking-wide text-[1.1rem] text-[var(--color-rose-3)] mb-[1.6vh]">{apt.tag}</p>
         <p className="opacity-80 max-w-[42ch] mb-[3vh]">{apt.shortDesc}</p>
         <ul className="flex flex-wrap gap-[10px]">
           {apt.specs.map(s => (
@@ -242,7 +242,7 @@ export function Apts() {
 
           <header className="px-[var(--spacing-pad-x)] flex flex-col gap-[2.6vh] mb-[9vh]">
             <p className="kicker">{c.kicker}</p>
-            <h2 className="font-display text-[clamp(2.8rem,9vw,3.2rem)]">{c.introT}</h2>
+            <h2 className="font-display text-[clamp(3.5rem,10vw,4.2rem)] md:text-[clamp(2.8rem,9vw,3.2rem)]">{c.introT}</h2>
             <p className="lede">{c.introL}</p>
           </header>
 
