@@ -130,12 +130,21 @@ export function BookingModal() {
     }
   }, [isOpen]);
 
+  const hasAutoAdvanced = useRef(false);
+
   useEffect(() => {
-    if (isOpen && preselectedUnit && units.length > 0 && step === 1) {
+    if (!isOpen) {
+      hasAutoAdvanced.current = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && preselectedUnit && units.length > 0 && step === 1 && !hasAutoAdvanced.current) {
       const unit = units.find(u => u.name.toLowerCase() === preselectedUnit.toLowerCase());
       if (unit) {
         setSelectedUnit(unit);
         setStep(2);
+        hasAutoAdvanced.current = true;
       }
     }
   }, [isOpen, preselectedUnit, units, step]);
