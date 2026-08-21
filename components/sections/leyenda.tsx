@@ -203,25 +203,25 @@ export function Leyenda() {
           </div>
 
           <div className="relative w-[90%] max-w-[700px] h-[30vh] md:h-[180px] mt-4 md:mt-8 flex items-center justify-center px-4">
-             <p className="legend-text opacity-0 absolute text-[clamp(1.3rem,4.5vw,2rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.1rem,3.5vw,1.5rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                Cuando los dioses preparaban el mundo, pidieron a todos los árboles que eligieran una estación para florecer.
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(1.3rem,4.5vw,2rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.1rem,3.5vw,1.5rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                La mayoría eligió el otoño, el verano o la primavera, evitando el invierno por ser frío y seco.
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(1.3rem,4.5vw,2rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.1rem,3.5vw,1.5rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                Ante la falta de voluntarios, un árbol callado y valiente se ofreció a florecer en esa época difícil.
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(1.3rem,4.5vw,2rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.1rem,3.5vw,1.5rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                Los dioses, impresionados por su coraje, le preguntaron su nombre...
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(2rem,6vw,3.2rem)] font-display text-[var(--color-cream)] uppercase tracking-widest text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.5rem,5vw,2.5rem)] font-sans font-bold text-[var(--color-cream)] uppercase tracking-widest text-center w-full text-balance">
                ¡Me llamo Amapa!
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(1.3rem,4.5vw,2rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1.1rem,3.5vw,1.5rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                Los demás árboles quedaron espantados ante la locura de querer florecer en invierno.
              </p>
-             <p className="legend-text opacity-0 absolute text-[clamp(1.15rem,4vw,1.8rem)] font-display text-[var(--color-cream)] leading-[1.35] text-center w-full text-balance">
+             <p className="legend-text opacity-0 absolute text-[clamp(1rem,3.2vw,1.35rem)] font-sans font-medium tracking-wide text-[var(--color-cream)] leading-[1.5] text-center w-full text-balance">
                Los dioses respondieron: “Por tu valentía, te haré florecer con varios colores. Serás blanca, amarilla, rosa y púrpura... para que el invierno nunca pierda la alegría.”
              </p>
           </div>

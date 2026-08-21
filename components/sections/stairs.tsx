@@ -173,10 +173,10 @@ export function Stairs() {
           <div className="relative h-[120px] md:h-[260px] mt-[1vh] md:mt-2 w-full max-w-[400px]">
             {steps.map((s, i) => (
               <div key={i} className={`spiral-step absolute inset-0 flex flex-col md:grid md:grid-cols-[auto_1fr] gap-[0.5vh] md:gap-[1.8vw] content-start ${i === 0 ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-                <span className="font-display text-[1.2rem] md:text-[1.8rem] xl:text-[2rem] text-[var(--color-cream)] opacity-60 md:mt-1">{s.n}</span>
+                <span className="font-sans font-semibold tracking-wider text-[1.1rem] md:text-[1.5rem] xl:text-[1.8rem] text-[var(--color-cream)] opacity-60 md:mt-1">{s.n}</span>
                 <div>
-                  <h3 className="font-display text-[1.8rem] md:text-[2.6rem] xl:text-[3.2rem] font-normal mb-[0.1em] leading-tight">{s.t}</h3>
-                  <p className="opacity-80 max-w-[38ch] text-[0.9rem] md:text-[1.25rem] xl:text-[1.4rem] leading-tight font-medium">{s.d}</p>
+                  <h3 className="font-sans font-medium tracking-tight text-[1.6rem] md:text-[2.2rem] xl:text-[2.8rem] mb-[0.1em] leading-tight">{s.t}</h3>
+                  <p className="opacity-80 max-w-[38ch] text-[0.9rem] md:text-[1.1rem] xl:text-[1.2rem] leading-relaxed font-normal">{s.d}</p>
                 </div>
               </div>
             ))}
