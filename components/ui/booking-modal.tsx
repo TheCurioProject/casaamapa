@@ -20,8 +20,8 @@ interface BookingUnit {
 }
 
 interface BookingDateInfo {
-  checkIn: string;
-  checkOut: string;
+  checkIn: Date;
+  checkOut: Date;
 }
 
 // Lazy load heavy components
@@ -375,7 +375,7 @@ export function BookingModal() {
               <motion.div key="step2" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full pb-8">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 2 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-2 leading-none">Tus fechas</h2>
-                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit.name}</strong> ({selectedUnit.price.toLocaleString()} MXN / noche)</p>
+                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit!.name}</strong> ({selectedUnit!.price.toLocaleString()} MXN / noche)</p>
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
                   {isLoadingDates && (
@@ -509,7 +509,7 @@ export function BookingModal() {
                 <div className="bg-white/60 rounded-2xl p-5 border border-[rgba(94,58,80,0.1)] mb-8 flex flex-col gap-4 text-sm shrink-0">
                   <div className="flex justify-between items-center pb-4 border-b border-[rgba(94,58,80,0.1)]">
                     <span className="opacity-70">Espacio</span>
-                    <span className="font-medium capitalize">{selectedUnit.name}</span>
+                    <span className="font-medium capitalize">{selectedUnit!.name}</span>
                   </div>
                   <div className="flex justify-between items-center pb-4 border-b border-[rgba(94,58,80,0.1)]">
                     <span className="opacity-70">Estancia</span>
