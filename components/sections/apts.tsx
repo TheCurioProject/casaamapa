@@ -133,7 +133,7 @@ export function Apts() {
     fadeReveal('.js-fade');
     parallaxAll();
 
-    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+    const isDesktop = window.matchMedia('(min-width: 1024px) and (orientation: landscape)').matches;
 
     if (!isDesktop) {
       const mobSection = document.querySelector('#apartamentos-m');
@@ -235,7 +235,7 @@ export function Apts() {
       >
         {/* Mobile Version */}
         <section
-          className="py-[14vh] pb-[20vh] md:hidden"
+          className="py-[14vh] pb-[20vh] lg:landscape:hidden"
           id="apartamentos-m"
         >
 
@@ -253,7 +253,7 @@ export function Apts() {
 
         {/* Desktop Version */}
         <section
-          className="max-md:hidden"
+          className="max-lg:hidden portrait:hidden"
         >
 
 
