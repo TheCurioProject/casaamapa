@@ -30,13 +30,13 @@ const LADAS = [
 export function BookingModal() {
   const { isOpen, closeBooking, preselectedUnit } = useBookingStore();
   const overlayRef = useRef<HTMLDivElement>(null);
-  
+
   // State
   const [step, setStep] = useState(1);
   const [units, setUnits] = useState<any[]>([]);
   const [isLoadingUnits, setIsLoadingUnits] = useState(true);
   const [unitsError, setUnitsError] = useState<string | null>(null);
-  
+
   // Selections
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [range, setRange] = useState<DateRange | undefined>();
@@ -44,14 +44,14 @@ export function BookingModal() {
   const [cleaningDates, setCleaningDates] = useState<Date[]>([]);
   const [isLoadingDates, setIsLoadingDates] = useState(false);
   const [datesError, setDatesError] = useState<string | null>(null);
-  
+
   // Guest Details
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [lada, setLada] = useState(LADAS[0]);
   const [showLadaMenu, setShowLadaMenu] = useState(false);
-  
+
   // Payment state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -70,24 +70,26 @@ export function BookingModal() {
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.5 });
     } else {
       document.body.style.overflow = '';
-      gsap.to(overlayRef.current, { autoAlpha: 0, duration: 0.4, onComplete: () => {
-        gsap.set(overlayRef.current, { display: 'none' });
-        // Reset state after close
-        setTimeout(() => {
-          setStep(1);
-          setSelectedUnit(null);
-          setRange(undefined);
-          setGuestName('');
-          setGuestEmail('');
-          setGuestPhone('');
-          setError('');
-          setUnitsError(null);
-          setDatesError(null);
-          setSuccess(false);
-          setBookingId('');
-          setClientSecret('');
-        }, 300);
-      }});
+      gsap.to(overlayRef.current, {
+        autoAlpha: 0, duration: 0.4, onComplete: () => {
+          gsap.set(overlayRef.current, { display: 'none' });
+          // Reset state after close
+          setTimeout(() => {
+            setStep(1);
+            setSelectedUnit(null);
+            setRange(undefined);
+            setGuestName('');
+            setGuestEmail('');
+            setGuestPhone('');
+            setError('');
+            setUnitsError(null);
+            setDatesError(null);
+            setSuccess(false);
+            setBookingId('');
+            setClientSecret('');
+          }, 300);
+        }
+      });
     }
   });
 
@@ -142,7 +144,7 @@ export function BookingModal() {
               const checkOut = new Date(b.checkOut);
               checkIn.setHours(12, 0, 0, 0);
               checkOut.setHours(12, 0, 0, 0);
-              
+
               let current = new Date(checkIn);
               while (current < checkOut) {
                 booked.push(new Date(current));
@@ -166,7 +168,7 @@ export function BookingModal() {
   // Derived state
   const nights = range?.to && range?.from ? Math.max(1, differenceInDays(range.to, range.from)) : (range?.from ? 1 : 0);
   const totalPrice = selectedUnit ? nights * selectedUnit.price : 0;
-  
+
   const getSmartHint = () => {
     if (!range?.from) return { text: "Selecciona tu fecha de llegada", status: "pending" };
     if (range.from && !range.to) return { text: "1 noche seleccionada. Selecciona salida o continúa.", status: "partial" };
@@ -205,7 +207,7 @@ export function BookingModal() {
 
     // Initialize Payment Intent
     const payment = await createPaymentIntent(totalPrice, 'mxn');
-    
+
     if (payment.error || !payment.clientSecret) {
       setError(payment.error || 'Error iniciando el pago');
       setLoading(false);
@@ -229,7 +231,7 @@ export function BookingModal() {
 
   // Swipe down to close logic
   const touchState = useRef({ startY: 0, currentY: 0, isDragging: false });
-  
+
   const handleTouchStart = (e: React.TouchEvent) => {
     // Only start dragging if at the top of the scroll container
     if (scrollContainerRef.current && scrollContainerRef.current.scrollTop <= 0) {
@@ -242,7 +244,7 @@ export function BookingModal() {
     if (!touchState.current.isDragging || !scrollContainerRef.current) return;
     const currentY = e.targetTouches[0].clientY;
     const diff = currentY - touchState.current.startY;
-    
+
     if (diff > 0) { // Only pull down
       gsap.set(scrollContainerRef.current, { y: diff, ease: 'none' });
     }
@@ -251,10 +253,10 @@ export function BookingModal() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchState.current.isDragging || !scrollContainerRef.current) return;
     touchState.current.isDragging = false;
-    
+
     const currentY = e.changedTouches[0].clientY;
     const diff = currentY - touchState.current.startY;
-    
+
     if (diff > 120) {
       // Threshold met, close modal
       closeBooking();
@@ -270,14 +272,14 @@ export function BookingModal() {
 
   return (
     <div ref={overlayRef} className="fixed inset-0 z-50 bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark">
-      <div 
-        ref={scrollContainerRef} 
+      <div
+        ref={scrollContainerRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className="bg-[var(--color-cream)] w-full h-[90vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
       >
-        
+
         {/* Drag handle pill (Mobile only) */}
         <div className="w-12 h-1.5 bg-[rgba(94,58,80,0.15)] rounded-full mx-auto mb-6 shrink-0 md:hidden" />
 
@@ -288,13 +290,13 @@ export function BookingModal() {
               <ArrowLeft className="w-5 h-5" />
             </button>
           ) : <div className="w-10 h-10" />}
-          
+
           <div className="flex gap-2">
             {[1, 2, 3, 4].map(s => (
               <div key={s} className={`h-1.5 rounded-full transition-all duration-500 ${step === s ? 'w-8 bg-[var(--color-rose-3)]' : step > s ? 'w-4 bg-[var(--color-rose-3)] opacity-40' : 'w-4 bg-[rgba(94,58,80,0.1)]'}`} />
             ))}
           </div>
-          
+
           <button onClick={closeBooking} className="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(94,58,80,0.06)] hover:bg-[rgba(94,58,80,0.12)] transition-colors">
             ✕
           </button>
@@ -313,7 +315,7 @@ export function BookingModal() {
               <motion.div key="step1" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 1 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-8 leading-none">Elige tu espacio</h2>
-                
+
                 {isLoadingUnits ? (
                   <div className="flex justify-center items-center py-12">
                     <div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" />
@@ -321,9 +323,9 @@ export function BookingModal() {
                 ) : units.length > 0 ? (
                   <div className="grid gap-3">
                     {units.map((unit: any) => (
-                      <button 
+                      <button
                         key={unit.id}
-                        onClick={() => { setSelectedUnit(unit); setStep(2); }} 
+                        onClick={() => { setSelectedUnit(unit); setStep(2); }}
                         className="group flex flex-col md:flex-row justify-between items-start md:items-center border border-[rgba(94,58,80,0.15)] rounded-2xl p-5 md:p-6 text-left hover:border-[var(--color-rose-3)] hover:bg-[var(--color-rose-3)]/5 transition-all duration-300 relative overflow-hidden"
                       >
                         <div>
@@ -357,7 +359,7 @@ export function BookingModal() {
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 2 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-2 leading-none">Tus fechas</h2>
                 <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit.name}</strong> (${selectedUnit.price.toLocaleString()} MXN / noche)</p>
-                
+
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
                   {isLoadingDates && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-cream)]/70 backdrop-blur-sm rounded-3xl">
@@ -426,9 +428,9 @@ export function BookingModal() {
                   )}
                 </div>
 
-                <button 
-                  disabled={!range?.from} 
-                  onClick={() => setStep(3)} 
+                <button
+                  disabled={!range?.from}
+                  onClick={() => setStep(3)}
                   className="mt-auto bg-[var(--color-ink)] text-[var(--color-cream)] rounded-full px-8 py-4 text-sm tracking-[0.2em] uppercase font-medium hover:bg-black disabled:opacity-30 disabled:hover:bg-[var(--color-ink)] transition-all flex justify-center w-full shrink-0"
                 >
                   Continuar
@@ -438,13 +440,13 @@ export function BookingModal() {
               <motion.div key="step3" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 3 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-8 leading-none">Tus datos</h2>
-                
+
                 <form onSubmit={(e) => { e.preventDefault(); setStep(4); }} className="flex flex-col gap-5 flex-1 pb-8">
                   <div>
                     <label className="block text-xs uppercase tracking-widest mb-2 opacity-70">Nombre completo</label>
                     <input type="text" required value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Ej. Ana García" className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-white/50 focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none" />
                   </div>
-                  
+
                   <div>
                     <label className="block text-xs uppercase tracking-widest mb-2 opacity-70">Correo electrónico</label>
                     <input type="email" required value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="tu@correo.com" className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-white/50 focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none" />
@@ -458,7 +460,7 @@ export function BookingModal() {
                         <span className="text-sm font-medium">{lada.code}</span>
                         <ChevronDown className="w-4 h-4 opacity-50" />
                       </button>
-                      
+
                       <AnimatePresence>
                         {showLadaMenu && (
                           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-[calc(100%+8px)] md:top-[calc(100%+8px)] md:bottom-auto left-0 w-[280px] bg-white rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] border border-black/5 z-20 py-2 flex flex-col max-h-48 overflow-y-auto">
@@ -486,7 +488,7 @@ export function BookingModal() {
               <motion.div key="step4" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full pb-8">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 4 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-6 leading-none">Resumen y Pago</h2>
-                
+
                 <div className="bg-white/60 rounded-2xl p-5 border border-[rgba(94,58,80,0.1)] mb-8 flex flex-col gap-4 text-sm shrink-0">
                   <div className="flex justify-between items-center pb-4 border-b border-[rgba(94,58,80,0.1)]">
                     <span className="opacity-70">Espacio</span>
@@ -515,11 +517,11 @@ export function BookingModal() {
                   </button>
                 ) : (
                   <div className="mt-4 shrink-0">
-                    <StripePayment 
-                      clientSecret={clientSecret} 
-                      bookingId={bookingId} 
-                      chargeAmount={chargeAmount} 
-                      onSuccess={() => setSuccess(true)} 
+                    <StripePayment
+                      clientSecret={clientSecret}
+                      bookingId={bookingId}
+                      chargeAmount={chargeAmount}
+                      onSuccess={() => setSuccess(true)}
                     />
                   </div>
                 )}

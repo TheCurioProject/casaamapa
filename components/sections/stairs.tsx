@@ -106,11 +106,11 @@ export function Stairs() {
       style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
     >
       <div
-        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[12vh] pb-[8vh] md:py-0"
+        className="spiral-stage h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden pt-[16vh] pb-[4vh] md:py-0"
         style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
       >
 
-        <div className="relative h-[28vh] md:h-[80vh] w-full flex justify-center items-center mt-0">
+        <div className="relative h-[28vh] md:h-[80vh] w-full flex justify-center items-center mt-0 md:-mt-[10vh]">
           <div className="relative w-[clamp(180px,50vw,28vh)] md:w-[min(70vh,38vw)] aspect-square shrink-0">
             <div className="spiral-mask absolute inset-0 rounded-full overflow-hidden will-change-transform shadow-[0_40px_120px_rgba(20,8,20,0.45)] z-2">
               <div className="spiral-imgwrap absolute inset-0 will-change-transform">

@@ -109,6 +109,46 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     };
   }, []);
 
+  // Swipe down to close logic
+  const touchState = useRef({ startY: 0, currentY: 0, isDragging: false });
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop <= 0) {
+      touchState.current.startY = e.targetTouches[0].clientY;
+      touchState.current.isDragging = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchState.current.isDragging || !containerRef.current) return;
+    const currentY = e.targetTouches[0].clientY;
+    const diff = currentY - touchState.current.startY;
+
+    if (diff > 0) { // Only pull down
+      containerRef.current.style.transform = `translateY(${diff}px)`;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchState.current.isDragging || !containerRef.current) return;
+    touchState.current.isDragging = false;
+
+    const currentY = e.changedTouches[0].clientY;
+    const diff = currentY - touchState.current.startY;
+
+    if (diff > 120) {
+      // Threshold met, close modal
+      onClose();
+    } else {
+      // Revert back
+      containerRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      containerRef.current.style.transform = '';
+      setTimeout(() => {
+        if (containerRef.current) containerRef.current.style.transition = '';
+      }, 300);
+    }
+  };
+
   // Icons mapping for specs
   const getIconForSpec = (spec: string) => {
     const s = spec.toLowerCase();
@@ -130,11 +170,14 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     >
       <motion.div
         ref={containerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="bg-[var(--color-sand)] text-[var(--color-ink)] w-full h-[95vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl overflow-y-auto relative flex flex-col shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain"
+        className="bg-[var(--color-sand)] text-[var(--color-ink)] w-full h-[95vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl overflow-y-auto relative flex flex-col shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain transform-gpu"
       >
         {/* Custom Animated Scrollbar */}
         <motion.div
@@ -150,20 +193,19 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
           </div>
           
           <div className="flex justify-between items-start px-4 md:px-6 pointer-events-auto w-full">
-            {/* Title Pill */}
-            <div className="bg-[var(--color-sand)]/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-sm border border-[rgba(94,58,80,0.08)]">
-              <span className="font-display text-[var(--color-rose-3)] tracking-widest uppercase text-base md:text-lg">
+            {/* Title */}
+            <div className="flex items-center">
+              <span className="font-display text-[var(--color-ink)] tracking-widest uppercase text-base md:text-lg font-semibold drop-shadow-sm">
                 Departamento {localApt.num}
               </span>
             </div>
             
-            {/* Close Button Pill */}
+            {/* Close Button */}
             <button 
               onClick={onClose}
-              className="group flex items-center gap-3 bg-[var(--color-sand)]/95 backdrop-blur-md px-4 md:px-5 py-2 md:py-2.5 rounded-2xl shadow-sm border border-[rgba(94,58,80,0.08)] hover:bg-[var(--color-cream)] transition-all"
+              className="group flex items-center hover:opacity-70 transition-opacity p-2 -m-2"
             >
-              <span className="font-sans text-[0.65rem] md:text-xs tracking-[0.2em] uppercase opacity-70 group-hover:opacity-100 transition-opacity mt-[2px]">Cerrar</span>
-              <X className="w-4 h-4 md:w-5 md:h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
+              <span className="font-sans text-[0.65rem] md:text-xs tracking-[0.2em] uppercase font-semibold drop-shadow-sm">Cerrar</span>
             </button>
           </div>
         </div>
@@ -201,7 +243,9 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
               <h3 className="font-display text-4xl md:text-5xl">Recorrido Virtual</h3>
             </div>
             
-            <VirtualTour aptId={localApt.name.toLowerCase()} />
+            <div className="-mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full">
+              <VirtualTour aptId={localApt.name.toLowerCase()} />
+            </div>
           </div>
 
           {/* Aesthetic Calendar Section */}
@@ -237,13 +281,13 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
                 </button>
               </div>
               
-              <div className="calendar-wrapper relative">
+              <div className="calendar-wrapper relative w-full md:w-auto flex justify-center overflow-hidden md:overflow-visible">
                 {isLoadingBookings && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-sand)]/50 backdrop-blur-sm rounded-3xl">
                     <div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center w-full max-w-full overflow-x-auto pb-4 md:pb-0">
                   <DayPicker
                     modifiers={{ booked: bookedDates, cleaning: cleaningDates }}
                     modifiersClassNames={{ booked: 'rdp-day_booked', cleaning: 'rdp-day_cleaning' }}

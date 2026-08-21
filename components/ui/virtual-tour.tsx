@@ -217,10 +217,10 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
   }, []);
 
   return (
-    <div className="py-6">
+    <div className="py-6 w-full">
       <div 
         ref={containerRef}
-        className={`relative w-full ${isFullscreen ? 'h-screen bg-black' : 'aspect-[4/3] md:aspect-[2/1] bg-[var(--color-ink)] rounded-[20px] md:rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-[rgba(94,58,80,0.15)]'} overflow-hidden group flex flex-col justify-center`}
+        className={`relative w-full ${isFullscreen ? 'h-screen bg-black' : 'aspect-[4/3] md:aspect-[2/1] bg-[var(--color-ink)] rounded-none md:rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border-y md:border border-[rgba(94,58,80,0.15)]'} overflow-hidden group flex flex-col justify-center`}
       >
         {/* Loading Overlay (Inline) */}
         <AnimatePresence>
@@ -295,14 +295,6 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
                 Desliza para explorar
               </span>
             </motion.div>
-
-            <button 
-              onClick={toggleFullscreen}
-              className="md:hidden flex items-center justify-center text-white/60 hover:text-white transition-colors p-2 -mr-2"
-              aria-label="Pantalla completa"
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </button>
           </div>
 
           {/* Elegant Fill Scrubber */}
