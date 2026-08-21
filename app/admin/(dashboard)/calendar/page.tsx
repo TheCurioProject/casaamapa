@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { getAdminCalendarData } from '@/app/actions/admin-calendar';
 import { AdminCalendar } from '@/components/admin/admin-calendar';
 

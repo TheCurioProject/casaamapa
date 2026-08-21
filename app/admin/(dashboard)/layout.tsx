@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/admin/sidebar';
+import { AdminShell } from '@/components/admin/admin-shell';
 import { signOut } from '@/auth';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -8,13 +8,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex w-full min-h-screen bg-[var(--color-cream)]">
-      <Sidebar onSignOut={handleSignOut} />
-      <main className="flex-1 pl-72 w-full">
-        <div className="p-12 max-w-7xl mx-auto w-full">
-          {children}
-        </div>
-      </main>
-    </div>
+    <AdminShell onSignOut={handleSignOut}>
+      {children}
+    </AdminShell>
   );
 }
