@@ -7,10 +7,9 @@ import {
   format, isSameDay, startOfDay, isBefore, isAfter, min, max
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Save, X, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, X, Info, RotateCcw, Loader2 } from 'lucide-react';
 import { useLoaderStore } from '@/store/useLoaderStore';
 import { setPricesForDates, deletePricesForDates } from '@/app/actions/prices';
-import { Trash2 } from 'lucide-react';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; status: string };
@@ -37,6 +36,8 @@ export function PricingCalendar({
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPrice, setNewPrice] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const { showLoader, hideLoader } = useLoaderStore();
 
@@ -133,6 +134,7 @@ export function PricingCalendar({
   const handleSavePrices = async () => {
     if (!selectionStart || !selectionEnd || !currentUnit || !newPrice) return;
     
+    setIsSaving(true);
     showLoader('Guardando precios...');
     
     const minDate = min([selectionStart, selectionEnd]);
@@ -143,6 +145,7 @@ export function PricingCalendar({
     const res = await setPricesForDates(currentUnit.id, datesToUpdate, parseInt(newPrice));
     
     hideLoader();
+    setIsSaving(false);
     if (res.success) {
       setIsModalOpen(false);
       setSelectionStart(null);
@@ -156,6 +159,7 @@ export function PricingCalendar({
   const handleResetPrices = async () => {
     if (!selectionStart || !selectionEnd || !currentUnit) return;
     
+    setIsResetting(true);
     showLoader('Restableciendo precios...');
     
     const minDate = min([selectionStart, selectionEnd]);
@@ -166,6 +170,7 @@ export function PricingCalendar({
     const res = await deletePricesForDates(currentUnit.id, datesToUpdate);
     
     hideLoader();
+    setIsResetting(false);
     if (res.success) {
       setIsModalOpen(false);
       setSelectionStart(null);
@@ -371,18 +376,19 @@ export function PricingCalendar({
                 <div className="flex flex-col gap-2 mt-4">
                   <button
                     onClick={handleSavePrices}
-                    disabled={!newPrice}
+                    disabled={!newPrice || isSaving || isResetting}
                     className="w-full bg-[var(--color-rose-3)] text-[var(--color-ink)] font-bold tracking-widest uppercase text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[var(--color-rose-2)] transition-colors disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4" />
-                    Guardar Cambios
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                   </button>
                   <button
                     onClick={handleResetPrices}
-                    className="w-full bg-white/5 border border-white/10 text-white font-bold tracking-widest uppercase text-[10px] py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors mt-2"
+                    disabled={isSaving || isResetting}
+                    className="w-full bg-white/5 border border-white/10 text-white font-bold tracking-widest uppercase text-[10px] py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors mt-2 disabled:opacity-50"
                   >
-                    <Trash2 className="w-3 h-3" />
-                    Regresar al valor por defecto (${currentUnit?.price})
+                    {isResetting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                    {isResetting ? 'Restableciendo...' : `Regresar al valor por defecto ($${currentUnit?.price})`}
                   </button>
                 </div>
               </div>

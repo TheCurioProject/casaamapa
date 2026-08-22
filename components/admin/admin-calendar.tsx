@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus, Search, Filter } from 'lucide-react';
 import { ManualBookingModal } from './manual-booking-modal';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; icalUrls?: string[] };
@@ -25,6 +25,8 @@ export function AdminCalendar({
   const hasIcalUrls = units.some(u => u.icalUrls && u.icalUrls.length > 0);
   const [direction, setDirection] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterUnit, setFilterUnit] = useState<string>('all');
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -60,7 +62,10 @@ export function AdminCalendar({
       return unitMatch && targetDate >= start && targetDate < end; // checkout day is not occupied
     });
 
-    if (booking) return { type: 'booking', data: booking };
+    if (booking) {
+      const isDimmed = searchQuery ? !booking.guestName.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+      return { type: 'booking', data: booking, isDimmed };
+    }
 
     // Check blocks
     const block = blockedDates.find(b => {
@@ -73,7 +78,10 @@ export function AdminCalendar({
       return unitMatch && targetDate >= start && targetDate <= end;
     });
 
-    if (block) return { type: 'block', data: block };
+    if (block) {
+      const isDimmed = !!searchQuery;
+      return { type: 'block', data: block, isDimmed };
+    }
 
     return null;
   };
@@ -88,7 +96,7 @@ export function AdminCalendar({
   return (
     <div className="flex flex-col gap-6 w-full overflow-hidden text-[var(--color-sand)]">
       {/* Header controls */}
-      <div className="flex justify-between items-center mb-8 bg-white/5 p-4 md:p-6 rounded-3xl border border-white/10 flex-col md:flex-row gap-4">
+      <div className="flex justify-between items-start md:items-center mb-8 bg-white/5 p-4 md:p-6 rounded-3xl border border-white/10 flex-col md:flex-row gap-4">
         <div className="flex items-center gap-4 text-white">
           <CalendarIcon className="w-6 h-6 text-[var(--color-rose-3)]" />
           <h2 className="text-xl font-display capitalize">
@@ -96,31 +104,62 @@ export function AdminCalendar({
           </h2>
         </div>
         
-        <div className="flex flex-wrap items-center gap-4">
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[var(--color-rose-3)] hover:bg-[var(--color-rose-2)] text-[var(--color-ink)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors shadow-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Bloqueo / Reserva
-          </button>
-          <button 
-            onClick={handleSync}
-            disabled={isSyncing || !hasIcalUrls}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
-          >
-            <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ repeat: isSyncing ? Infinity : 0, duration: 1, ease: 'linear' }}>
-              <RefreshCw className="w-4 h-4" />
-            </motion.div>
-            Sincronizar
-          </button>
-          <div className="flex gap-2">
-            <button onClick={handlePrevMonth} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10">
-              <ChevronLeft className="w-5 h-5" />
+        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-4 w-full md:w-auto">
+          {/* Filters */}
+          <div className="flex flex-1 md:flex-none flex-col md:flex-row gap-2">
+            <div className="flex items-center gap-2 bg-black/20 rounded-xl border border-white/10 px-3 py-2">
+              <Search className="w-4 h-4 text-white/50 shrink-0" />
+              <input 
+                type="text" 
+                placeholder="Buscar huésped..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none text-xs text-white outline-none w-full min-w-[120px]"
+              />
+            </div>
+            <div className="flex items-center gap-2 bg-black/20 rounded-xl border border-white/10 px-3 py-2">
+              <Filter className="w-4 h-4 text-white/50 shrink-0" />
+              <select 
+                value={filterUnit}
+                onChange={(e) => setFilterUnit(e.target.value)}
+                className="bg-transparent border-none text-xs text-white outline-none w-full appearance-none cursor-pointer pr-4"
+              >
+                <option value="all" className="bg-[var(--color-ink)]">Todas las unidades</option>
+                {units.map(u => (
+                  <option key={u.id} value={u.id} className="bg-[var(--color-ink)]">{u.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[var(--color-rose-3)] hover:bg-[var(--color-rose-2)] text-[var(--color-ink)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors shadow-lg"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Bloqueo / Reserva</span>
+              <span className="sm:hidden">Nuevo</span>
             </button>
-            <button onClick={handleNextMonth} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10">
-              <ChevronRight className="w-5 h-5" />
+            <button 
+              onClick={handleSync}
+              disabled={isSyncing || !hasIcalUrls}
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 px-3 md:px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
+              title="Sincronizar"
+            >
+              <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ repeat: isSyncing ? Infinity : 0, duration: 1, ease: 'linear' }}>
+                <RefreshCw className="w-4 h-4" />
+              </motion.div>
+              <span className="hidden md:inline">Sincronizar</span>
             </button>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={handlePrevMonth} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button onClick={handleNextMonth} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -134,13 +173,19 @@ export function AdminCalendar({
           const monthBookings = bookings.filter(b => {
             const bStart = new Date(b.checkIn);
             const bEnd = new Date(b.checkOut);
-            return (bStart <= end && bEnd >= start);
+            const inMonth = (bStart <= end && bEnd >= start);
+            const matchSearch = searchQuery ? b.guestName.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+            const matchUnit = filterUnit !== 'all' ? b.apartmentId === filterUnit : true;
+            return inMonth && matchSearch && matchUnit;
           }).map(b => ({ ...b, sortDate: new Date(b.checkIn), type: 'booking' as const }));
 
           const monthBlocks = blockedDates.filter(b => {
             const bStart = new Date(b.startDate);
             const bEnd = new Date(b.endDate);
-            return (bStart <= end && bEnd >= start);
+            const inMonth = (bStart <= end && bEnd >= start);
+            const matchSearch = searchQuery ? false : true;
+            const matchUnit = filterUnit !== 'all' ? b.apartmentId === filterUnit : true;
+            return inMonth && matchSearch && matchUnit;
           }).map(b => ({ ...b, sortDate: new Date(b.startDate), type: 'block' as const }));
 
           const activities = [...monthBookings, ...monthBlocks].sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
@@ -273,7 +318,7 @@ export function AdminCalendar({
 
             {/* Rows (Units) */}
             <div className="flex flex-col relative z-10">
-              {units.map(unit => (
+              {units.filter(u => filterUnit === 'all' || u.id === filterUnit).map(unit => (
                 <div key={unit.id} className="flex border-b border-white/5 hover:bg-white/[0.03] transition-colors relative">
                   {/* Fixed Unit Column */}
                   <div className="w-48 shrink-0 p-4 sticky left-0 z-20 bg-[var(--color-ink-2)] border-r border-white/10 flex flex-col justify-center shadow-[4px_0_12px_rgba(0,0,0,0.1)] group-hover:bg-[var(--color-ink-2)]">
@@ -316,6 +361,8 @@ export function AdminCalendar({
                             content = isStart ? <Lock className={`w-3 h-3 ${textColor} opacity-80`} /> : null;
                           }
 
+                          const dimmedClass = status?.isDimmed ? 'opacity-20 grayscale' : '';
+
                           return (
                             <div 
                               key={day.toISOString()} 
@@ -323,7 +370,7 @@ export function AdminCalendar({
                             >
                               {status && (
                                 <div 
-                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md cursor-help overflow-hidden`}
+                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md cursor-help overflow-hidden ${dimmedClass}`}
                                   title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
                                 >
                                   {content}
