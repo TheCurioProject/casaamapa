@@ -5,6 +5,39 @@ import { revalidatePath } from 'next/cache';
 
 export async function createManualBlock(data: { apartmentId: string; startDate: Date; endDate: Date; reason?: string }) {
   try {
+    let idsToCheck = [data.apartmentId];
+    if (data.apartmentId === 'amapa') {
+      idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+    } else {
+      idsToCheck = [data.apartmentId, 'amapa'];
+    }
+
+    const [overlappingBooking, overlappingBlock] = await Promise.all([
+      prisma.booking.findFirst({
+        where: {
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          AND: [
+            { checkIn: { lte: data.endDate } },
+            { checkOut: { gt: data.startDate } }
+          ]
+        }
+      }),
+      prisma.blockedDate.findFirst({
+        where: {
+          apartmentId: { in: idsToCheck },
+          AND: [
+            { startDate: { lte: data.endDate } },
+            { endDate: { gte: data.startDate } }
+          ]
+        }
+      })
+    ]);
+
+    if (overlappingBooking || overlappingBlock) {
+      return { error: 'Las fechas seleccionadas se solapan con una reserva o bloqueo existente.' };
+    }
+
     await prisma.blockedDate.create({
       data: {
         apartmentId: data.apartmentId,
@@ -49,6 +82,39 @@ export async function createManualBooking(data: {
   totalPrice?: number;
 }) {
   try {
+    let idsToCheck = [data.apartmentId];
+    if (data.apartmentId === 'amapa') {
+      idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+    } else {
+      idsToCheck = [data.apartmentId, 'amapa'];
+    }
+
+    const [overlappingBooking, overlappingBlock] = await Promise.all([
+      prisma.booking.findFirst({
+        where: {
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          AND: [
+            { checkIn: { lt: data.checkOut } },
+            { checkOut: { gt: data.checkIn } }
+          ]
+        }
+      }),
+      prisma.blockedDate.findFirst({
+        where: {
+          apartmentId: { in: idsToCheck },
+          AND: [
+            { startDate: { lt: data.checkOut } },
+            { endDate: { gte: data.checkIn } }
+          ]
+        }
+      })
+    ]);
+
+    if (overlappingBooking || overlappingBlock) {
+      return { error: 'Las fechas seleccionadas se solapan con una reserva o bloqueo existente.' };
+    }
+
     const booking = await prisma.booking.create({
       data: {
         apartmentId: data.apartmentId,
@@ -110,18 +176,29 @@ export async function updateBooking(id: string, data: any) {
         idsToCheck = [data.apartmentId, 'amapa'];
       }
 
-      const overlapping = await prisma.booking.findFirst({
-        where: {
-          id: { not: id }, // ignore current booking
-          apartmentId: { in: idsToCheck },
-          status: { in: ['pending', 'confirmed'] },
-          AND: [
-            { checkIn: { lt: new Date(data.checkOut) } },
-            { checkOut: { gt: new Date(data.checkIn) } }
-          ]
-        }
-      });
-      if (overlapping) return { error: 'Las fechas seleccionadas se solapan con otra reserva existente.' };
+      const [overlappingBooking, overlappingBlock] = await Promise.all([
+        prisma.booking.findFirst({
+          where: {
+            id: { not: id }, // ignore current booking
+            apartmentId: { in: idsToCheck },
+            status: { in: ['pending', 'confirmed'] },
+            AND: [
+              { checkIn: { lt: new Date(data.checkOut) } },
+              { checkOut: { gt: new Date(data.checkIn) } }
+            ]
+          }
+        }),
+        prisma.blockedDate.findFirst({
+          where: {
+            apartmentId: { in: idsToCheck },
+            AND: [
+              { startDate: { lt: new Date(data.checkOut) } },
+              { endDate: { gte: new Date(data.checkIn) } }
+            ]
+          }
+        })
+      ]);
+      if (overlappingBooking || overlappingBlock) return { error: 'Las fechas seleccionadas se solapan con otra reserva o bloqueo existente.' };
     }
 
     const booking = await prisma.booking.update({

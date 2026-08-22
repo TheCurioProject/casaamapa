@@ -230,6 +230,15 @@ p, h1, h2, h3, h4, span, li {
   border-color: transparent !important;
 }
 
+/* Disabled / Past Days (Grayed out) */
+.custom-neumorphic-calendar .rdp-day_disabled {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: rgba(0, 0, 0, 0.3) !important;
+  pointer-events: none !important;
+  border-color: transparent !important;
+  cursor: not-allowed !important;
+}
+
 .custom-neumorphic-calendar .rdp-caption_label {
   font-family: var(--font-body);
   font-weight: 600;

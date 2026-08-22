@@ -274,7 +274,7 @@ export function PricingCalendar({
                         cellClass += "bg-[var(--color-coral)] border-[var(--color-coral)] opacity-80 cursor-not-allowed";
                         displayPrice = undefined;
                       } else if (isPast) {
-                        cellClass += "bg-white/5 border-transparent opacity-30 cursor-not-allowed";
+                        cellClass += "bg-black/20 border-transparent opacity-40 grayscale pointer-events-none";
                       } else if (selected) {
                         cellClass += "bg-[var(--color-rose-3)] border-[var(--color-rose-3)] text-[var(--color-ink)] scale-105 shadow-lg z-10";
                       } else if (customPrice) {
