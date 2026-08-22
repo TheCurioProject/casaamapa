@@ -48,10 +48,11 @@ export async function GET(
       }
     });
 
-    // Fetch manually blocked dates (or imported OTA blocks)
+    // Fetch manually blocked dates (excluding imported OTA blocks to prevent infinite loops)
     const blocks = await prisma.blockedDate.findMany({
       where: {
-        apartmentId: { in: relatedUnitIds }
+        apartmentId: { in: relatedUnitIds },
+        isOtaBlock: false
       }
     });
 
@@ -63,13 +64,14 @@ export async function GET(
       method: 'PUBLISH' as any
     });
 
-    // Add bookings
+    // Add bookings (Web reservations) - adding 1 extra day for cleaning
     bookings.forEach(booking => {
-      // iCal generator expects start and end Date objects or moment/luxon.
-      // Since our booking.checkIn is a Date at midnight, we can set allDay: true
+      const checkoutWithCleaning = new Date(booking.checkOut);
+      checkoutWithCleaning.setDate(checkoutWithCleaning.getDate() + 1);
+
       cal.createEvent({
         start: booking.checkIn,
-        end: booking.checkOut,
+        end: checkoutWithCleaning,
         allDay: true,
         summary: `Reservado`,
         id: `booking-${booking.id}@amapachacala.com`,
