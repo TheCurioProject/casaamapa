@@ -371,12 +371,12 @@ export function AdminCalendar({
 
                           const dimmedClass = status?.isDimmed ? 'opacity-20 grayscale' : '';
                           const isPast = day.getTime() < startOfDay(new Date()).getTime();
-                          const pastOverlay = isPast ? 'bg-black/30 opacity-60 grayscale pointer-events-none' : '';
+                          const pastOverlay = isPast ? 'bg-black/30 opacity-60 grayscale' : '';
 
                           return (
                             <div 
                               key={day.toISOString()} 
-                              className={`w-14 shrink-0 border-r border-white/5 relative h-16 flex items-center p-0.5 ${isPast ? 'pointer-events-none' : ''}`}
+                              className={`w-14 shrink-0 border-r border-white/5 relative h-16 flex items-center p-0.5 ${isPast && !status ? 'cursor-not-allowed' : ''}`}
                             >
                               {status ? (
                                 <div 
@@ -386,13 +386,13 @@ export function AdminCalendar({
                                       : status.type === 'block' ? () => setSelectedBlock(status.data as BlockedDate) : undefined
                                       : undefined
                                   }
-                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md overflow-hidden ${dimmedClass} ${pastOverlay} ${!isPast ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-help'}`}
+                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md overflow-hidden ${dimmedClass} ${pastOverlay} ${!isPast ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-not-allowed'}`}
                                   title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
                                 >
                                   {content}
                                 </div>
                               ) : isPast ? (
-                                <div className="w-full h-full rounded-md bg-black/20 opacity-40 grayscale pointer-events-none" />
+                                <div className="w-full h-full rounded-md bg-black/20 opacity-40 grayscale cursor-not-allowed" />
                               ) : null}
                             </div>
                           );

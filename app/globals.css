@@ -218,26 +218,40 @@ p, h1, h2, h3, h4, span, li {
 .custom-neumorphic-calendar .rdp-day_booked {
   background: var(--color-coral) !important;
   color: white !important;
-  pointer-events: none;
   border-color: transparent !important;
+  cursor: not-allowed !important;
+}
+.custom-neumorphic-calendar .rdp-day_booked:hover {
+  background: var(--color-coral) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Limpieza (+1 día, Rose 2) */
 .custom-neumorphic-calendar .rdp-day_cleaning {
   background: var(--color-rose-2) !important;
   color: white !important;
-  pointer-events: none;
   border-color: transparent !important;
+  cursor: not-allowed !important;
+}
+.custom-neumorphic-calendar .rdp-day_cleaning:hover {
+  background: var(--color-rose-2) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Disabled / Past Days (Grayed out) */
 .custom-neumorphic-calendar .rdp-day_disabled {
   background-color: #d1d5db !important;
   color: #9ca3af !important;
-  pointer-events: none !important;
   border-color: transparent !important;
   cursor: not-allowed !important;
   opacity: 1 !important;
+}
+.custom-neumorphic-calendar .rdp-day_disabled:hover {
+  background-color: #d1d5db !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Read-Only Calendar (No hover effects on days) */
