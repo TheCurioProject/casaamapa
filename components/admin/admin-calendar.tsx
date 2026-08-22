@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus, Search, Filter } from 'lucide-react';
 import { ManualBookingModal } from './manual-booking-modal';
 
@@ -27,6 +28,8 @@ export function AdminCalendar({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterUnit, setFilterUnit] = useState<string>('all');
+  
+  const router = useRouter();
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -204,7 +207,11 @@ export function AdminCalendar({
             if (act.type === 'booking') {
               const b = act as Booking;
               return (
-                <div key={`booking-${b.id}-${idx}`} className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group">
+                <div 
+                  key={`booking-${b.id}-${idx}`} 
+                  onClick={() => router.push(`/admin/bookings?edit=${b.id}`)}
+                  className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group cursor-pointer hover:bg-white/10 transition-colors"
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-bold text-white text-base flex items-center gap-2">
@@ -370,7 +377,8 @@ export function AdminCalendar({
                             >
                               {status && (
                                 <div 
-                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md cursor-help overflow-hidden ${dimmedClass}`}
+                                  onClick={status.type === 'booking' ? () => router.push(`/admin/bookings?edit=${status.data.id}`) : undefined}
+                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md overflow-hidden ${dimmedClass} ${status.type === 'booking' ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-help'}`}
                                   title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
                                 >
                                   {content}

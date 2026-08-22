@@ -128,9 +128,9 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
           </button>
 
           {error && (
-            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2 text-red-400 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p>{error}</p>
+            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+              <p className="font-medium leading-relaxed">{error}</p>
             </div>
           )}
         </div>
@@ -146,7 +146,7 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
       </form>
 
       {/* iCal Export Information */}
-      <div className="mt-auto pt-8 border-t border-white/10">
+      <div className="mt-10">
         <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-3">
           Exportar iCal (Para OTAs)
         </label>

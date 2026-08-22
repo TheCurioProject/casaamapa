@@ -3,18 +3,34 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit, Mail, Trash2, FileText, ChevronDown, Phone, Loader2 } from 'lucide-react';
 import { useDialogStore } from '@/store/useDialogStore';
 import { EditBookingModal } from './edit-booking-modal';
 
 export function BookingsListClient({ bookings }: { bookings: any[] }) {
+  const searchParams = useSearchParams();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   
   const dialog = useDialogStore();
+
+  React.useEffect(() => {
+    const editId = searchParams?.get('edit');
+    if (editId && bookings.some(b => b.id === editId)) {
+      setExpandedId(editId);
+      setEditingBookingId(editId);
+      setIsEditModalOpen(true);
+      
+      // Clean up the URL to prevent reopening on reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('edit');
+      window.history.replaceState({}, '', url);
+    }
+  }, [searchParams, bookings]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);
@@ -191,7 +207,7 @@ export function BookingsListClient({ bookings }: { bookings: any[] }) {
                         <button 
                           onClick={() => handleDelete(booking.id)}
                           disabled={loadingAction === booking.id}
-                          className="w-full mt-2 bg-transparent text-[var(--color-coral)]/80 py-3 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/10 transition-colors"
+                          className="w-full mt-2 bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30 py-3 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/30 transition-colors"
                         >
                           {loadingAction === booking.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                           Eliminar Reserva
@@ -274,7 +290,7 @@ export function BookingsListClient({ bookings }: { bookings: any[] }) {
                               exit={{ opacity: 0, height: 0 }}
                               className="overflow-hidden"
                             >
-                              <div className="p-6 md:px-8 border-b border-white/10 grid grid-cols-3 gap-8">
+                              <div className="p-6 md:px-8 grid grid-cols-3 gap-8">
                                 <div className="col-span-2 grid grid-cols-2 gap-y-6 gap-x-8">
                                   <div className="flex flex-col gap-1">
                                     <span className="text-[10px] opacity-50 uppercase tracking-widest flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Teléfono Huésped</span>
@@ -328,7 +344,7 @@ export function BookingsListClient({ bookings }: { bookings: any[] }) {
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); handleDelete(booking.id); }}
                                     disabled={loadingAction === booking.id}
-                                    className="w-full mt-2 bg-transparent text-[var(--color-coral)]/80 py-2.5 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/10 transition-colors"
+                                    className="w-full mt-2 bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30 py-2.5 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/30 transition-colors"
                                   >
                                     {loadingAction === booking.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                     Eliminar Reserva

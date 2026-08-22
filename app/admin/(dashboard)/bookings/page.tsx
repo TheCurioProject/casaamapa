@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-
+import { Suspense } from 'react';
 import { BookingsListClient } from '@/components/admin/bookings-list-client';
 import { BookOpen } from 'lucide-react';
 
@@ -29,7 +29,9 @@ export default async function AdminBookingsPage() {
         <p className="opacity-70 text-sm">Gestiona y revisa todas las reservas directas.</p>
       </header>
 
-      <BookingsListClient bookings={bookings} />
+      <Suspense fallback={<div className="p-8 text-center opacity-50">Cargando reservas...</div>}>
+        <BookingsListClient bookings={bookings} />
+      </Suspense>
     </div>
   );
 }
