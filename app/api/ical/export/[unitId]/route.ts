@@ -12,8 +12,13 @@ export async function GET(
   const { unitId } = resolvedParams;
 
   try {
-    const targetUnit = await prisma.unit.findUnique({
-      where: { id: unitId },
+    const targetUnit = await prisma.unit.findFirst({
+      where: { 
+        id: {
+          equals: unitId,
+          mode: 'insensitive'
+        }
+      },
     });
 
     if (!targetUnit) {
@@ -60,7 +65,9 @@ export async function GET(
       'VERSION:2.0',
       'PRODID:-//CasaAmapa//Calendar//EN',
       'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH'
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Casa Amapa',
+      'X-WR-TIMEZONE:America/Mexico_City'
     ];
 
     const formatDate = (date: Date) => {
@@ -113,7 +120,7 @@ export async function GET(
         'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
-        'Content-Length': Buffer.byteLength(calendarString, 'utf-8').toString()
+        'Content-Length': new TextEncoder().encode(calendarString).length.toString()
       }
     });
 
