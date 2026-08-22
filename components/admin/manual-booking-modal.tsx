@@ -195,7 +195,7 @@ export function ManualBookingModal({
                   mode="range"
                   selected={range}
                   onSelect={setRange}
-                  disabled={[{ before: new Date() }]}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   className="custom-neumorphic-calendar font-sans !m-0"
                   locale={es}
                 />

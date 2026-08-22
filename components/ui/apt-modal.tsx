@@ -308,7 +308,15 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
                   <DayPicker
                     modifiers={{ booked: bookedDates, cleaning: cleaningDates }}
                     modifiersClassNames={{ booked: 'rdp-day_booked', cleaning: 'rdp-day_cleaning' }}
-                    disabled={[{ before: new Date() }, ...bookedDates, ...cleaningDates]}
+                    disabled={(date) => {
+                      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+                      const today = new Date();
+                      const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+                      if (d < t) return true;
+                      return [...bookedDates, ...cleaningDates].some(bd => 
+                        new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d
+                      );
+                    }}
                     className="font-sans custom-neumorphic-calendar !m-0"
                     locale={es}
                   />
