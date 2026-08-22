@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, Loader2, CheckCircle2, AlertCircle, Copy } from 'lucide-react';
 import { updateIcalUrls } from '@/app/admin/(dashboard)/units/actions';
 
@@ -11,7 +11,13 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const exportUrl = `https://amapachacala.com/api/ical/export/${unitId}/calendar.ics`;
+  const [exportUrl, setExportUrl] = useState(`https://amapachacala.com/api/ical/export/${unitId}/calendar.ics`);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setExportUrl(`${window.location.origin}/api/ical/export/${unitId}/calendar.ics`);
+    }
+  }, [unitId]);
 
   const handleAdd = () => {
     setUrls([...urls, '']);
