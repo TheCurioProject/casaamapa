@@ -14,7 +14,10 @@ export default async function AdminIcalPage() {
   return (
     <div className="text-[var(--color-sand)] max-w-4xl mx-auto">
       <header className="mb-12">
-        <h1 className="font-display text-4xl mb-2 text-[var(--color-rose-3)]">Sincronización iCal</h1>
+        <h1 className="font-display text-4xl mb-2 text-white flex items-center gap-3">
+          <LinkIcon className="w-8 h-8 text-[var(--color-rose-3)]" />
+          Sincronización iCal
+        </h1>
         <p className="opacity-70 text-sm">Gestiona la conexión con Airbnb, Booking.com y otras OTAs.</p>
       </header>
 

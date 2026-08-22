@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { updatePrice, updateIcalUrls, createUnit, deleteUnit } from './actions';
-import { Copy, Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Trash2, Building } from 'lucide-react';
 import { SubmitButton } from '@/components/admin/submit-button';
 
 export default async function AdminUnitsPage() {
@@ -18,7 +18,10 @@ export default async function AdminUnitsPage() {
     <div className="text-[var(--color-sand)]">
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="font-display text-4xl mb-2 text-[var(--color-rose-3)]">Propiedades & Unidades</h1>
+          <h1 className="font-display text-4xl mb-2 text-white flex items-center gap-3">
+            <Building className="w-8 h-8 text-[var(--color-rose-3)]" />
+            Propiedades & Unidades
+          </h1>
           <p className="opacity-70 text-sm">Administra habitaciones, precios y enlaces iCal.</p>
         </div>
         

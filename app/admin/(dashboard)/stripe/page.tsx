@@ -13,7 +13,10 @@ export default async function AdminStripePage() {
   return (
     <div className="text-[var(--color-sand)] max-w-4xl mx-auto">
       <header className="mb-12">
-        <h1 className="font-display text-4xl mb-2 text-[var(--color-rose-3)]">Stripe & Pagos</h1>
+        <h1 className="font-display text-4xl mb-2 text-white flex items-center gap-3">
+          <CreditCard className="w-8 h-8 text-[var(--color-rose-3)]" />
+          Stripe & Pagos
+        </h1>
         <p className="opacity-70 text-sm">Gestiona la integración con la pasarela de pagos.</p>
       </header>
 

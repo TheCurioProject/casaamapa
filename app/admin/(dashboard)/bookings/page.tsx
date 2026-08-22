@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { BookingActions } from '@/components/admin/booking-actions';
+import { BookOpen } from 'lucide-react';
 
 export const metadata = {
   title: 'Reservas | Admin - Casa Amapa',
@@ -22,7 +23,10 @@ export default async function AdminBookingsPage() {
   return (
     <div className="text-[var(--color-sand)] max-w-6xl mx-auto">
       <header className="mb-12">
-        <h1 className="font-display text-4xl mb-2 text-[var(--color-rose-3)]">Reservas</h1>
+        <h1 className="font-display text-4xl mb-2 text-white flex items-center gap-3">
+          <BookOpen className="w-8 h-8 text-[var(--color-rose-3)]" />
+          Reservas
+        </h1>
         <p className="opacity-70 text-sm">Gestiona y revisa todas las reservas directas.</p>
       </header>
 

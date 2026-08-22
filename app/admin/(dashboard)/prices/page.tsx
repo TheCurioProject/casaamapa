@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { PricingCalendar } from '@/components/admin/pricing-calendar';
 import { getPricesForDateRange } from '@/app/actions/prices';
 import { startOfMonth, addMonths, subMonths } from 'date-fns';
+import { DollarSign } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,8 +36,11 @@ export default async function AdminPricesPage() {
   return (
     <div className="flex flex-col gap-8 w-full">
       <div>
-        <h1 className="font-display text-4xl tracking-tight text-[var(--color-ink)] mb-2">Precios</h1>
-        <p className="text-[var(--color-ink)] opacity-70">Ajusta los precios por fecha para cada unidad.</p>
+        <h1 className="font-display text-4xl tracking-tight text-white mb-2 flex items-center gap-3">
+          <DollarSign className="w-8 h-8 text-[var(--color-rose-3)]" />
+          Precios
+        </h1>
+        <p className="text-white opacity-70">Ajusta los precios por fecha para cada unidad.</p>
       </div>
 
       <PricingCalendar 
