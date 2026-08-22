@@ -32,7 +32,7 @@ export function ManualBookingModal({
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
-  const [idPhotoUrl, setIdPhotoUrl] = useState('');
+  const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(50);
   
   // Block fields
@@ -56,6 +56,23 @@ export function ManualBookingModal({
 
     try {
       if (type === 'booking') {
+        let uploadedUrl = '';
+        if (idPhotoFile) {
+          const formData = new FormData();
+          formData.append('file', idPhotoFile);
+          
+          const uploadRes = await fetch('/api/admin/upload-id', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok || !uploadData.success) {
+            throw new Error(uploadData.error || 'Error subiendo la imagen de identificación.');
+          }
+          uploadedUrl = uploadData.url;
+        }
+
         const res = await createManualBooking({
           apartmentId: selectedUnit!.id,
           checkIn: range.from,
@@ -63,7 +80,7 @@ export function ManualBookingModal({
           guestName,
           guestEmail,
           guestPhone,
-          idPhotoUrl,
+          idPhotoUrl: uploadedUrl,
           depositPercentage,
           totalPrice: estimatedPrice,
           guests: 2
@@ -122,15 +139,16 @@ export function ManualBookingModal({
         initial={{ opacity: 0, scale: 0.95, y: 20 }} 
         animate={{ opacity: 1, scale: 1, y: 0 }} 
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-[var(--color-cream)] w-full max-w-xl rounded-3xl p-8 relative z-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar text-[var(--color-ink)]"
+        className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors">
-          <X className="w-5 h-5" />
-        </button>
+        <div className="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar text-[var(--color-ink)] relative">
+          <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors z-10">
+            <X className="w-5 h-5" />
+          </button>
 
-        <h2 className="font-display text-3xl mb-6 text-[var(--color-rose-3)]">
-          {step === 4 ? 'Reserva Creada' : 'Nueva Operación'}
-        </h2>
+          <h2 className="font-display text-3xl mb-6 text-[var(--color-rose-3)]">
+            {step === 4 ? 'Reserva Creada' : 'Nueva Operación'}
+          </h2>
 
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 flex items-start gap-2">
@@ -205,8 +223,8 @@ export function ManualBookingModal({
                     <input type="email" required value={guestEmail} onChange={e => setGuestEmail(e.target.value)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Foto ID (URL / Opcional)</label>
-                    <input type="text" value={idPhotoUrl} onChange={e => setIdPhotoUrl(e.target.value)} placeholder="https://..." className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none" />
+                    <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Foto ID (Opcional)</label>
+                    <input type="file" accept="image/*" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-rose-3)] file:text-white hover:file:bg-[var(--color-rose-2)]" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -260,6 +278,7 @@ export function ManualBookingModal({
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </motion.div>
     </div>
   );

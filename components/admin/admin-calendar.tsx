@@ -7,7 +7,7 @@ import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus } from 'lucide-react';
 import { ManualBookingModal } from './manual-booking-modal';
 
-type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
+type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; icalUrls?: string[] };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; guestName: string; status: string; isManual: boolean };
 type BlockedDate = { id: string; apartmentId: string; startDate: Date; endDate: Date; reason: string | null; isOtaBlock: boolean };
 
@@ -22,6 +22,7 @@ export function AdminCalendar({
 }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [isSyncing, setIsSyncing] = useState(false);
+  const hasIcalUrls = units.some(u => u.icalUrls && u.icalUrls.length > 0);
   const [direction, setDirection] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -87,8 +88,8 @@ export function AdminCalendar({
   return (
     <div className="flex flex-col gap-6 w-full overflow-hidden text-[var(--color-sand)]">
       {/* Header controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
-        <div className="flex items-center gap-4">
+      <div className="flex justify-between items-center mb-8 bg-white/5 p-4 md:p-6 rounded-3xl border border-white/10 flex-col md:flex-row gap-4">
+        <div className="flex items-center gap-4 text-white">
           <CalendarIcon className="w-6 h-6 text-[var(--color-rose-3)]" />
           <h2 className="text-xl font-display capitalize">
             {format(currentMonth, 'MMMM yyyy', { locale: es })}
@@ -105,10 +106,12 @@ export function AdminCalendar({
           </button>
           <button 
             onClick={handleSync}
-            disabled={isSyncing}
+            disabled={isSyncing || !hasIcalUrls}
             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ repeat: isSyncing ? Infinity : 0, duration: 1, ease: 'linear' }}>
+              <RefreshCw className="w-4 h-4" />
+            </motion.div>
             Sincronizar
           </button>
           <div className="flex gap-2">
@@ -123,9 +126,9 @@ export function AdminCalendar({
       </div>
 
       {/* Cloudbeds Style Matrix */}
-      <div className="w-full overflow-hidden bg-[var(--color-ink-2)] rounded-3xl border border-white/10 pb-4 shadow-xl">
-        <div className="w-full overflow-x-auto custom-scrollbar relative">
-          <div className="min-w-[1000px] relative">
+      <div className="bg-white/5 rounded-3xl border border-white/10 relative overflow-hidden flex flex-col">
+        <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
+          <div className="w-max pr-8">
             
             {/* Header Row (Days) */}
             <div className="flex border-b border-white/10 sticky top-0 bg-[var(--color-ink-2)] z-30 shadow-sm">
@@ -228,7 +231,7 @@ export function AdminCalendar({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-6 text-[10px] uppercase tracking-[0.15em] font-bold opacity-90 mt-2 px-4">
+      <div className="flex flex-wrap gap-6 text-[10px] uppercase tracking-widest mt-6 px-6 pb-6">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-[var(--color-coral)] rounded-sm shadow-sm"></div>
           <span>Reserva Web (Roja)</span>

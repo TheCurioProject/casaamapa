@@ -88,7 +88,7 @@ export function AdminShell({
             className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-cream)] hover:bg-white/10 transition-all duration-300 mb-2 group"
           >
             <Globe className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" />
-            <span className="text-sm font-medium tracking-wide opacity-90 group-hover:opacity-100 transition-opacity">Ver Sitio</span>
+            <span className="text-sm font-medium tracking-wide opacity-90 group-hover:opacity-100 transition-opacity">Volver a la Web</span>
           </Link>
           <form action={onSignOut}>
             <button type="submit" className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-coral)] hover:bg-[rgba(208,73,108,0.15)] transition-all duration-300 group">

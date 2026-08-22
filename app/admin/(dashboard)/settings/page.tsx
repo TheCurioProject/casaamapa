@@ -19,7 +19,7 @@ export default async function SettingsPage() {
         <p className="opacity-70">Configura notificaciones, pagos y opciones generales de la plataforma.</p>
       </div>
 
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-[rgba(94,58,80,0.08)]">
+      <div className="bg-white/5 rounded-3xl p-8 shadow-sm border border-white/10">
         <form action={async (formData) => {
           'use server';
           await updateSettings(formData);
@@ -27,7 +27,7 @@ export default async function SettingsPage() {
           
           {/* Email Notifications */}
           <section>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-[rgba(94,58,80,0.1)] pb-3">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3 text-white">
               <Mail className="w-5 h-5 text-[var(--color-rose-3)]" />
               Notificaciones por Correo
             </h2>
@@ -43,7 +43,7 @@ export default async function SettingsPage() {
                   name="adminEmail"
                   defaultValue={settings?.adminEmail || ''}
                   placeholder="ejemplo@casaamapa.mx"
-                  className="w-full md:w-1/2 border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-[var(--color-cream)] focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none"
+                  className="w-full md:w-1/2 border border-white/20 rounded-xl px-4 py-3 bg-white/5 focus:bg-white/10 focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none text-white"
                 />
               </div>
             </div>
@@ -51,7 +51,7 @@ export default async function SettingsPage() {
 
           {/* Payment Settings */}
           <section>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-[rgba(94,58,80,0.1)] pb-3">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3 text-white">
               Pagos y Reservas
             </h2>
             <div className="space-y-6">
@@ -66,7 +66,7 @@ export default async function SettingsPage() {
                   defaultValue={settings?.depositPercentage || 50}
                   min="10"
                   max="100"
-                  className="w-full md:w-1/3 border border-[rgba(94,58,80,0.2)] rounded-xl px-4 py-3 bg-[var(--color-cream)] focus:bg-white focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none"
+                  className="w-full md:w-1/3 border border-white/20 rounded-xl px-4 py-3 bg-white/5 focus:bg-white/10 focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none text-white"
                 />
               </div>
 
@@ -85,7 +85,7 @@ export default async function SettingsPage() {
             </div>
           </section>
 
-          <div className="pt-6 border-t border-[rgba(94,58,80,0.1)] flex justify-end">
+          <div className="pt-6 border-t border-white/10 flex justify-end">
             <SubmitButton>
               <Save className="w-4 h-4" />
               Guardar Ajustes

@@ -26,15 +26,15 @@ export default async function AdminBookingsPage() {
         <p className="opacity-70 text-sm">Gestiona y revisa todas las reservas directas.</p>
       </header>
 
-      <div className="bg-white/5 border border-white/10 rounded-[24px] overflow-hidden">
+      <div className="bg-white/5 border border-white/10 rounded-[24px]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-white/5 border-b border-white/10 uppercase tracking-widest text-[10px] opacity-70">
+          <thead className="bg-white/5 border-b border-white/10 rounded-t-[24px] uppercase tracking-widest text-[10px] opacity-70">
             <tr>
-              <th className="px-6 py-4 font-medium">Huésped</th>
+              <th className="px-6 py-4 font-medium first:rounded-tl-[24px] last:rounded-tr-[24px]">Huésped</th>
               <th className="px-6 py-4 font-medium">Unidad</th>
               <th className="px-6 py-4 font-medium">Fechas</th>
               <th className="px-6 py-4 font-medium">Estado</th>
-              <th className="px-6 py-4 font-medium">Fecha Registro</th>
+              <th className="px-6 py-4 font-medium last:rounded-tr-[24px]">Fecha Registro</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">

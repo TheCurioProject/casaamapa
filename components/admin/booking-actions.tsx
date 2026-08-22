@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { MoreHorizontal, Mail, Trash2, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { EditBookingModal } from './edit-booking-modal';
+
 export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId: string, isManual: boolean, guestEmail: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -66,15 +69,13 @@ export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId:
               className="absolute right-0 top-full mt-2 w-48 bg-[var(--color-ink-2)] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
             >
               <div className="py-1">
-                {isManual && (
-                  <button 
-                    onClick={() => { alert('Funcionalidad de edición en desarrollo.'); setIsOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-3"
-                  >
-                    <Edit className="w-4 h-4 opacity-70" />
-                    Editar Reserva
-                  </button>
-                )}
+                <button 
+                  onClick={() => { setIsEditModalOpen(true); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-3"
+                >
+                  <Edit className="w-4 h-4 opacity-70" />
+                  Editar Reserva
+                </button>
                 <button 
                   onClick={handleSendInvoice}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-3"
@@ -95,6 +96,14 @@ export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId:
           </>
         )}
       </AnimatePresence>
+      
+      {isEditModalOpen && (
+        <EditBookingModal 
+          isOpen={isEditModalOpen} 
+          onClose={() => setIsEditModalOpen(false)} 
+          bookingId={bookingId} 
+        />
+      )}
     </div>
   );
 }

@@ -4,8 +4,31 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
+export async function cleanupExpiredPendingBookings() {
+  try {
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const result = await prisma.booking.deleteMany({
+      where: {
+        status: 'pending',
+        createdAt: { lt: fifteenMinsAgo }
+      }
+    });
+    if (result.count > 0) {
+      revalidatePath('/');
+      revalidatePath('/admin/calendar');
+      revalidatePath('/admin/bookings');
+    }
+    return { success: true, deletedCount: result.count };
+  } catch (error) {
+    console.error('Error cleaning up expired bookings:', error);
+    return { error: 'Failed to clean up bookings' };
+  }
+}
+
 export async function checkAvailability(apartmentId: string, startDate: Date, endDate: Date) {
   try {
+    await cleanupExpiredPendingBookings();
+
     const overlappingBookings = await prisma.booking.findMany({
       where: {
         apartmentId,
@@ -34,8 +57,9 @@ export async function createPendingBooking(data: {
   guests: number;
 }) {
   try {
+    await cleanupExpiredPendingBookings();
+
     const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Determine which units to check for overlaps
       let idsToCheck = [data.apartmentId];
       if (data.apartmentId === 'amapa') {
         idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
@@ -43,7 +67,6 @@ export async function createPendingBooking(data: {
         idsToCheck = [data.apartmentId, 'amapa'];
       }
 
-      // Check overlapping bookings
       const overlapping = await tx.booking.findFirst({
         where: {
           apartmentId: { in: idsToCheck },
@@ -59,7 +82,6 @@ export async function createPendingBooking(data: {
         throw new Error('overlap');
       }
 
-      // Create the booking
       return await tx.booking.create({
         data: {
           ...data,
@@ -82,6 +104,8 @@ export async function createPendingBooking(data: {
 
 export async function getApartmentBookings(apartmentId: string) {
   try {
+    await cleanupExpiredPendingBookings();
+
     const isWholeHouseReq = apartmentId === 'amapa';
     
     let idsToCheck = [apartmentId];
@@ -109,10 +133,9 @@ export async function getApartmentBookings(apartmentId: string) {
       })
     ]);
 
-    // Map blockedDates to the same structure so the client can just read `checkIn`/`checkOut`
     const mappedBlocks = blockedDates.map(b => ({
       checkIn: b.startDate,
-      checkOut: new Date(new Date(b.endDate).getTime() + 24 * 60 * 60 * 1000) // Blocks are inclusive, so checkOut is day after end
+      checkOut: new Date(new Date(b.endDate).getTime() + 24 * 60 * 60 * 1000)
     }));
 
     return { bookings: [...bookings, ...mappedBlocks] };

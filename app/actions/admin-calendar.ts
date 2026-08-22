@@ -85,3 +85,56 @@ export async function getAdminCalendarData() {
 
   return { units, bookings, blockedDates };
 }
+
+export async function getBookingById(id: string) {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { unit: true }
+    });
+    return { booking };
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    return { error: 'No se pudo cargar la reserva.' };
+  }
+}
+
+export async function updateBooking(id: string, data: any) {
+  try {
+    // Check overlap if dates are updated
+    if (data.checkIn && data.checkOut && data.apartmentId) {
+      let idsToCheck = [data.apartmentId];
+      if (data.apartmentId === 'amapa') {
+        idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+      } else {
+        idsToCheck = [data.apartmentId, 'amapa'];
+      }
+
+      const overlapping = await prisma.booking.findFirst({
+        where: {
+          id: { not: id }, // ignore current booking
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          AND: [
+            { checkIn: { lt: new Date(data.checkOut) } },
+            { checkOut: { gt: new Date(data.checkIn) } }
+          ]
+        }
+      });
+      if (overlapping) return { error: 'Las fechas seleccionadas se solapan con otra reserva existente.' };
+    }
+
+    const booking = await prisma.booking.update({
+      where: { id },
+      data
+    });
+    
+    revalidatePath('/admin/calendar');
+    revalidatePath('/admin/bookings');
+    revalidatePath('/');
+    return { success: true, booking };
+  } catch (error) {
+    console.error('Error updating booking:', error);
+    return { error: 'No se pudo actualizar la reserva.' };
+  }
+}
