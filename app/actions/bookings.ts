@@ -29,18 +29,36 @@ export async function checkAvailability(apartmentId: string, startDate: Date, en
   try {
     await cleanupExpiredPendingBookings();
 
-    const overlappingBookings = await prisma.booking.findMany({
-      where: {
-        apartmentId,
-        status: { in: ['pending', 'confirmed'] },
-        AND: [
-          { checkIn: { lt: endDate } },
-          { checkOut: { gt: startDate } }
-        ]
-      }
-    });
+    let idsToCheck = [apartmentId];
+    if (apartmentId === 'amapa') {
+      idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+    } else {
+      idsToCheck = [apartmentId, 'amapa'];
+    }
 
-    return { available: overlappingBookings.length === 0, overlapping: overlappingBookings };
+    const [overlappingBookings, overlappingBlocks] = await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          AND: [
+            { checkIn: { lt: endDate } },
+            { checkOut: { gt: startDate } }
+          ]
+        }
+      }),
+      prisma.blockedDate.findMany({
+        where: {
+          apartmentId: { in: idsToCheck },
+          AND: [
+            { startDate: { lt: endDate } },
+            { endDate: { gte: startDate } } // blocks are inclusive, so gt or gte depends on logic, use gte to be safe
+          ]
+        }
+      })
+    ]);
+
+    return { available: overlappingBookings.length === 0 && overlappingBlocks.length === 0, overlapping: [...overlappingBookings, ...overlappingBlocks] };
   } catch (error) {
     console.error('Error checking availability:', error);
     return { error: 'Failed to check availability' };
@@ -67,18 +85,29 @@ export async function createPendingBooking(data: {
         idsToCheck = [data.apartmentId, 'amapa'];
       }
 
-      const overlapping = await tx.booking.findFirst({
-        where: {
-          apartmentId: { in: idsToCheck },
-          status: { in: ['pending', 'confirmed'] },
-          AND: [
-            { checkIn: { lt: data.checkOut } },
-            { checkOut: { gt: data.checkIn } }
-          ]
-        }
-      });
+      const [overlappingBooking, overlappingBlock] = await Promise.all([
+        tx.booking.findFirst({
+          where: {
+            apartmentId: { in: idsToCheck },
+            status: { in: ['pending', 'confirmed'] },
+            AND: [
+              { checkIn: { lt: data.checkOut } },
+              { checkOut: { gt: data.checkIn } }
+            ]
+          }
+        }),
+        tx.blockedDate.findFirst({
+          where: {
+            apartmentId: { in: idsToCheck },
+            AND: [
+              { startDate: { lt: data.checkOut } },
+              { endDate: { gte: data.checkIn } }
+            ]
+          }
+        })
+      ]);
 
-      if (overlapping) {
+      if (overlappingBooking || overlappingBlock) {
         throw new Error('overlap');
       }
 
