@@ -37,6 +37,10 @@ model Booking {
   guestEmail             String   @map("guest_email")
   guestPhone             String   @map("guest_phone")
   guests                 Int      @default(2)
+  isManual               Boolean  @default(false) @map("is_manual")
+  idPhotoUrl             String?  @map("id_photo_url")
+  depositPercentage      Int?     @map("deposit_percentage")
+  totalPrice             Float?   @map("total_price")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("bookings")

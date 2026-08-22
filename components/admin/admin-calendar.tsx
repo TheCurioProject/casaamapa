@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, isWithinInterval, startOfDay } from 'date-fns';
+import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus } from 'lucide-react';
+import { ManualBookingModal } from './manual-booking-modal';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
-type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; guestName: string; status: string };
+type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; guestName: string; status: string; isManual: boolean };
 type BlockedDate = { id: string; apartmentId: string; startDate: Date; endDate: Date; reason: string | null; isOtaBlock: boolean };
 
 export function AdminCalendar({
@@ -21,14 +22,16 @@ export function AdminCalendar({
 }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [isSyncing, setIsSyncing] = useState(false);
+  const [direction, setDirection] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth)
   });
 
-  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const handlePrevMonth = () => { setDirection(-1); setCurrentMonth(subMonths(currentMonth, 1)); };
+  const handleNextMonth = () => { setDirection(1); setCurrentMonth(addMonths(currentMonth, 1)); };
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -49,7 +52,6 @@ export function AdminCalendar({
     const booking = bookings.find(b => {
       const start = startOfDay(new Date(b.checkIn));
       const end = startOfDay(new Date(b.checkOut));
-      // Cross-blocking logic:
       const unitMatch = b.apartmentId === unitId || 
         (units.find(u => u.id === b.apartmentId)?.isWholeHouse) || 
         (units.find(u => u.id === unitId)?.isWholeHouse);
@@ -75,10 +77,17 @@ export function AdminCalendar({
     return null;
   };
 
+  // Animation variants
+  const slideVariants = {
+    enter: (direction: number) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
+    center: { zIndex: 1, x: 0, opacity: 1 },
+    exit: (direction: number) => ({ zIndex: 0, x: direction < 0 ? 300 : -300, opacity: 0 })
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full overflow-hidden text-[var(--color-sand)]">
       {/* Header controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
         <div className="flex items-center gap-4">
           <CalendarIcon className="w-6 h-6 text-[var(--color-rose-3)]" />
           <h2 className="text-xl font-display capitalize">
@@ -86,14 +95,21 @@ export function AdminCalendar({
           </h2>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-[var(--color-rose-3)] hover:bg-[var(--color-rose-2)] text-[var(--color-ink)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Bloqueo / Reserva
+          </button>
           <button 
             onClick={handleSync}
             disabled={isSyncing}
-            className="flex items-center gap-2 bg-white/10 hover:bg-[var(--color-rose-3)] px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            Sincronizar OTAs
+            Sincronizar
           </button>
           <div className="flex gap-2">
             <button onClick={handlePrevMonth} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10">
@@ -107,103 +123,152 @@ export function AdminCalendar({
       </div>
 
       {/* Cloudbeds Style Matrix */}
-      <div className="w-full overflow-x-auto bg-white/5 rounded-3xl border border-white/10 pb-4 custom-scrollbar">
-        <div className="min-w-[800px]">
-          {/* Header Row (Days) */}
-          <div className="flex border-b border-white/10 sticky top-0 bg-[var(--color-ink)] z-20">
-            <div className="w-48 shrink-0 p-4 font-medium text-sm tracking-widest uppercase opacity-70 sticky left-0 z-30 bg-[var(--color-ink)] border-r border-white/10">
-              Unidad
+      <div className="w-full overflow-hidden bg-[var(--color-ink-2)] rounded-3xl border border-white/10 pb-4 shadow-xl">
+        <div className="w-full overflow-x-auto custom-scrollbar relative">
+          <div className="min-w-[1000px] relative">
+            
+            {/* Header Row (Days) */}
+            <div className="flex border-b border-white/10 sticky top-0 bg-[var(--color-ink-2)] z-30 shadow-sm">
+              <div className="w-48 shrink-0 p-4 font-bold text-sm tracking-widest uppercase opacity-90 sticky left-0 z-40 bg-[var(--color-ink-2)] border-r border-white/10 flex items-center shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
+                Unidad
+              </div>
+              <div className="flex flex-1 relative overflow-hidden">
+                <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                  <motion.div 
+                    key={currentMonth.toISOString()} 
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="flex flex-1"
+                  >
+                    {daysInMonth.map(day => (
+                      <div key={day.toISOString()} className="w-14 shrink-0 flex flex-col items-center justify-center p-2 border-r border-white/5">
+                        <span className="text-[9px] opacity-70 uppercase tracking-widest">{format(day, 'EEE', { locale: es })}</span>
+                        <span className="font-bold text-sm mt-1">{format(day, 'd')}</span>
+                      </div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
-            <div className="flex flex-1">
-              {daysInMonth.map(day => (
-                <div key={day.toISOString()} className="w-12 shrink-0 flex flex-col items-center justify-center p-2 border-r border-white/5">
-                  <span className="text-[10px] opacity-50 uppercase">{format(day, 'EEE', { locale: es })}</span>
-                  <span className="font-medium">{format(day, 'd')}</span>
+
+            {/* Rows (Units) */}
+            <div className="flex flex-col relative z-10">
+              {units.map(unit => (
+                <div key={unit.id} className="flex border-b border-white/5 hover:bg-white/[0.03] transition-colors relative">
+                  {/* Fixed Unit Column */}
+                  <div className="w-48 shrink-0 p-4 sticky left-0 z-20 bg-[var(--color-ink-2)] border-r border-white/10 flex flex-col justify-center shadow-[4px_0_12px_rgba(0,0,0,0.1)] group-hover:bg-[var(--color-ink-2)]">
+                    <span className="font-bold text-sm truncate">{unit.name}</span>
+                    {unit.isWholeHouse && <span className="text-[9px] text-[var(--color-rose-3)] uppercase tracking-widest mt-1">Casa Completa</span>}
+                  </div>
+                  
+                  {/* Days Grid */}
+                  <div className="flex flex-1 relative overflow-hidden">
+                    <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                      <motion.div 
+                        key={currentMonth.toISOString()} 
+                        custom={direction}
+                        variants={slideVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="flex flex-1"
+                      >
+                        {daysInMonth.map(day => {
+                          const status = getStatusForDayAndUnit(day, unit.id);
+                          let cellColor = '';
+                          let content = null;
+
+                          if (status?.type === 'booking') {
+                            const isManual = (status.data as Booking).isManual;
+                            // Reserva Web (Directa): Rojo (coral), Manual: Rosa Claro
+                            cellColor = isManual ? 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]' : 'bg-[var(--color-coral)] border-[var(--color-coral)]';
+                            const textColor = isManual ? 'text-[var(--color-ink)]' : 'text-white';
+                            
+                            const isStart = isSameDay(new Date((status.data as Booking).checkIn), day) || day.getDate() === 1;
+                            content = isStart ? <User className={`w-4 h-4 ${textColor}`} /> : null;
+                          } else if (status?.type === 'block') {
+                            const isOta = (status.data as BlockedDate).isOtaBlock;
+                            // Bloqueo OTA: Rosa Obscuro (ink-2 but darker or just something dark pink) -> let's use a custom hex or rose-3
+                            // Actually color-ink-2 is dark pinkish brown. Let's use #9b4b62 for OTA to make it distinct Rosa Obscuro.
+                            cellColor = isOta ? 'bg-[#9b4b62] border-[#9b4b62]' : 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]'; // manual block same as manual booking or white/20
+                            const textColor = isOta ? 'text-white' : 'text-[var(--color-ink)]';
+                            
+                            const isStart = isSameDay(new Date((status.data as BlockedDate).startDate), day) || day.getDate() === 1;
+                            content = isStart ? <Lock className={`w-3 h-3 ${textColor} opacity-80`} /> : null;
+                          }
+
+                          return (
+                            <div 
+                              key={day.toISOString()} 
+                              className="w-14 shrink-0 border-r border-white/5 relative h-16 flex items-center p-0.5"
+                            >
+                              {status && (
+                                <div 
+                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md cursor-help overflow-hidden`}
+                                  title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
+                                >
+                                  {content}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Rows (Units) */}
-          <div className="flex flex-col">
-            {units.map(unit => (
-              <div key={unit.id} className="flex border-b border-white/5 hover:bg-white/[0.02] transition-colors relative">
-                {/* Fixed Unit Column */}
-                <div className="w-48 shrink-0 p-4 sticky left-0 z-10 bg-[var(--color-ink)] border-r border-white/10 flex flex-col justify-center">
-                  <span className="font-semibold text-sm truncate">{unit.name}</span>
-                  {unit.isWholeHouse && <span className="text-[9px] text-[var(--color-rose-3)] uppercase tracking-widest mt-1">Casa Completa</span>}
-                </div>
-                
-                {/* Days Grid */}
-                <div className="flex flex-1 relative">
-                  {daysInMonth.map(day => {
-                    const status = getStatusForDayAndUnit(day, unit.id);
-                    let cellColor = '';
-                    let content = null;
-
-                    if (status?.type === 'booking') {
-                      cellColor = 'bg-[var(--color-rose-3)] border-[var(--color-rose-3)]';
-                      // Only show icon on start day or first day of month
-                      const isStart = isSameDay(new Date((status.data as Booking).checkIn), day) || day.getDate() === 1;
-                      content = isStart ? <User className="w-4 h-4 text-white" /> : null;
-                    } else if (status?.type === 'block') {
-                      const isOta = (status.data as BlockedDate).isOtaBlock;
-                      cellColor = isOta ? 'bg-[var(--color-coral)]/80 border-[var(--color-coral)]' : 'bg-white/20 border-white/30';
-                      const isStart = isSameDay(new Date((status.data as BlockedDate).startDate), day) || day.getDate() === 1;
-                      content = isStart ? <Lock className="w-3 h-3 text-white/80" /> : null;
-                    }
-
-                    return (
-                      <div 
-                        key={day.toISOString()} 
-                        className="w-12 shrink-0 border-r border-white/5 relative h-14 flex items-center p-0.5"
-                      >
-                        {status && (
-                          <div 
-                            className={`w-full h-full flex items-center justify-center rounded-sm ${cellColor} shadow-sm cursor-help`}
-                            title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
-                          >
-                            {content}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-6 text-xs uppercase tracking-widest font-medium opacity-70">
+      <div className="flex flex-wrap gap-6 text-[10px] uppercase tracking-[0.15em] font-bold opacity-90 mt-2 px-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-[var(--color-rose-3)] rounded-sm"></div>
-          <span>Reserva Directa</span>
+          <div className="w-4 h-4 bg-[var(--color-coral)] rounded-sm shadow-sm"></div>
+          <span>Reserva Web (Roja)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-[var(--color-coral)]/80 rounded-sm"></div>
-          <span>Bloqueo OTA (Airbnb/Booking)</span>
+          <div className="w-4 h-4 bg-[#9b4b62] rounded-sm shadow-sm"></div>
+          <span>Bloqueo OTA (Rosa Obscuro)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-white/20 rounded-sm"></div>
-          <span>Bloqueo Manual</span>
+          <div className="w-4 h-4 bg-[var(--color-rose-1)] rounded-sm shadow-sm"></div>
+          <span className="text-[var(--color-sand)]">Bloqueo Manual (Rosa Claro)</span>
         </div>
       </div>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          height: 8px;
+          height: 10px;
+          width: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 4px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: var(--color-rose-3);
-          border-radius: 4px;
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: var(--color-coral);
         }
       `}</style>
+
+      {isModalOpen && (
+        <ManualBookingModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          units={units}
+          bookedDates={blockedDates.map(b => b.startDate)} // simplified for picker disabled state
+        />
+      )}
     </div>
   );
 }

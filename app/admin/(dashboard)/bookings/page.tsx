@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { BookingActions } from '@/components/admin/booking-actions';
 
 export const metadata = {
   title: 'Reservas | Admin - Casa Amapa',
@@ -43,10 +44,17 @@ export default async function AdminBookingsPage() {
               </tr>
             ) : (
               bookings.map(booking => (
-                <tr key={booking.id} className="hover:bg-white/5 transition-colors">
+                <tr key={booking.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4">
-                    <p className="font-medium text-white">{booking.guestName}</p>
-                    <p className="opacity-70 text-xs">{booking.guestEmail}</p>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-medium text-white flex items-center gap-2">
+                          {booking.guestName}
+                          {booking.isManual && <span className="text-[9px] bg-[var(--color-rose-3)]/20 text-[var(--color-rose-3)] px-2 py-0.5 rounded-full uppercase tracking-widest border border-[var(--color-rose-3)]/30">Manual</span>}
+                        </p>
+                        <p className="opacity-70 text-xs">{booking.guestEmail}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 capitalize">{booking.unit.name}</td>
                   <td className="px-6 py-4">
@@ -59,6 +67,9 @@ export default async function AdminBookingsPage() {
                   </td>
                   <td className="px-6 py-4 opacity-70">
                     {format(new Date(booking.createdAt), 'd MMM yyyy', { locale: es })}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <BookingActions bookingId={booking.id} isManual={booking.isManual} guestEmail={booking.guestEmail} />
                   </td>
                 </tr>
               ))

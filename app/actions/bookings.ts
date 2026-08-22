@@ -82,19 +82,40 @@ export async function createPendingBooking(data: {
 
 export async function getApartmentBookings(apartmentId: string) {
   try {
-    const bookings = await prisma.booking.findMany({
-      where: {
-        apartmentId,
-        status: { in: ['pending', 'confirmed'] },
-        checkOut: { gte: new Date() } // Sólo reservas actuales y futuras
-      },
-      select: {
-        checkIn: true,
-        checkOut: true,
-      }
-    });
+    const isWholeHouseReq = apartmentId === 'amapa';
+    
+    let idsToCheck = [apartmentId];
+    if (isWholeHouseReq) {
+      idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
+    } else {
+      idsToCheck = [apartmentId, 'amapa'];
+    }
 
-    return { bookings };
+    const [bookings, blockedDates] = await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          apartmentId: { in: idsToCheck },
+          status: { in: ['pending', 'confirmed'] },
+          checkOut: { gte: new Date() }
+        },
+        select: { checkIn: true, checkOut: true }
+      }),
+      prisma.blockedDate.findMany({
+        where: {
+          apartmentId: { in: idsToCheck },
+          endDate: { gte: new Date() }
+        },
+        select: { startDate: true, endDate: true }
+      })
+    ]);
+
+    // Map blockedDates to the same structure so the client can just read `checkIn`/`checkOut`
+    const mappedBlocks = blockedDates.map(b => ({
+      checkIn: b.startDate,
+      checkOut: new Date(new Date(b.endDate).getTime() + 24 * 60 * 60 * 1000) // Blocks are inclusive, so checkOut is day after end
+    }));
+
+    return { bookings: [...bookings, ...mappedBlocks] };
   } catch (error) {
     console.error(`Error fetching bookings for ${apartmentId}:`, error);
     return { error: 'Failed to fetch bookings' };

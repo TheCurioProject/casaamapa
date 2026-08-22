@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useBookingStore } from '@/lib/store';
+import { useLoaderStore } from '@/store/useLoaderStore';
 import { createPendingBooking, getApartmentBookings, getUnits } from '@/app/actions/bookings';
 import dynamic from 'next/dynamic';
 import { es } from 'date-fns/locale';
@@ -40,6 +41,7 @@ const LADAS = [
 
 export function BookingModal() {
   const { isOpen, closeBooking, preselectedUnit } = useBookingStore();
+  const { showLoader, hideLoader } = useLoaderStore();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // State
@@ -115,6 +117,7 @@ export function BookingModal() {
     if (isOpen && units.length === 0) {
       setIsLoadingUnits(true);
       setUnitsError(null);
+      showLoader();
       getUnits().then(res => {
         if (res && res.units) {
           setUnits(res.units);
@@ -126,6 +129,7 @@ export function BookingModal() {
         setUnitsError(err instanceof Error ? err.message : String(err));
       }).finally(() => {
         setIsLoadingUnits(false);
+        hideLoader();
       });
     }
   }, [isOpen]);
@@ -160,6 +164,7 @@ export function BookingModal() {
   useEffect(() => {
     if (step === 2 && selectedUnit) {
       setIsLoadingDates(true);
+      showLoader();
       getApartmentBookings(selectedUnit.id)
         .then(res => {
           if (res && res.bookings) {
@@ -187,6 +192,7 @@ export function BookingModal() {
         })
         .finally(() => {
           setIsLoadingDates(false);
+          hideLoader();
         });
     }
   }, [step, selectedUnit]);
@@ -342,11 +348,7 @@ export function BookingModal() {
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 1 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-8 leading-none">Elige tu espacio</h2>
 
-                {isLoadingUnits ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : units.length > 0 ? (
+                {isLoadingUnits ? null : units.length > 0 ? (
                   <div className="grid gap-3">
                     {units.map((unit: BookingUnit) => (
                       <button
@@ -387,12 +389,7 @@ export function BookingModal() {
                 <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit!.name}</strong> ({selectedUnit!.price.toLocaleString()} MXN / noche)</p>
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
-                  {isLoadingDates && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-cream)]/70 backdrop-blur-sm rounded-3xl">
-                      <div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-                  {isOpen && (
+                  {isOpen && !isLoadingDates && (
                     <div className="calendar-wrapper bg-white/40 p-2 md:p-6 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] w-full flex flex-col items-center">
                       <DayPicker
                         mode="range"

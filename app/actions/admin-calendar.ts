@@ -44,6 +44,9 @@ export async function createManualBooking(data: {
   guestEmail?: string;
   guestPhone?: string;
   guests: number;
+  idPhotoUrl?: string;
+  depositPercentage?: number;
+  totalPrice?: number;
 }) {
   try {
     const booking = await prisma.booking.create({
@@ -55,7 +58,11 @@ export async function createManualBooking(data: {
         guestEmail: data.guestEmail || 'admin@manual.com',
         guestPhone: data.guestPhone || '',
         guests: data.guests,
-        status: 'confirmed'
+        status: 'confirmed',
+        isManual: true,
+        idPhotoUrl: data.idPhotoUrl || null,
+        depositPercentage: data.depositPercentage || null,
+        totalPrice: data.totalPrice || null
       }
     });
     revalidatePath('/admin/calendar');

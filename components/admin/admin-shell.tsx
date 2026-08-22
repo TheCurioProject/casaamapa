@@ -27,7 +27,6 @@ export function AdminShell({
     { name: 'Bookings', href: '/admin/bookings', icon: BookOpen, desc: 'Gestión de reservas' },
     { name: 'Calendario', href: '/admin/calendar', icon: Calendar, desc: 'Tape Chart' },
     { name: 'Unidades', href: '/admin/units', icon: Building, desc: 'Propiedades' },
-    { name: 'Content', href: '/admin/content', icon: BookOpen, desc: 'Gestión web' },
     { name: 'iCal Sync', href: '/admin/ical', icon: LinkIcon, desc: 'Conexión OTAs' },
     { name: 'Stripe', href: '/admin/stripe', icon: CreditCard, desc: 'Pagos' },
     { name: 'Ajustes', href: '/admin/settings', icon: Settings, desc: 'Configuración' },
@@ -41,14 +40,14 @@ export function AdminShell({
   };
 
   return (
-    <div className="flex w-full min-h-screen bg-[var(--color-ink)] text-[var(--color-sand)] font-body">
+    <div className="flex w-full min-h-screen bg-[var(--color-ink-2)] text-[var(--color-sand)] font-body">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-72 flex-col fixed inset-y-0 left-0 z-50 border-r border-white/10 bg-[var(--color-ink)] shadow-2xl">
         <div className="p-10 relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-rose-3)] opacity-10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-cream)] opacity-5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
           <Link href="/admin">
-            <h1 className="font-display text-4xl tracking-tight text-[var(--color-rose-3)] relative z-10">Amapa</h1>
-            <p className="text-[0.65rem] mt-2 tracking-[0.3em] uppercase opacity-70 relative z-10">Admin Panel</p>
+            <h1 className="font-display text-4xl tracking-tight text-[var(--color-cream)] relative z-10">Casa Amapa</h1>
+            <p className="text-[0.65rem] mt-2 tracking-[0.3em] uppercase opacity-90 text-[var(--color-cream)] relative z-10">Admin Panel</p>
           </Link>
         </div>
         
@@ -63,19 +62,19 @@ export function AdminShell({
                 href={item.href}
                 onClick={() => handleNavigation(item.href)}
                 className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group ${
-                  isActive ? 'text-[var(--color-ink)]' : 'text-[var(--color-sand)] hover:text-white'
+                  isActive ? 'text-[var(--color-ink)]' : 'text-[var(--color-cream)] hover:text-white'
                 }`}
               >
                 {isActive && (
                   <motion.div 
                     layoutId="activeTabDesktop"
-                    className="absolute inset-0 bg-[var(--color-cream)] rounded-2xl"
+                    className="absolute inset-0 bg-[var(--color-cream)] rounded-2xl shadow-md"
                     initial={false}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}
-                <Icon className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-[var(--color-rose-3)]' : 'opacity-50 group-hover:opacity-100'}`} />
-                <span className={`text-sm font-medium tracking-wide relative z-10 ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}>
+                <Icon className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-[var(--color-ink)]' : 'opacity-70 group-hover:opacity-100'}`} />
+                <span className={`text-sm font-medium tracking-wide relative z-10 ${isActive ? 'font-bold' : 'opacity-80 group-hover:opacity-100'}`}>
                   {item.name}
                 </span>
               </Link>
@@ -86,22 +85,22 @@ export function AdminShell({
         <div className="p-6 border-t border-white/10 relative z-10">
           <Link 
             href="/" 
-            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-sand)] hover:bg-white/5 transition-all duration-300 mb-2 group"
+            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-cream)] hover:bg-white/10 transition-all duration-300 mb-2 group"
           >
-            <Globe className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-            <span className="text-sm font-medium tracking-wide opacity-70 group-hover:opacity-100 transition-opacity">Ver Sitio</span>
+            <Globe className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" />
+            <span className="text-sm font-medium tracking-wide opacity-90 group-hover:opacity-100 transition-opacity">Ver Sitio</span>
           </Link>
           <form action={onSignOut}>
-            <button type="submit" className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-coral)] hover:bg-[rgba(208,73,108,0.1)] transition-all duration-300 group">
-              <LogOut className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-              <span className="text-sm font-medium tracking-wide">Cerrar Sesión</span>
+            <button type="submit" className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-[var(--color-coral)] hover:bg-[rgba(208,73,108,0.15)] transition-all duration-300 group">
+              <LogOut className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" />
+              <span className="text-sm font-medium tracking-wide opacity-90 group-hover:opacity-100">Cerrar Sesión</span>
             </button>
           </form>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-72 w-full min-h-screen relative overflow-x-hidden">
+      <main className="flex-1 md:ml-72 w-full min-h-screen relative overflow-x-hidden bg-[var(--color-ink-2)]">
         <div className="p-4 md:p-12 w-full pb-24 md:pb-12 max-w-7xl mx-auto">
           {children}
         </div>
@@ -134,13 +133,13 @@ export function AdminShell({
                   setIsToolsOpen(false);
                 }
               }}
-              className="relative z-10 bg-[var(--color-ink)] border-t border-white/10 rounded-t-3xl p-6 pt-2 shadow-2xl text-[var(--color-sand)] max-h-[85vh] overflow-y-auto"
+              className="relative z-10 bg-[var(--color-ink)] border-t border-white/10 rounded-t-3xl p-6 pt-2 shadow-2xl text-[var(--color-cream)] max-h-[85vh] overflow-y-auto custom-scrollbar"
             >
               <div 
                 className="w-full py-4 flex justify-center cursor-grab active:cursor-grabbing touch-none"
                 onPointerDown={(e) => dragControls.start(e)}
               >
-                <div className="w-12 h-1.5 bg-white/20 rounded-full" />
+                <div className="w-12 h-1.5 bg-white/30 rounded-full" />
               </div>
 
               <div 
@@ -148,13 +147,13 @@ export function AdminShell({
                 onPointerDown={(e) => dragControls.start(e)}
               >
                 <div>
-                  <h2 className="font-display text-2xl tracking-tight text-[var(--color-rose-3)]">Navegación</h2>
-                  <p className="text-xs text-[var(--color-sand)]/60 uppercase tracking-widest mt-1">Admin Panel</p>
+                  <h2 className="font-display text-2xl tracking-tight text-[var(--color-cream)]">Navegación</h2>
+                  <p className="text-xs text-[var(--color-cream)]/70 uppercase tracking-widest mt-1">Admin Panel</p>
                 </div>
                 <button
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => setIsToolsOpen(false)}
-                  className="p-2 text-[var(--color-sand)]/60 hover:text-white bg-white/5 rounded-full transition-colors"
+                  className="p-2 text-[var(--color-cream)]/70 hover:text-white bg-white/10 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -170,15 +169,15 @@ export function AdminShell({
                       onClick={() => handleNavigation(item.href)}
                       className={`flex flex-col p-4 rounded-2xl border transition-all duration-200 ${
                         isActive 
-                          ? 'bg-[var(--color-rose-3)]/20 border-[var(--color-rose-3)] text-white shadow-lg' 
-                          : 'bg-white/5 border-white/10 text-[var(--color-sand)] hover:bg-white/10'
+                          ? 'bg-[var(--color-cream)] border-[var(--color-cream)] text-[var(--color-ink)] shadow-lg' 
+                          : 'bg-white/5 border-white/10 text-[var(--color-cream)] hover:bg-white/10'
                       }`}
                     >
-                      <div className={`p-2.5 rounded-xl w-fit mb-3 ${isActive ? 'bg-[var(--color-rose-3)] text-white' : 'bg-white/10 text-[var(--color-rose-3)]'}`}>
+                      <div className={`p-2.5 rounded-xl w-fit mb-3 ${isActive ? 'bg-[var(--color-ink)] text-[var(--color-cream)]' : 'bg-white/10 text-[var(--color-cream)]'}`}>
                         <item.icon className="w-5 h-5" />
                       </div>
-                      <span className="font-bold text-sm text-white mb-0.5">{item.name}</span>
-                      <span className="text-xs md:text-[10px] text-[var(--color-sand)]/60 font-light leading-snug">{item.desc}</span>
+                      <span className={`font-bold text-sm mb-0.5 ${isActive ? 'text-[var(--color-ink)]' : 'text-white'}`}>{item.name}</span>
+                      <span className={`text-xs md:text-[10px] font-light leading-snug ${isActive ? 'text-[var(--color-ink)]/70' : 'text-[var(--color-cream)]/60'}`}>{item.desc}</span>
                     </Link>
                   );
                 })}
@@ -187,7 +186,7 @@ export function AdminShell({
               <div className="flex flex-col gap-3 mt-4">
                 <Link
                   href="/"
-                  className="w-full py-3.5 px-4 bg-white/5 border border-white/10 text-[var(--color-sand)] rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"
+                  className="w-full py-3.5 px-4 bg-white/10 border border-white/20 text-white rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/20 transition-colors"
                 >
                   <Globe className="w-4 h-4" />
                   Ver Sitio Público
@@ -196,7 +195,7 @@ export function AdminShell({
                   <button
                     type="submit"
                     onClick={() => setIsToolsOpen(false)}
-                    className="w-full py-3.5 px-4 bg-[var(--color-coral)]/10 border border-[var(--color-coral)]/20 text-[var(--color-coral)] rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/20 transition-colors"
+                    className="w-full py-3.5 px-4 bg-[var(--color-coral)]/20 border border-[var(--color-coral)]/30 text-[var(--color-coral)] rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/30 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     Cerrar Sesión
@@ -214,8 +213,8 @@ export function AdminShell({
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={() => setIsToolsOpen(!isToolsOpen)}
-            className={`w-14 h-14 rounded-2xl bg-[var(--color-ink-2)] border border-white/15 text-white flex items-center justify-center shadow-2xl transition-all duration-300 ${
-              isToolsOpen ? 'ring-4 ring-white/20 scale-105' : 'hover:bg-[var(--color-ink)]'
+            className={`w-14 h-14 rounded-2xl bg-[var(--color-ink)] border border-white/20 text-white flex items-center justify-center shadow-2xl transition-all duration-300 ${
+              isToolsOpen ? 'ring-4 ring-white/20 scale-105' : 'hover:bg-[var(--color-ink-2)]'
             }`}
             aria-label="Tools Menu"
           >
