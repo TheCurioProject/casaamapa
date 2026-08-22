@@ -37,6 +37,8 @@ export function EditBookingModal({
   const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(50);
   
+  const [isInteracted, setIsInteracted] = useState(false);
+  
   const [error, setError] = useState('');
   const { showLoader, hideLoader } = useLoaderStore();
 
@@ -126,8 +128,17 @@ export function EditBookingModal({
       color: 'var(--color-ink)',
       backgroundColor: 'rgba(230, 160, 90, 0.3)', // Amber color for "being edited"
       fontWeight: 'bold',
-      borderRadius: '50%'
+      borderRadius: '50%',
+      ...( !isInteracted ? {
+        boxShadow: '0 0 15px rgba(230, 160, 90, 0.8)',
+        border: '1px solid rgba(230, 160, 90, 0.5)',
+      } : {})
     }
+  };
+
+  const handleSelectRange = (newRange: DateRange | undefined) => {
+    setIsInteracted(true);
+    setRange(newRange);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,11 +244,12 @@ export function EditBookingModal({
                     <DayPicker
                       mode="range"
                       selected={range}
-                      onSelect={setRange}
+                      onSelect={handleSelectRange}
                       disabled={isDateDisabled}
                       modifiers={modifiers}
                       modifiersStyles={modifiersStyles}
-                      className="custom-neumorphic-calendar font-sans !m-0"
+                      defaultMonth={currentCheckIn || undefined}
+                      className={`custom-neumorphic-calendar font-sans !m-0 ${!isInteracted ? 'animate-pulse-slow' : ''}`}
                       locale={es}
                     />
                   </div>
