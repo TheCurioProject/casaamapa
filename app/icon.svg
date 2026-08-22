@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <circle cx="60" cy="60" r="60" fill="#D98BA0" />
   <path 
-    d="M 30 110 L 30 60 A 30 30 0 0 1 90 60 L 90 110"
+    d="M 30 100 L 30 50 A 30 30 0 0 1 90 50 L 90 100"
     fill="transparent"
     stroke="#ffffff"
     stroke-width="12"
