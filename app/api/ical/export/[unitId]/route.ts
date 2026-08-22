@@ -58,7 +58,7 @@ export async function GET(
     let icalContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Amapa Chacala//Unit Calendar//EN',
+      'PRODID:-//CasaAmapa//Calendar//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH'
     ];
@@ -90,18 +90,30 @@ export async function GET(
       icalContent.push('END:VEVENT');
     });
 
+    // Always include a dummy event if calendar is completely empty to prevent strict parsers like Airbnb from rejecting it
+    if (bookings.length === 0 && blocks.length === 0) {
+      icalContent.push('BEGIN:VEVENT');
+      icalContent.push(`UID:sync-init-${unitId}@amapachacala.com`);
+      icalContent.push(`DTSTAMP:${nowStr}`);
+      icalContent.push(`DTSTART;VALUE=DATE:20200101`);
+      icalContent.push(`DTEND;VALUE=DATE:20200102`);
+      icalContent.push(`SUMMARY:Calendar Sync Initialization`);
+      icalContent.push('END:VEVENT');
+    }
+
     icalContent.push('END:VCALENDAR');
 
-    const calendarString = icalContent.join('\r\n');
+    const calendarString = icalContent.join('\r\n') + '\r\n'; // ensure trailing CRLF
 
-    return new NextResponse(calendarString, {
+    return new Response(calendarString, {
       status: 200,
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': `attachment; filename="${unitId}-calendar.ics"`,
         'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Content-Length': Buffer.byteLength(calendarString, 'utf-8').toString()
       }
     });
 
