@@ -439,7 +439,8 @@ export function AdminCalendar({
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           units={units}
-          bookedDates={blockedDates.map(b => b.startDate)} // simplified for picker disabled state
+          bookings={bookings}
+          blockedDates={blockedDates}
         />
       )}
     </div>

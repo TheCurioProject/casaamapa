@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
@@ -14,12 +14,14 @@ export function ManualBookingModal({
   isOpen,
   onClose,
   units,
-  bookedDates
+  bookings,
+  blockedDates
 }: {
   isOpen: boolean;
   onClose: () => void;
   units: Unit[];
-  bookedDates: Date[];
+  bookings: any[];
+  blockedDates: any[];
 }) {
   const [step, setStep] = useState(1);
   const [type, setType] = useState<'booking' | 'block'>('booking');
@@ -42,6 +44,42 @@ export function ManualBookingModal({
 
   const nights = range?.from && range?.to ? Math.max(1, differenceInDays(range.to, range.from)) : 0;
   const estimatedPrice = selectedUnit ? nights * selectedUnit.price : 0;
+
+  const computedDates = useMemo(() => {
+    if (!selectedUnit) return { booked: [], cleaning: [] };
+    const booked: Date[] = [];
+    const cleaning: Date[] = [];
+
+    const unitBookings = bookings.filter(b => b.apartmentId === selectedUnit.id || selectedUnit.isWholeHouse || units.find(u => u.id === b.apartmentId)?.isWholeHouse);
+    const unitBlocks = blockedDates.filter(b => b.apartmentId === selectedUnit.id || selectedUnit.isWholeHouse || units.find(u => u.id === b.apartmentId)?.isWholeHouse);
+
+    unitBookings.forEach(b => {
+      const checkIn = new Date(b.checkIn);
+      const checkOut = new Date(b.checkOut);
+      checkIn.setHours(12, 0, 0, 0);
+      checkOut.setHours(12, 0, 0, 0);
+      let current = new Date(checkIn);
+      while (current < checkOut) {
+        booked.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+      cleaning.push(new Date(checkOut));
+    });
+
+    unitBlocks.forEach(b => {
+      const start = new Date(b.startDate);
+      const end = new Date(b.endDate);
+      start.setHours(12, 0, 0, 0);
+      end.setHours(12, 0, 0, 0);
+      let current = new Date(start);
+      while (current <= end) {
+        booked.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+    });
+
+    return { booked, cleaning };
+  }, [selectedUnit, bookings, blockedDates, units]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,8 +232,50 @@ export function ManualBookingModal({
                 <DayPicker
                   mode="range"
                   selected={range}
-                  onSelect={setRange}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  onSelect={(newRange, selectedDay) => {
+                    if (!newRange) {
+                      setRange(undefined);
+                      return;
+                    }
+                    if (range?.from && !range?.to && new Date(selectedDay).getTime() === new Date(range.from).getTime()) {
+                      setRange({ from: range.from, to: range.from });
+                    } else {
+                      setRange(newRange);
+                    }
+                  }}
+                  modifiers={{
+                    booked: computedDates.booked,
+                    cleaning: computedDates.cleaning
+                  }}
+                  modifiersClassNames={{
+                    booked: 'rdp-day_booked',
+                    cleaning: 'rdp-day_cleaning'
+                  }}
+                  disabled={(date) => {
+                    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+                    const today = new Date();
+                    const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+                    if (d < t) return true;
+                    
+                    if (!range?.from) {
+                      return computedDates.booked.some(bd => 
+                        new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d
+                      );
+                    } else {
+                      const fromTime = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()).getTime();
+                      if (d <= fromTime) return true;
+                      
+                      const nextBookedDate = computedDates.booked
+                        .map(bd => new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime())
+                        .filter(time => time > fromTime)
+                        .sort((a, b) => a - b)[0];
+                        
+                      if (nextBookedDate && d > nextBookedDate) {
+                        return true;
+                      }
+                      return false;
+                    }
+                  }}
                   className="custom-neumorphic-calendar font-sans !m-0"
                   locale={es}
                 />

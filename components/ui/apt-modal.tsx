@@ -317,7 +317,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
                         new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d
                       );
                     }}
-                    className="font-sans custom-neumorphic-calendar !m-0"
+                    className="font-sans custom-neumorphic-calendar read-only-calendar !m-0"
                     locale={es}
                   />
                   

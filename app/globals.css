@@ -232,11 +232,20 @@ p, h1, h2, h3, h4, span, li {
 
 /* Disabled / Past Days (Grayed out) */
 .custom-neumorphic-calendar .rdp-day_disabled {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  color: rgba(0, 0, 0, 0.3) !important;
+  background-color: #d1d5db !important;
+  color: #9ca3af !important;
   pointer-events: none !important;
   border-color: transparent !important;
   cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+/* Read-Only Calendar (No hover effects on days) */
+.read-only-calendar .rdp-day {
+  pointer-events: none !important;
+}
+.read-only-calendar .rdp-nav_button {
+  pointer-events: auto !important; /* Keep month navigation active */
 }
 
 .custom-neumorphic-calendar .rdp-caption_label {
