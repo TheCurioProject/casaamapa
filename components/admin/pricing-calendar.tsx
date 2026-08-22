@@ -385,9 +385,8 @@ export function PricingCalendar({
                   <button
                     onClick={handleResetPrices}
                     disabled={isSaving || isResetting}
-                    className="w-full bg-white/5 border border-white/10 text-white font-bold tracking-widest uppercase text-[10px] py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors mt-2 disabled:opacity-50"
+                    className="w-full bg-white/5 border border-white/10 text-white font-bold tracking-widest uppercase text-[10px] py-3 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors mt-2 disabled:opacity-50"
                   >
-                    {isResetting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                     {isResetting ? 'Restableciendo...' : `Regresar al valor por defecto ($${currentUnit?.price})`}
                   </button>
                 </div>

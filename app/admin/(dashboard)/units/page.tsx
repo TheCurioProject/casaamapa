@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { updatePrice, updateIcalUrls, createUnit, deleteUnit } from './actions';
 import { Copy, Plus, Trash2, Building } from 'lucide-react';
 import { SubmitButton } from '@/components/admin/submit-button';
+import { ICalForm } from '@/components/admin/ical-form';
 
 export default async function AdminUnitsPage() {
   const session = await auth();
@@ -95,38 +96,7 @@ export default async function AdminUnitsPage() {
               </SubmitButton>
             </form>
 
-            <form action={updateIcalUrls} className="flex flex-col gap-4 flex-1">
-              <input type="hidden" name="id" value={unit.id} />
-              <div className="flex-1 w-full">
-                <label className="flex flex-col sm:flex-row justify-between sm:items-end mb-2 gap-1">
-                  <span className="text-xs uppercase tracking-widest font-medium opacity-70">Importar iCal (Desde OTAs)</span>
-                  <span className="opacity-50 text-[10px] uppercase tracking-widest">Una URL por línea</span>
-                </label>
-                <textarea 
-                  name="icalUrls"
-                  defaultValue={(unit.icalUrls || []).join('\n')}
-                  rows={3}
-                  placeholder="https://www.airbnb.com/calendar/ical/..."
-                  className="w-full border border-white/10 rounded-xl px-4 py-4 sm:py-3 bg-black/20 focus:bg-black/40 focus:border-[var(--color-rose-3)] outline-none resize-none text-xs font-mono text-[var(--color-sand)]"
-                />
-              </div>
-              <SubmitButton className="w-full sm:w-auto sm:self-end bg-white/10 text-white rounded-xl px-6 py-4 sm:py-3 text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors flex justify-center">
-                Guardar URLs
-              </SubmitButton>
-            </form>
-
-            {/* iCal Export Information */}
-            <div className="mt-8 pt-8 border-t border-white/10">
-              <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-3">
-                Exportar iCal (Para OTAs)
-              </label>
-              <div className="flex items-center w-full">
-                <code className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-4 sm:py-3 text-[10px] sm:text-xs font-mono break-all text-[var(--color-rose-3)] shadow-inner">
-                  https://amapachacala.com/api/ical/export/{unit.id}/calendar.ics
-                </code>
-              </div>
-              <p className="text-[10px] sm:text-xs opacity-50 mt-3 leading-relaxed">Copia esta URL en Airbnb o Booking para sincronizar la disponibilidad de esta unidad.</p>
-            </div>
+            <ICalForm unitId={unit.id} initialUrls={unit.icalUrls || []} />
           </div>
         ))}
       </div>

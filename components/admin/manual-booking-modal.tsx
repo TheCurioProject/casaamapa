@@ -161,8 +161,12 @@ export function ManualBookingModal({
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="flex gap-4 mb-6">
-                <button onClick={() => setType('booking')} className={`flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors ${type === 'booking' ? 'bg-[var(--color-ink)] text-[var(--color-cream)]' : 'bg-white text-[var(--color-ink)] border border-black/10'}`}>Reserva Manual</button>
-                <button onClick={() => setType('block')} className={`flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors ${type === 'block' ? 'bg-[var(--color-ink)] text-[var(--color-cream)]' : 'bg-white text-[var(--color-ink)] border border-black/10'}`}>Bloquear Fechas</button>
+                <button onClick={() => setType('booking')} className={`flex-1 py-2 sm:py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors leading-relaxed sm:leading-normal ${type === 'booking' ? 'bg-[var(--color-ink)] text-[var(--color-cream)]' : 'bg-white text-[var(--color-ink)] border border-black/10'}`}>
+                  Reserva<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Manual
+                </button>
+                <button onClick={() => setType('block')} className={`flex-1 py-2 sm:py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors leading-relaxed sm:leading-normal ${type === 'block' ? 'bg-[var(--color-ink)] text-[var(--color-cream)]' : 'bg-white text-[var(--color-ink)] border border-black/10'}`}>
+                  Bloquear<br className="sm:hidden" /><span className="hidden sm:inline"> </span>Fechas
+                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-8">

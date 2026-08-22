@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreHorizontal, Mail, Trash2, Edit } from 'lucide-react';
+import { MoreHorizontal, Mail, Trash2, Edit, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { EditBookingModal } from './edit-booking-modal';
@@ -76,6 +76,14 @@ export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId:
                   <Edit className="w-4 h-4 opacity-70" />
                   Editar Reserva
                 </button>
+                <a 
+                  href={`/api/admin/invoice-html/${bookingId}`}
+                  target="_blank"
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-3"
+                >
+                  <FileText className="w-4 h-4 opacity-70" />
+                  Descargar Invoice
+                </a>
                 <button 
                   onClick={handleSendInvoice}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center gap-3"
