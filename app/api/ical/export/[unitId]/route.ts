@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
@@ -95,7 +98,10 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${unitId}-calendar.ics"`
+        'Content-Disposition': `attachment; filename="${unitId}-calendar.ics"`,
+        'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     });
 
