@@ -91,17 +91,49 @@ export async function POST(request: NextRequest) {
             }
             syncStats.processed++;
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error(`Failed to sync URL ${url} for unit ${unit.id}:`, e);
           syncStats.errors++;
+          try {
+            await prisma.syncLog.create({
+              data: {
+                status: 'ERROR',
+                message: `Error al conectar con URL para la unidad ${unit.name}: ${e.message || String(e)}`
+              }
+            });
+          } catch(err) {}
         }
       }
     }
 
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    await prisma.syncLog.deleteMany({
+      where: {
+        createdAt: { lt: thirtyDaysAgo }
+      }
+    });
+
+    await prisma.syncLog.create({
+      data: {
+        status: syncStats.errors === 0 ? 'SUCCESS' : 'WARNING',
+        message: `Sincronización manual completada. Procesados: ${syncStats.processed}, Nuevos Bloqueos: ${syncStats.added}, Errores: ${syncStats.errors}.`
+      }
+    });
+
     return NextResponse.json({ success: true, stats: syncStats });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in iCal sync:', error);
+    try {
+      await prisma.syncLog.create({
+        data: {
+          status: 'ERROR',
+          message: `Error general del sistema: ${error.message || String(error)}`
+        }
+      });
+    } catch(e) {}
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

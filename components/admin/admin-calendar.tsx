@@ -28,6 +28,7 @@ export function AdminCalendar({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterUnit, setFilterUnit] = useState<string>('all');
+  const [selectedBlock, setSelectedBlock] = useState<BlockedDate | null>(null);
   
   const router = useRouter();
 
@@ -219,7 +220,7 @@ export function AdminCalendar({
                       </p>
                     </div>
                     <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest ${
-                      b.isManual ? 'bg-[var(--color-rose-1)]/20 text-[var(--color-rose-1)] border border-[var(--color-rose-1)]/30' : 'bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30'
+                      b.isManual ? 'bg-[var(--color-rose-1)]/20 text-[var(--color-rose-1)] border border-[var(--color-rose-1)]/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'
                     }`}>
                       {b.isManual ? 'Manual' : 'Web'}
                     </span>
@@ -250,7 +251,7 @@ export function AdminCalendar({
             } else {
               const b = act as BlockedDate;
               return (
-                <div key={`block-${b.id}-${idx}`} className="bg-[#9b4b62]/10 border border-[#9b4b62]/30 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group">
+                <div key={`block-${b.id}-${idx}`} onClick={() => setSelectedBlock(b)} className="bg-[#9b4b62]/10 border border-[#9b4b62]/30 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group cursor-pointer hover:bg-white/10 transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-[#9b4b62]" />
@@ -353,8 +354,8 @@ export function AdminCalendar({
 
                           if (status?.type === 'booking') {
                             const isManual = (status.data as Booking).isManual;
-                            // Reserva Web (Directa): Rojo (coral), Manual: Rosa Claro
-                            cellColor = isManual ? 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]' : 'bg-[var(--color-coral)] border-[var(--color-coral)]';
+                            // Reserva Web (Directa): Rojo (red-500), Manual: Rosa Claro
+                            cellColor = isManual ? 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]' : 'bg-red-500 border-red-500';
                             const textColor = isManual ? 'text-[var(--color-ink)]' : 'text-white';
                             
                             const isStart = isSameDay(new Date((status.data as Booking).checkIn), day) || day.getDate() === 1;
@@ -379,8 +380,13 @@ export function AdminCalendar({
                             >
                               {status ? (
                                 <div 
-                                  onClick={status.type === 'booking' && !isPast ? () => router.push(`/admin/bookings?edit=${status.data.id}`) : undefined}
-                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md overflow-hidden ${dimmedClass} ${pastOverlay} ${status.type === 'booking' && !isPast ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-help'}`}
+                                  onClick={
+                                    !isPast 
+                                      ? status.type === 'booking' ? () => router.push(`/admin/bookings?edit=${status.data.id}`) 
+                                      : status.type === 'block' ? () => setSelectedBlock(status.data as BlockedDate) : undefined
+                                      : undefined
+                                  }
+                                  className={`w-full h-full flex items-center justify-center rounded-md ${cellColor} shadow-md overflow-hidden ${dimmedClass} ${pastOverlay} ${!isPast ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-help'}`}
                                   title={status.type === 'booking' ? `Reservado por ${(status.data as Booking).guestName}` : `Bloqueado: ${(status.data as BlockedDate).reason}`}
                                 >
                                   {content}
@@ -403,7 +409,7 @@ export function AdminCalendar({
 
       <div className="flex flex-wrap gap-6 text-[10px] uppercase tracking-widest mt-6 px-6 pb-6">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-[var(--color-coral)] rounded-sm shadow-sm"></div>
+          <div className="w-4 h-4 bg-red-500 rounded-sm shadow-sm"></div>
           <span>Reserva Web (Roja)</span>
         </div>
         <div className="flex items-center gap-2">
@@ -443,6 +449,64 @@ export function AdminCalendar({
           blockedDates={blockedDates}
         />
       )}
+
+      {/* Block Details Modal */}
+      <AnimatePresence>
+        {selectedBlock && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              onClick={() => setSelectedBlock(null)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-sm bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden text-[var(--color-ink)] p-8"
+            >
+              <div className="flex items-center gap-3 mb-6 text-[var(--color-rose-3)]">
+                <Lock className="w-6 h-6" />
+                <h3 className="font-display text-2xl">Detalles del Bloqueo</h3>
+              </div>
+              
+              <div className="space-y-4 mb-8">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Unidad</p>
+                  <p className="font-semibold capitalize text-lg">{units.find(u => u.id === selectedBlock.apartmentId)?.name}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-black/5 p-3 rounded-xl border border-black/5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Desde</p>
+                    <p className="font-semibold">{format(new Date(selectedBlock.startDate), 'd MMM', { locale: es })}</p>
+                  </div>
+                  <div className="bg-black/5 p-3 rounded-xl border border-black/5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Hasta</p>
+                    <p className="font-semibold">{format(new Date(selectedBlock.endDate), 'd MMM', { locale: es })}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Origen / Motivo</p>
+                  <div className="bg-black/5 p-3 rounded-xl border border-black/5 text-sm italic">
+                    {selectedBlock.isOtaBlock ? `Bloqueo de OTA (ej. Airbnb/Booking)\nReferencia: ${selectedBlock.reason}` : selectedBlock.reason || 'Sin motivo especificado'}
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setSelectedBlock(null)}
+                className="w-full py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black"
+              >
+                Cerrar
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

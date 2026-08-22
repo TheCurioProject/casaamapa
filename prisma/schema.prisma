@@ -95,3 +95,12 @@ model BlockedDate {
   @@index([apartmentId])
   @@map("blocked_dates")
 }
+
+model SyncLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status    String   // "SUCCESS" or "ERROR"
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("sync_logs")
+}
