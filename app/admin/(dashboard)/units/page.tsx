@@ -122,7 +122,7 @@ export default async function AdminUnitsPage() {
               </label>
               <div className="flex items-center w-full">
                 <code className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-4 sm:py-3 text-[10px] sm:text-xs font-mono break-all text-[var(--color-rose-3)] shadow-inner">
-                  https://amapachacala.com/api/ical/export/{unit.id}
+                  https://amapachacala.com/api/ical/export/{unit.id}/calendar.ics
                 </code>
               </div>
               <p className="text-[10px] sm:text-xs opacity-50 mt-3 leading-relaxed">Copia esta URL en Airbnb o Booking para sincronizar la disponibilidad de esta unidad.</p>

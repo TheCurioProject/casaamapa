@@ -54,14 +54,18 @@ export async function setPricesForDates(apartmentId: string, dates: Date[], pric
 
 export async function deletePricesForDates(apartmentId: string, dates: Date[]) {
   try {
-    await prisma.dailyPrice.deleteMany({
-      where: {
-        apartmentId,
-        date: {
-          in: dates,
-        },
-      },
-    });
+    // Normalize dates to match exactly what is stored in the database
+    // We use a transaction of deletes based on the unique compound key
+    await prisma.$transaction(
+      dates.map(date => {
+        return prisma.dailyPrice.deleteMany({
+          where: {
+            apartmentId,
+            date,
+          },
+        });
+      })
+    );
 
     revalidatePath('/admin/prices');
     revalidatePath('/admin/calendar');

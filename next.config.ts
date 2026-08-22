@@ -25,6 +25,14 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['node-ical'],
+  async rewrites() {
+    return [
+      {
+        source: '/api/ical/export/:unitId/calendar.ics',
+        destination: '/api/ical/export/:unitId',
+      },
+    ];
+  },
   async headers() {
     return [
       {
