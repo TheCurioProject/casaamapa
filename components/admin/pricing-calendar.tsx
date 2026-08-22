@@ -9,7 +9,8 @@ import {
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Save, X, Info } from 'lucide-react';
 import { useLoaderStore } from '@/store/useLoaderStore';
-import { setPricesForDates } from '@/app/actions/prices';
+import { setPricesForDates, deletePricesForDates } from '@/app/actions/prices';
+import { Trash2 } from 'lucide-react';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; status: string };
@@ -152,6 +153,29 @@ export function PricingCalendar({
     }
   };
 
+  const handleResetPrices = async () => {
+    if (!selectionStart || !selectionEnd || !currentUnit) return;
+    
+    showLoader('Restableciendo precios...');
+    
+    const minDate = min([selectionStart, selectionEnd]);
+    const maxDate = max([selectionStart, selectionEnd]);
+    
+    const datesToUpdate = eachDayOfInterval({ start: minDate, end: maxDate }).filter(d => !getStatusForDay(d));
+    
+    const res = await deletePricesForDates(currentUnit.id, datesToUpdate);
+    
+    hideLoader();
+    if (res.success) {
+      setIsModalOpen(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+      window.location.reload();
+    } else {
+      alert(res.error);
+    }
+  };
+
   const slideVariants = {
     enter: (direction: number) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
     center: { zIndex: 1, x: 0, opacity: 1 },
@@ -187,6 +211,20 @@ export function PricingCalendar({
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectionStart && !selectionEnd && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-[var(--color-rose-3)]/20 border border-[var(--color-rose-3)] text-white px-4 py-3 rounded-2xl flex justify-center items-center gap-2 text-sm text-center mx-auto max-w-lg w-full"
+          >
+            <Info className="w-4 h-4 text-[var(--color-rose-3)] shrink-0" />
+            <span>Selecciona <strong>otra fecha</strong> para un rango, o haz clic en la <strong>misma fecha</strong> para configurar un solo día.</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Calendar Grid */}
       <div className="relative overflow-hidden min-h-[400px]">
@@ -330,14 +368,23 @@ export function PricingCalendar({
                   </p>
                 </div>
 
-                <button
-                  onClick={handleSavePrices}
-                  disabled={!newPrice}
-                  className="w-full bg-[var(--color-rose-3)] text-[var(--color-ink)] font-bold tracking-widest uppercase text-sm py-4 rounded-xl mt-4 flex items-center justify-center gap-2 hover:bg-[var(--color-rose-2)] transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  Guardar Cambios
-                </button>
+                <div className="flex flex-col gap-2 mt-4">
+                  <button
+                    onClick={handleSavePrices}
+                    disabled={!newPrice}
+                    className="w-full bg-[var(--color-rose-3)] text-[var(--color-ink)] font-bold tracking-widest uppercase text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[var(--color-rose-2)] transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    Guardar Cambios
+                  </button>
+                  <button
+                    onClick={handleResetPrices}
+                    className="w-full bg-white/5 border border-white/10 text-white font-bold tracking-widest uppercase text-[10px] py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors mt-2"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Regresar al valor por defecto (${currentUnit?.price})
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

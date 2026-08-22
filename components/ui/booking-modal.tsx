@@ -7,7 +7,7 @@ import { useLoaderStore } from '@/store/useLoaderStore';
 import { createPendingBooking, getApartmentBookings, getUnits } from '@/app/actions/bookings';
 import dynamic from 'next/dynamic';
 import { es } from 'date-fns/locale';
-import { differenceInDays, isWithinInterval, parseISO } from 'date-fns';
+import { differenceInDays, isWithinInterval, parseISO, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import 'react-day-picker/dist/style.css';
@@ -390,17 +390,18 @@ export function BookingModal() {
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
                   {isOpen && !isLoadingDates && (
-                    <div className="calendar-wrapper bg-white/40 p-2 md:p-6 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] w-full flex flex-col items-center">
+                    <div className="calendar-wrapper bg-white/40 p-2 md:p-6 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] w-full flex flex-col items-center relative">
                       <DayPicker
                         mode="range"
                         selected={range}
-                        onSelect={(newRange) => {
+                        onSelect={(newRange, selectedDay) => {
                           if (!newRange) {
                             setRange(undefined);
                             return;
                           }
-                          if (newRange.from && !newRange.to) {
-                            setRange({ from: newRange.from, to: newRange.from });
+                          // If clicking the same day that is already the 'from' date, set it as a 1-night stay
+                          if (range?.from && !range?.to && isSameDay(selectedDay, range.from)) {
+                            setRange({ from: range.from, to: range.from });
                           } else {
                             setRange(newRange);
                           }
@@ -417,6 +418,19 @@ export function BookingModal() {
                         className="custom-neumorphic-calendar font-sans !m-0"
                         locale={es}
                       />
+
+                      <AnimatePresence>
+                        {range?.from && !range?.to && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 bg-[var(--color-ink)] text-white px-4 py-3 rounded-2xl flex items-center gap-2 text-xs text-center w-[90%] md:w-auto shadow-2xl z-10 border border-white/20 pointer-events-none"
+                          >
+                            <span>Pulsa sobre la <strong>misma fecha</strong> para 1 noche, o selecciona otra para un rango.</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       {/* Leyenda del calendario */}
                       <div className="flex justify-center gap-4 mt-6 text-[0.65rem] uppercase tracking-widest font-semibold opacity-70 flex-wrap w-full px-4">

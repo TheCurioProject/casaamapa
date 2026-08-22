@@ -51,3 +51,23 @@ export async function setPricesForDates(apartmentId: string, dates: Date[], pric
     return { success: false, error: 'Error al actualizar precios' };
   }
 }
+
+export async function deletePricesForDates(apartmentId: string, dates: Date[]) {
+  try {
+    await prisma.dailyPrice.deleteMany({
+      where: {
+        apartmentId,
+        date: {
+          in: dates,
+        },
+      },
+    });
+
+    revalidatePath('/admin/prices');
+    revalidatePath('/admin/calendar');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting prices:', error);
+    return { success: false, error: 'Error al restablecer precios' };
+  }
+}

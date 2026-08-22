@@ -102,7 +102,7 @@ export function AdminShell({
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 w-full min-h-screen relative overflow-x-hidden bg-[var(--color-ink-2)]">
-        <div className="p-4 md:p-12 w-full pb-32 md:pb-12 max-w-7xl mx-auto">
+        <div className="p-4 pt-10 md:p-12 w-full pb-32 md:pb-12 max-w-7xl mx-auto">
           {children}
         </div>
       </main>

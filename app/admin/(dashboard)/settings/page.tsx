@@ -49,41 +49,7 @@ export default async function SettingsPage() {
             </div>
           </section>
 
-          {/* Payment Settings */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3 text-white">
-              Pagos y Reservas
-            </h2>
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="depositPercentage" className="block text-sm font-medium opacity-80 mb-1">
-                  Porcentaje de Anticipo (%)
-                </label>
-                <input
-                  type="number"
-                  id="depositPercentage"
-                  name="depositPercentage"
-                  defaultValue={settings?.depositPercentage || 50}
-                  min="10"
-                  max="100"
-                  className="w-full md:w-1/3 border border-white/20 rounded-xl px-4 py-3 bg-white/5 focus:bg-white/10 focus:border-[var(--color-rose-3)] focus:ring-1 focus:ring-[var(--color-rose-3)] transition-all outline-none text-white"
-                />
-              </div>
 
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="isFullPayment"
-                  name="isFullPayment"
-                  defaultChecked={settings?.isFullPayment}
-                  className="w-5 h-5 accent-[var(--color-rose-3)] rounded focus:ring-[var(--color-rose-3)]"
-                />
-                <label htmlFor="isFullPayment" className="text-sm font-medium opacity-80">
-                  Exigir pago completo al reservar (Ignora el porcentaje de anticipo)
-                </label>
-              </div>
-            </div>
-          </section>
 
           <div className="pt-6 border-t border-white/10 flex justify-end">
             <SubmitButton>

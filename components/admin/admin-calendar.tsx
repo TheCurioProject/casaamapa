@@ -125,8 +125,121 @@ export function AdminCalendar({
         </div>
       </div>
 
-      {/* Cloudbeds Style Matrix */}
-      <div className="bg-white/5 rounded-3xl border border-white/10 relative overflow-hidden flex flex-col">
+      {/* Mobile Activity List (Mobile First Variant) */}
+      <div className="md:hidden flex flex-col gap-4">
+        {(() => {
+          const start = startOfMonth(currentMonth);
+          const end = endOfMonth(currentMonth);
+          
+          const monthBookings = bookings.filter(b => {
+            const bStart = new Date(b.checkIn);
+            const bEnd = new Date(b.checkOut);
+            return (bStart <= end && bEnd >= start);
+          }).map(b => ({ ...b, sortDate: new Date(b.checkIn), type: 'booking' as const }));
+
+          const monthBlocks = blockedDates.filter(b => {
+            const bStart = new Date(b.startDate);
+            const bEnd = new Date(b.endDate);
+            return (bStart <= end && bEnd >= start);
+          }).map(b => ({ ...b, sortDate: new Date(b.startDate), type: 'block' as const }));
+
+          const activities = [...monthBookings, ...monthBlocks].sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+          if (activities.length === 0) {
+            return (
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center opacity-50 text-white">
+                No hay actividad para este mes.
+              </div>
+            );
+          }
+
+          return activities.map((act, idx) => {
+            const unit = units.find(u => u.id === (act.type === 'booking' ? (act as Booking).apartmentId : (act as BlockedDate).apartmentId));
+            
+            if (act.type === 'booking') {
+              const b = act as Booking;
+              return (
+                <div key={`booking-${b.id}-${idx}`} className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-white text-base flex items-center gap-2">
+                        {b.guestName}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest ${
+                      b.isManual ? 'bg-[var(--color-rose-1)]/20 text-[var(--color-rose-1)] border border-[var(--color-rose-1)]/30' : 'bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30'
+                    }`}>
+                      {b.isManual ? 'Manual' : 'Web'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black/20 text-white/80 border border-white/10 px-2 py-1 rounded text-xs font-semibold tracking-wide capitalize">
+                      {unit?.name || b.apartmentId}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Check-in</span>
+                      <span className="text-xs font-medium text-white/90">
+                        {format(new Date(b.checkIn), 'd MMM', { locale: es })}
+                      </span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Check-out</span>
+                      <span className="text-xs font-medium text-white/90">
+                        {format(new Date(b.checkOut), 'd MMM', { locale: es })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            } else {
+              const b = act as BlockedDate;
+              return (
+                <div key={`block-${b.id}-${idx}`} className="bg-[#9b4b62]/10 border border-[#9b4b62]/30 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-[#9b4b62]" />
+                      <p className="font-bold text-white text-base">Bloqueo</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest bg-[#9b4b62]/30 text-[#e0a8b9]`}>
+                      {b.isOtaBlock ? 'OTA' : 'Manual'}
+                    </span>
+                  </div>
+                  
+                  <p className="text-xs opacity-70 italic">{b.reason || 'Sin motivo especificado'}</p>
+
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black/20 text-white/80 border border-white/10 px-2 py-1 rounded text-xs font-semibold tracking-wide capitalize">
+                      {unit?.name || b.apartmentId}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Desde</span>
+                      <span className="text-xs font-medium text-white/90">
+                        {format(new Date(b.startDate), 'd MMM', { locale: es })}
+                      </span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Hasta</span>
+                      <span className="text-xs font-medium text-white/90">
+                        {format(new Date(b.endDate), 'd MMM', { locale: es })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+          });
+        })()}
+      </div>
+
+      {/* Cloudbeds Style Matrix (Desktop) */}
+      <div className="hidden md:flex bg-white/5 rounded-3xl border border-white/10 relative overflow-hidden flex-col">
         <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
           <div className="w-max pr-8">
             
@@ -196,8 +309,6 @@ export function AdminCalendar({
                             content = isStart ? <User className={`w-4 h-4 ${textColor}`} /> : null;
                           } else if (status?.type === 'block') {
                             const isOta = (status.data as BlockedDate).isOtaBlock;
-                            // Bloqueo OTA: Rosa Obscuro (ink-2 but darker or just something dark pink) -> let's use a custom hex or rose-3
-                            // Actually color-ink-2 is dark pinkish brown. Let's use #9b4b62 for OTA to make it distinct Rosa Obscuro.
                             cellColor = isOta ? 'bg-[#9b4b62] border-[#9b4b62]' : 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]'; // manual block same as manual booking or white/20
                             const textColor = isOta ? 'text-white' : 'text-[var(--color-ink)]';
                             

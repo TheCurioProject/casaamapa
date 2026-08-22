@@ -35,7 +35,7 @@ export default async function AdminBookingsPage() {
           <div className="p-8 text-center opacity-50 bg-white/5 rounded-2xl border border-white/10">No hay reservas directas aún.</div>
         ) : (
           bookings.map(booking => (
-            <div key={booking.id} className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-4 relative overflow-hidden group">
+            <div key={booking.id} className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-4 relative group">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-bold text-white text-base flex items-center gap-2">
