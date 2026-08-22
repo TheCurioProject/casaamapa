@@ -227,7 +227,7 @@ export function PricingCalendar({
 
                       if (status) {
                         cellClass += "bg-[var(--color-coral)] border-[var(--color-coral)] opacity-80 cursor-not-allowed";
-                        displayPrice = null;
+                        displayPrice = undefined;
                       } else if (isPast) {
                         cellClass += "bg-white/5 border-transparent opacity-30 cursor-not-allowed";
                       } else if (selected) {

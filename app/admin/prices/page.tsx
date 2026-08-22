@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { PricingCalendar } from '@/components/admin/pricing-calendar';
 import { getPricesForDateRange } from '@/app/actions/prices';
 import { startOfMonth, addMonths, subMonths } from 'date-fns';
