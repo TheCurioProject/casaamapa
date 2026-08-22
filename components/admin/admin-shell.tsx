@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { 
   Calendar, Building, Settings, LogOut, LayoutDashboard, 
-  BookOpen, Link as LinkIcon, CreditCard, X, Menu, Globe
+  BookOpen, Link as LinkIcon, CreditCard, X, Menu, Globe, DollarSign
 } from 'lucide-react';
 import { useLoaderStore } from '@/store/useLoaderStore';
 
@@ -26,6 +26,7 @@ export function AdminShell({
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, desc: 'Vista general' },
     { name: 'Bookings', href: '/admin/bookings', icon: BookOpen, desc: 'Gestión de reservas' },
     { name: 'Calendario', href: '/admin/calendar', icon: Calendar, desc: 'Tape Chart' },
+    { name: 'Precios', href: '/admin/prices', icon: DollarSign, desc: 'Precios diarios' },
     { name: 'Unidades', href: '/admin/units', icon: Building, desc: 'Propiedades' },
     { name: 'iCal Sync', href: '/admin/ical', icon: LinkIcon, desc: 'Conexión OTAs' },
     { name: 'Stripe', href: '/admin/stripe', icon: CreditCard, desc: 'Pagos' },
