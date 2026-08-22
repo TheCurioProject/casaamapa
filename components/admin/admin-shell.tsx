@@ -102,7 +102,7 @@ export function AdminShell({
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 w-full min-h-screen relative overflow-x-hidden bg-[var(--color-ink-2)]">
-        <div className="p-4 md:p-12 w-full pb-24 md:pb-12 max-w-7xl mx-auto">
+        <div className="p-4 md:p-12 w-full pb-32 md:pb-12 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
@@ -208,23 +208,25 @@ export function AdminShell({
         )}
       </AnimatePresence>
 
-      {/* Mobile Floating Button */}
-      <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-6 left-0 right-0 z-[900] flex justify-center pointer-events-none">
-        <div className="pointer-events-auto">
-          <motion.button
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setIsToolsOpen(!isToolsOpen)}
-            className={`w-14 h-14 rounded-2xl bg-[var(--color-ink)] border border-white/20 text-white flex items-center justify-center shadow-2xl transition-all duration-300 ${
-              isToolsOpen ? 'ring-4 ring-white/20 scale-105' : 'hover:bg-[var(--color-ink-2)]'
-            }`}
-            aria-label="Tools Menu"
-          >
-            {isToolsOpen ? (
-              <X className="w-6 h-6 text-white" />
-            ) : (
-              <Menu className="w-6 h-6 text-white" />
-            )}
-          </motion.button>
+      {/* Mobile Bottom Navigation */}
+      <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-[900] bg-[var(--color-ink)] border-t border-white/10 pb-safe">
+        <div className="flex items-center justify-around px-2 py-3">
+          <Link href="/admin" onClick={() => handleNavigation('/admin')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-[9px] font-medium tracking-wide">Inicio</span>
+          </Link>
+          <Link href="/admin/bookings" onClick={() => handleNavigation('/admin/bookings')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/bookings' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-[9px] font-medium tracking-wide">Reservas</span>
+          </Link>
+          <Link href="/admin/calendar" onClick={() => handleNavigation('/admin/calendar')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/calendar' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+            <Calendar className="w-5 h-5" />
+            <span className="text-[9px] font-medium tracking-wide">Calendario</span>
+          </Link>
+          <button onClick={() => setIsToolsOpen(!isToolsOpen)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${isToolsOpen ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+            <Menu className="w-5 h-5" />
+            <span className="text-[9px] font-medium tracking-wide">Menú</span>
+          </button>
         </div>
       </nav>
     </div>

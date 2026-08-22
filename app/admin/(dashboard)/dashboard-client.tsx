@@ -68,7 +68,44 @@ export function AdminDashboardClient({
             <p className="text-xs opacity-60 uppercase tracking-widest text-[var(--color-sand)]">Las más recientes de la plataforma</p>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-white/10">
+          {recentBookings.length === 0 ? (
+            <div className="p-8 text-center opacity-50 text-white">No hay reservas recientes.</div>
+          ) : recentBookings.map((b: any, index: number) => (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index }}
+              key={b.id}
+              className="p-6 flex flex-col gap-3"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-bold text-white text-base mb-0.5">{b.guestName}</div>
+                  <div className="opacity-60 text-[10px] uppercase tracking-widest text-white/70">{b.guestEmail}</div>
+                </div>
+                <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest ${
+                  b.status === 'confirmed' ? 'bg-[#E8F5E9]/20 text-[#81C784]' :
+                  b.status === 'pending' ? 'bg-[#FFF3E0]/20 text-[#FFB74D]' :
+                  'bg-[#FFEBEE]/20 text-[#E57373]'
+                }`}>
+                  {b.status}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="bg-[var(--color-rose-3)]/20 text-[var(--color-rose-2)] px-2 py-1 rounded text-xs font-semibold tracking-wide">
+                  {b.unit?.name || b.apartmentId}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 opacity-80 text-xs text-white bg-black/20 p-2 rounded-lg w-fit">
+                <span>{new Date(b.checkIn).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</span>
+                <ArrowUpRight className="w-3 h-3 opacity-40 mx-1" />
+                <span>{new Date(b.checkOut).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
