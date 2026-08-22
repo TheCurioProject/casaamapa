@@ -1,8 +1,6 @@
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
+import ical from 'ical-generator';
 
 export async function GET(
   request: NextRequest,
@@ -22,7 +20,7 @@ export async function GET(
     });
 
     if (!targetUnit) {
-      return new NextResponse('Unit not found', { status: 404 });
+      return new Response('Unit not found', { status: 404 });
     }
 
     // CROSS-BLOCKING LOGIC
@@ -57,60 +55,50 @@ export async function GET(
       }
     });
 
-    // Generate iCal string
-    const nowStr = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    
-    let icalContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//CasaAmapa//Calendar//EN',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'X-WR-CALNAME:Casa Amapa',
-      'X-WR-TIMEZONE:America/Mexico_City'
-    ];
-
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0].replace(/-/g, '');
-    };
+    const cal = ical({
+      name: `Casa Amapa - ${targetUnit.name}`,
+      prodId: { company: 'CasaAmapa', product: 'Calendar', language: 'EN' },
+      timezone: 'America/Mexico_City',
+      scale: 'GREGORIAN',
+      method: 'PUBLISH' as any
+    });
 
     // Add bookings
     bookings.forEach(booking => {
-      icalContent.push('BEGIN:VEVENT');
-      icalContent.push(`UID:booking-${booking.id}@amapachacala.com`);
-      icalContent.push(`DTSTAMP:${nowStr}`);
-      icalContent.push(`DTSTART;VALUE=DATE:${formatDate(booking.checkIn)}`);
-      // iCal DTEND is exclusive, which matches checkOut date conceptually
-      icalContent.push(`DTEND;VALUE=DATE:${formatDate(booking.checkOut)}`);
-      icalContent.push(`SUMMARY:Amapa Booking (${booking.apartmentId})`);
-      icalContent.push('END:VEVENT');
+      // iCal generator expects start and end Date objects or moment/luxon.
+      // Since our booking.checkIn is a Date at midnight, we can set allDay: true
+      cal.createEvent({
+        start: booking.checkIn,
+        end: booking.checkOut,
+        allDay: true,
+        summary: `Reservado`,
+        id: `booking-${booking.id}@amapachacala.com`,
+      });
     });
 
     // Add blocks
     blocks.forEach(block => {
-      icalContent.push('BEGIN:VEVENT');
-      icalContent.push(`UID:block-${block.id}@amapachacala.com`);
-      icalContent.push(`DTSTAMP:${nowStr}`);
-      icalContent.push(`DTSTART;VALUE=DATE:${formatDate(block.startDate)}`);
-      icalContent.push(`DTEND;VALUE=DATE:${formatDate(block.endDate)}`);
-      icalContent.push(`SUMMARY:${block.reason || 'Blocked'} (${block.apartmentId})`);
-      icalContent.push('END:VEVENT');
+      cal.createEvent({
+        start: block.startDate,
+        end: block.endDate,
+        allDay: true,
+        summary: block.reason || 'Bloqueado',
+        id: `block-${block.id}@amapachacala.com`,
+      });
     });
 
     // Always include a dummy event if calendar is completely empty to prevent strict parsers like Airbnb from rejecting it
     if (bookings.length === 0 && blocks.length === 0) {
-      icalContent.push('BEGIN:VEVENT');
-      icalContent.push(`UID:sync-init-${unitId}@amapachacala.com`);
-      icalContent.push(`DTSTAMP:${nowStr}`);
-      icalContent.push(`DTSTART;VALUE=DATE:20200101`);
-      icalContent.push(`DTEND;VALUE=DATE:20200102`);
-      icalContent.push(`SUMMARY:Calendar Sync Initialization`);
-      icalContent.push('END:VEVENT');
+      cal.createEvent({
+        start: new Date(2020, 0, 1),
+        end: new Date(2020, 0, 2),
+        allDay: true,
+        summary: 'Sincronización de Calendario',
+        id: `sync-init-${unitId}@amapachacala.com`,
+      });
     }
 
-    icalContent.push('END:VCALENDAR');
-
-    const calendarString = icalContent.join('\r\n') + '\r\n'; // ensure trailing CRLF
+    const calendarString = cal.toString();
 
     return new Response(calendarString, {
       status: 200,
@@ -126,6 +114,6 @@ export async function GET(
 
   } catch (error) {
     console.error('Error generating iCal:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new Response('Internal Server Error', { status: 500 });
   }
 }
