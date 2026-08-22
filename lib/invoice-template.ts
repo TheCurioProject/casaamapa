@@ -24,8 +24,8 @@ export function getInvoiceHtml(booking: any) {
   
   .rules-section { margin-top: 40px; }
   .rules-title { font-family: "Georgia", serif; font-size: 22px; color: #42242C; margin-bottom: 20px; border-bottom: 2px solid #d98ba0; padding-bottom: 10px; display: inline-block; }
-  .rule-item { margin-bottom: 16px; font-size: 14px; line-height: 1.5; color: #555555; clear: both; overflow: hidden; display: flex; align-items: flex-start; gap: 12px;}
-  .rule-icon { color: #d0496c; font-size: 18px; margin-top: 2px; flex-shrink: 0; }
+  .rule-item { margin-bottom: 16px; font-size: 14px; line-height: 1.5; color: #555555; clear: both; overflow: hidden; display: flex; align-items: flex-start; gap: 8px;}
+  .rule-icon { color: #d0496c; font-size: 14px; margin-top: 3px; flex-shrink: 0; }
   .rule-text { flex-grow: 1; }
   
   .highlight-rule { background-color: #fff0f0; border-left: 4px solid #d0496c; padding: 15px; border-radius: 4px; color: #d0496c; font-weight: bold; margin: 25px 0; font-size: 13px; letter-spacing: 0.5px; }
@@ -42,7 +42,7 @@ export function getInvoiceHtml(booking: any) {
   <div class="container">
     <div class="header">
       <div class="logo-container">
-        <img src="https://amapachacala.com/images/arco.png" alt="Arco Casa Amapa" class="logo" />
+        <img src="data:image/png;base64,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" alt="Arco Casa Amapa" class="logo" />
       </div>
       <h1 class="title">Casa Amapa</h1>
       <div class="subtitle">Comprobante de Reserva</div>
@@ -118,7 +118,7 @@ export function getInvoiceHtml(booking: any) {
       <p style="margin: 0 0 10px 0;"><strong>Soporte y Contacto</strong></p>
       <p style="margin: 0 0 5px 0;">Email: <a href="mailto:thecurio.dev@hotmail.com">thecurio.dev@hotmail.com</a></p>
       <p style="margin: 0 0 15px 0;">Teléfono: 311 394 4729</p>
-      <p style="font-size: 10px; opacity: 0.7;">Casa Amapa · Zihuatanejo, Guerrero, México</p>
+      <p style="font-size: 10px; opacity: 0.7;">Casa Amapa · Chacala, Nayarit, México</p>
     </div>
   </div>
 </body>

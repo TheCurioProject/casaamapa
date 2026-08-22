@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { MoreHorizontal, Mail, Trash2, Edit, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDialogStore } from '@/store/useDialogStore';
 
 import { EditBookingModal } from './edit-booking-modal';
 
@@ -11,23 +12,31 @@ export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId:
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta reserva? Esta acción no se puede deshacer.')) return;
-    
-    setLoading(true);
-    try {
-      await fetch(`/api/admin/bookings/${bookingId}`, { method: 'DELETE' });
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      alert('Error al eliminar reserva');
-      setLoading(false);
-    }
+  const dialog = useDialogStore();
+
+  const handleDelete = () => {
+    dialog.confirm({
+      title: '¿Eliminar Reserva?',
+      description: '¿Estás seguro de que deseas eliminar esta reserva? Esta acción no se puede deshacer.',
+      type: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await fetch(`/api/admin/bookings/${bookingId}`, { method: 'DELETE' });
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          dialog.alert({ title: 'Error', description: 'Ocurrió un error al intentar eliminar la reserva.', type: 'danger' });
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleSendInvoice = async () => {
     if (!guestEmail) {
-      alert('Esta reserva no tiene un correo electrónico asociado.');
+      dialog.alert({ title: 'Sin correo', description: 'Esta reserva no tiene un correo electrónico asociado.', type: 'alert' });
       return;
     }
     setLoading(true);
@@ -38,10 +47,10 @@ export function BookingActions({ bookingId, isManual, guestEmail }: { bookingId:
         body: JSON.stringify({ bookingId })
       });
       if (!res.ok) throw new Error('Error al enviar');
-      alert('Invoice enviado exitosamente.');
+      dialog.alert({ title: '¡Enviado!', description: 'El comprobante ha sido reenviado exitosamente al cliente.', type: 'confirm' });
     } catch (err) {
       console.error(err);
-      alert('Error al enviar invoice.');
+      dialog.alert({ title: 'Error de envío', description: 'No se pudo enviar el invoice en este momento.', type: 'danger' });
     } finally {
       setLoading(false);
       setIsOpen(false);

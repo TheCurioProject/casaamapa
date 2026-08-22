@@ -2,19 +2,26 @@
 
 import { useState } from 'react';
 import { updateSettings } from '@/app/actions/admin';
+import { useDialogStore } from '@/store/useDialogStore';
 
 export function SettingsForm({ initialSettings }: { initialSettings: { depositPercentage: number, isFullPayment: boolean } }) {
   const [isFull, setIsFull] = useState(initialSettings.isFullPayment);
   const [percentage, setPercentage] = useState(initialSettings.depositPercentage);
   const [loading, setLoading] = useState(false);
+  const dialog = useDialogStore();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    await updateSettings(formData);
-    setLoading(false);
-    alert('Configuración guardada');
+    try {
+      await updateSettings(formData);
+      dialog.alert({ title: 'Configuración Guardada', description: 'Los ajustes se han actualizado correctamente.', type: 'confirm' });
+    } catch (err) {
+      dialog.alert({ title: 'Error', description: 'No se pudo guardar la configuración.', type: 'danger' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

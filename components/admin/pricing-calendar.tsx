@@ -10,6 +10,7 @@ import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Save, X, Info, RotateCcw, Loader2 } from 'lucide-react';
 import { useLoaderStore } from '@/store/useLoaderStore';
 import { setPricesForDates, deletePricesForDates } from '@/app/actions/prices';
+import { useDialogStore } from '@/store/useDialogStore';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; status: string };
@@ -40,6 +41,7 @@ export function PricingCalendar({
   const [isResetting, setIsResetting] = useState(false);
 
   const { showLoader, hideLoader } = useLoaderStore();
+  const dialog = useDialogStore();
 
   const handlePrevMonth = () => { setDirection(-1); setCurrentMonth(subMonths(currentMonth, 1)); };
   const handleNextMonth = () => { setDirection(1); setCurrentMonth(addMonths(currentMonth, 1)); };
@@ -152,7 +154,7 @@ export function PricingCalendar({
       setSelectionEnd(null);
       window.location.reload(); // simple reload to get new data
     } else {
-      alert(res.error);
+      dialog.alert({ title: 'Error al Guardar', description: res.error || 'Error desconocido', type: 'danger' });
     }
   };
 
@@ -177,7 +179,7 @@ export function PricingCalendar({
       setSelectionEnd(null);
       window.location.reload();
     } else {
-      alert(res.error);
+      dialog.alert({ title: 'Error al Restablecer', description: res.error || 'Error desconocido', type: 'danger' });
     }
   };
 
