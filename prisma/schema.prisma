@@ -19,10 +19,24 @@ model Unit {
   icalUrls    String[]  @default([]) @map("ical_urls")
   bookings    Booking[]
   blockedDates BlockedDate[]
+  dailyPrices DailyPrice[]
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("units")
+}
+
+model DailyPrice {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apartmentId String   @map("apartment_id")
+  unit        Unit     @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  date        DateTime @db.Date
+  price       Int
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([apartmentId, date])
+  @@map("daily_prices")
 }
 
 model Booking {

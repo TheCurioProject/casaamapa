@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Building, Settings, LogOut, LayoutDashboard } from 'lucide-react';
+import { Calendar, Building, Settings, LogOut, LayoutDashboard, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function Sidebar({ onSignOut }: { onSignOut: () => void }) {
@@ -11,6 +11,7 @@ export function Sidebar({ onSignOut }: { onSignOut: () => void }) {
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Calendario', href: '/admin/calendar', icon: Calendar },
+    { name: 'Precios', href: '/admin/prices', icon: DollarSign },
     { name: 'Unidades', href: '/admin/units', icon: Building },
     { name: 'Ajustes', href: '/admin/settings', icon: Settings },
   ];
