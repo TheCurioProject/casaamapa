@@ -26,32 +26,32 @@ export default async function AdminUnitsPage() {
         </div>
         
         {/* Create new unit form */}
-        <form action={createUnit} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-end gap-4">
-          <div>
-            <label className="block text-[10px] uppercase tracking-widest font-medium opacity-70 mb-1">Nombre</label>
+        <form action={createUnit} className="bg-white/5 border border-white/10 rounded-2xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-end gap-4 w-full md:w-auto mt-6 md:mt-0 shadow-lg">
+          <div className="w-full sm:w-auto">
+            <label className="block text-[10px] uppercase tracking-widest font-medium opacity-70 mb-2">Nombre</label>
             <input 
               type="text" 
               name="name" 
               required
               placeholder="Ej. Suite Sur"
-              className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[var(--color-rose-3)] outline-none"
+              className="w-full sm:w-48 bg-black/20 border border-white/10 rounded-xl px-4 py-3 sm:py-2 text-sm focus:border-[var(--color-rose-3)] outline-none transition-colors"
             />
           </div>
-          <div>
-            <label className="block text-[10px] uppercase tracking-widest font-medium opacity-70 mb-1">Precio Base</label>
+          <div className="w-full sm:w-auto">
+            <label className="block text-[10px] uppercase tracking-widest font-medium opacity-70 mb-2">Precio Base</label>
             <input 
               type="number" 
               name="price" 
               required
               placeholder="3500"
-              className="w-24 bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-[var(--color-rose-3)] outline-none"
+              className="w-full sm:w-32 bg-black/20 border border-white/10 rounded-xl px-4 py-3 sm:py-2 text-sm focus:border-[var(--color-rose-3)] outline-none transition-colors"
             />
           </div>
-          <div className="flex items-center gap-2 mb-2">
-            <input type="checkbox" name="isWholeHouse" value="true" id="isWholeHouse" className="accent-[var(--color-rose-3)]" />
-            <label htmlFor="isWholeHouse" className="text-[10px] uppercase tracking-widest">¿Es Casa Entera?</label>
+          <div className="flex items-center gap-3 mb-2 sm:mb-3 w-full sm:w-auto p-2 sm:p-0 bg-black/10 sm:bg-transparent rounded-xl">
+            <input type="checkbox" name="isWholeHouse" value="true" id="isWholeHouse" className="accent-[var(--color-rose-3)] w-4 h-4" />
+            <label htmlFor="isWholeHouse" className="text-xs sm:text-[10px] uppercase tracking-widest font-medium">¿Es Casa Entera?</label>
           </div>
-          <SubmitButton className="bg-[var(--color-rose-3)] text-white hover:bg-[var(--color-rose-2)] rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-2">
+          <SubmitButton className="w-full sm:w-auto bg-[var(--color-rose-3)] text-[var(--color-ink)] hover:bg-[var(--color-rose-2)] rounded-xl px-6 py-3.5 sm:py-2.5 text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 transition-colors mt-2 sm:mt-0">
             <Plus className="w-4 h-4" /> Añadir
           </SubmitButton>
         </form>
@@ -81,51 +81,51 @@ export default async function AdminUnitsPage() {
 
             <form action={updatePrice} className="flex flex-col sm:flex-row sm:items-end gap-4 mb-8">
               <input type="hidden" name="id" value={unit.id} />
-              <div className="flex-1">
+              <div className="flex-1 w-full">
                 <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-2">Precio Base (MXN)</label>
                 <input 
                   type="number" 
                   name="price"
                   defaultValue={unit.price}
-                  className="w-full bg-black/20 border-b border-white/20 pb-2 focus:border-[var(--color-rose-3)] outline-none transition-colors text-xl font-medium"
+                  className="w-full bg-black/20 border-b-2 border-white/20 pb-3 focus:border-[var(--color-rose-3)] outline-none transition-colors text-2xl font-medium px-2 rounded-t-lg"
                 />
               </div>
-              <SubmitButton className="bg-white/10 text-white rounded-xl px-6 py-2.5 text-xs uppercase tracking-widest hover:bg-[var(--color-rose-3)] transition-colors">
+              <SubmitButton className="w-full sm:w-auto bg-white/10 text-white rounded-xl px-6 py-4 sm:py-3 text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors mt-2 sm:mt-0 flex justify-center">
                 Actualizar Precio
               </SubmitButton>
             </form>
 
             <form action={updateIcalUrls} className="flex flex-col gap-4 flex-1">
               <input type="hidden" name="id" value={unit.id} />
-              <div className="flex-1">
-                <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-2 flex justify-between">
-                  <span>Importar iCal (Desde OTAs)</span>
-                  <span className="opacity-50 text-[10px]">Una URL por línea</span>
+              <div className="flex-1 w-full">
+                <label className="flex flex-col sm:flex-row justify-between sm:items-end mb-2 gap-1">
+                  <span className="text-xs uppercase tracking-widest font-medium opacity-70">Importar iCal (Desde OTAs)</span>
+                  <span className="opacity-50 text-[10px] uppercase tracking-widest">Una URL por línea</span>
                 </label>
                 <textarea 
                   name="icalUrls"
                   defaultValue={(unit.icalUrls || []).join('\n')}
                   rows={3}
                   placeholder="https://www.airbnb.com/calendar/ical/..."
-                  className="w-full border border-white/10 rounded-xl px-4 py-3 bg-black/20 focus:bg-black/40 focus:border-[var(--color-rose-3)] outline-none resize-none text-xs font-mono text-[var(--color-sand)]"
+                  className="w-full border border-white/10 rounded-xl px-4 py-4 sm:py-3 bg-black/20 focus:bg-black/40 focus:border-[var(--color-rose-3)] outline-none resize-none text-xs font-mono text-[var(--color-sand)]"
                 />
               </div>
-              <SubmitButton className="self-end bg-white/10 text-white rounded-xl px-6 py-2.5 text-xs uppercase tracking-widest hover:bg-[var(--color-rose-3)] transition-colors">
+              <SubmitButton className="w-full sm:w-auto sm:self-end bg-white/10 text-white rounded-xl px-6 py-4 sm:py-3 text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors flex justify-center">
                 Guardar URLs
               </SubmitButton>
             </form>
 
             {/* iCal Export Information */}
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-2">
+            <div className="mt-8 pt-8 border-t border-white/10">
+              <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-3">
                 Exportar iCal (Para OTAs)
               </label>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 bg-black/30 border border-white/5 rounded-lg px-3 py-2 text-[10px] sm:text-xs font-mono break-all text-[var(--color-rose-3)]">
+              <div className="flex items-center w-full">
+                <code className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-4 sm:py-3 text-[10px] sm:text-xs font-mono break-all text-[var(--color-rose-3)] shadow-inner">
                   https://amapachacala.com/api/ical/export/{unit.id}
                 </code>
               </div>
-              <p className="text-[10px] opacity-50 mt-2">Copia esta URL en Airbnb o Booking para sincronizar la disponibilidad de esta unidad.</p>
+              <p className="text-[10px] sm:text-xs opacity-50 mt-3 leading-relaxed">Copia esta URL en Airbnb o Booking para sincronizar la disponibilidad de esta unidad.</p>
             </div>
           </div>
         ))}
