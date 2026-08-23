@@ -64,25 +64,27 @@ export async function GET(
       method: 'PUBLISH' as any
     });
 
-    // Add bookings (Web reservations) - adding 1 extra day for cleaning
+    // Add bookings (Web reservations) - export exact checkIn and checkOut
     bookings.forEach(booking => {
-      const checkoutWithCleaning = new Date(booking.checkOut);
-      checkoutWithCleaning.setDate(checkoutWithCleaning.getDate() + 1);
-
       cal.createEvent({
         start: booking.checkIn,
-        end: checkoutWithCleaning,
+        end: booking.checkOut,
         allDay: true,
         summary: `Reservado`,
         id: `booking-${booking.id}@amapachacala.com`,
       });
     });
 
-    // Add blocks
+    // Add blocks (Manual and OTA)
     blocks.forEach(block => {
+      // Our DB stores endDate as the last blocked night (inclusive).
+      // iCal expects DTEND to be exclusive (the day after the last blocked night).
+      const blockEnd = new Date(block.endDate);
+      blockEnd.setDate(blockEnd.getDate() + 1);
+
       cal.createEvent({
         start: block.startDate,
-        end: block.endDate,
+        end: blockEnd,
         allDay: true,
         summary: block.reason || 'Bloqueado',
         id: `block-${block.id}@amapachacala.com`,

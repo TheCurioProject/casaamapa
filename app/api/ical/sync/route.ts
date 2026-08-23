@@ -63,9 +63,14 @@ export async function POST(request: NextRequest) {
             };
 
             const startDate = parseDateString(startMatch[1]);
-            const endDate = parseDateString(endMatch[1]);
+            const endDateRaw = parseDateString(endMatch[1]);
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDateRaw.getTime())) continue;
 
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) continue;
+            // iCal DTEND for VALUE=DATE is exclusive (it's the checkout day). 
+            // Our system stores endDate as the last blocked night (inclusive).
+            const endDate = new Date(endDateRaw);
+            endDate.setDate(endDate.getDate() - 1);
 
             // Check if this block already exists (by OTA UID or just by date overlap)
             // For simplicity, we'll store the UID in `reason` or `otaSource` and use `isOtaBlock`.
