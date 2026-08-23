@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { sendConfirmationEmail } from '@/app/actions/payments';
 import { createPendingBooking } from '@/app/actions/bookings';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
@@ -28,22 +27,20 @@ function CheckoutForm({ bookingId, onSuccess }: { bookingId: string, onSuccess: 
       return;
     }
 
-    // Process payment (simulated redirect or server handling)
+    // Process payment
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/es?booking_success=true`,
+        return_url: `${window.location.origin}/es?booking_success=true&booking_id=${bookingId}`,
       },
-      redirect: 'if_required', // Handle success here instead of redirecting if possible
+      // By using 'always', Stripe will redirect the user upon success.
+      // The frontend will intercept 'booking_success=true' on the main layout to show the modal.
+      redirect: 'always', 
     });
 
     if (confirmError) {
       setError(confirmError.message ?? 'El pago falló');
       setLoading(false);
-    } else {
-      // Payment succeeded!
-      await sendConfirmationEmail(bookingId);
-      onSuccess();
     }
   };
 

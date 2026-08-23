@@ -238,7 +238,7 @@ export function BookingModal() {
     setBookingId(res.booking.id);
 
     // Initialize Payment Intent
-    const payment = await createPaymentIntent(totalPrice, 'mxn');
+    const payment = await createPaymentIntent(totalPrice, 'mxn', res.booking.id);
 
     if (payment.error || !payment.clientSecret) {
       setError(payment.error || 'Error iniciando el pago');

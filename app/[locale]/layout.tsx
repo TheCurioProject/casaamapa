@@ -15,6 +15,8 @@ import { LenisProvider } from '@/components/providers/lenis-provider';
 import { BookingModal } from '@/components/ui/booking-modal';
 import { Preloader } from '@/components/ui/preloader';
 import { GlobalLoader } from '@/components/ui/global-loader';
+import { BookingSuccessModal } from '@/components/ui/booking-success-modal';
+import { Suspense } from 'react';
 
 const montserratAlternates = Montserrat_Alternates({
   variable: "--font-montserrat",
@@ -151,6 +153,9 @@ export default async function RootLayout({
             <Footer />
 
             <BookingModal />
+            <Suspense fallback={null}>
+              <BookingSuccessModal />
+            </Suspense>
           </LenisProvider>
         </NextIntlClientProvider>
       </body>
