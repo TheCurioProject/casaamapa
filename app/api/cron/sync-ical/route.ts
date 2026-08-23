@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, ExtTxClient } from '@/lib/db';
 import ical from 'node-ical';
 
 export const dynamic = 'force-dynamic';
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
           }
 
           // Transaction: Delete old blocks for this specific OTA URL, and insert new ones
-          await prisma.$transaction(async (tx) => {
+          await prisma.$transaction(async (tx: ExtTxClient) => {
             await tx.blockedDate.deleteMany({
               where: {
                 apartmentId: unit.id,

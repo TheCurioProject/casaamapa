@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/db';
+import { prisma, ExtTxClient } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -77,7 +77,7 @@ export async function createPendingBooking(data: {
   try {
     await cleanupExpiredPendingBookings();
 
-    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const booking = await prisma.$transaction(async (tx: ExtTxClient) => {
       let idsToCheck = [data.apartmentId];
       if (data.apartmentId === 'amapa') {
         idsToCheck = ['amapa', 'tierra', 'aire', 'agua'];
