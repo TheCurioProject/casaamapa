@@ -51,11 +51,14 @@ export async function POST(request: NextRequest) {
 
             const parseDateString = (dateStr: string) => {
               const cleanStr = dateStr.trim();
-              if (cleanStr.length === 8) {
-                // YYYYMMDD
-                return new Date(`${cleanStr.slice(0,4)}-${cleanStr.slice(4,6)}-${cleanStr.slice(6,8)}T12:00:00Z`);
+              const match = cleanStr.match(/^(\d{4})-?(\d{2})-?(\d{2})/);
+              if (match) {
+                const year = match[1];
+                const month = match[2];
+                const day = match[3];
+                // Forzar 12:00 PM UTC para evitar cambios de día al ajustar zona horaria
+                return new Date(`${year}-${month}-${day}T12:00:00Z`);
               }
-              // Try standard parse
               return new Date(cleanStr);
             };
 
