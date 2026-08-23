@@ -39,8 +39,9 @@ interface AptModalProps {
 
 function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   
-  const { scrollYProgress } = useScroll({ container: containerRef });
+  const { scrollYProgress } = useScroll({ container: scrollRef });
   const scaleY = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
@@ -130,7 +131,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
   const touchState = useRef({ startY: 0, currentY: 0, isDragging: false });
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (containerRef.current && containerRef.current.scrollTop <= 0) {
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
       touchState.current.startY = e.targetTouches[0].clientY;
       touchState.current.isDragging = true;
     }
@@ -195,37 +196,42 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         style={{ backgroundColor, color: textColor }}
-        className="w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl overflow-y-auto relative flex flex-col shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain transform-gpu"
+        className="w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl relative flex flex-col shadow-2xl transform-gpu overflow-hidden"
       >
-        {/* Custom Animated Scrollbar */}
+        {/* Custom Animated Scrollbar - absolute to modal, doesn't scroll with content */}
         <motion.div
           style={{ scaleY }}
-          className="hidden md:block absolute top-4 right-2 bottom-4 w-2 bg-[var(--color-rose-3)] origin-top z-50 rounded-full opacity-80"
+          className="absolute top-4 right-2 bottom-4 w-1.5 md:w-2 bg-[var(--color-rose-3)] origin-top z-50 rounded-full opacity-80"
         />
 
-        {/* Header & Close Button */}
-        <div className="sticky top-0 z-10 flex flex-col bg-transparent pb-4 pt-2 md:pt-4 pointer-events-none">
-          {/* Drag Handle for Mobile */}
-          <div className="w-full flex justify-center pt-2 pb-2 md:hidden pointer-events-auto">
-            <div className="w-12 h-1.5 bg-[rgba(94,58,80,0.2)] rounded-full" />
+        {/* Scrollable Content Container */}
+        <div 
+          ref={scrollRef}
+          className="flex-1 w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain"
+        >
+          {/* Header & Close Button */}
+          <div className="sticky top-0 z-10 flex flex-col bg-transparent pb-4 pt-2 md:pt-4 pointer-events-none">
+            {/* Drag Handle for All Touch Devices */}
+            <div className="w-full flex justify-center pt-2 pb-2 pointer-events-auto">
+              <div className="w-12 h-1.5 bg-[rgba(94,58,80,0.2)] rounded-full" />
+            </div>
+            
+            <div className="flex justify-end items-start px-4 md:px-6 pointer-events-auto w-full">
+              {/* Close Button */}
+              <button 
+                onClick={onClose}
+                className="group flex items-center hover:opacity-70 transition-opacity p-2 -m-2"
+              >
+                <span className="font-sans text-[0.65rem] md:text-xs tracking-[0.2em] uppercase font-semibold drop-shadow-sm mr-2">Cerrar</span>
+                <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </motion.div>
+              </button>
+            </div>
           </div>
-          
-          <div className="flex justify-end items-start px-4 md:px-6 pointer-events-auto w-full">
-            {/* Close Button */}
-            <button 
-              onClick={onClose}
-              className="group flex items-center hover:opacity-70 transition-opacity p-2 -m-2"
-            >
-              <span className="font-sans text-[0.65rem] md:text-xs tracking-[0.2em] uppercase font-semibold drop-shadow-sm mr-2">Cerrar</span>
-              <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
-                <X className="w-4 h-4 md:w-5 md:h-5" />
-              </motion.div>
-            </button>
-          </div>
-        </div>
 
-        <div className="px-6 md:px-12 pb-24">
-          {/* Title Section */}
+          <div className="px-6 md:px-12 pb-24">
+            {/* Title Section */}
           <div className="mt-4 mb-16 text-center md:text-left">
             <span className="font-display text-[var(--color-rose-3)] tracking-widest uppercase text-base md:text-lg block mb-4">
               Departamento {localApt.num}
@@ -340,6 +346,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
               </div>
             </div>
           </div>
+        </div>
         </div>
       </motion.div>
     </motion.div>
