@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, Mail, Trash2, FileText, ChevronDown, Phone, Loader2, Globe, FileEdit, Link as LinkIcon, PenTool } from 'lucide-react';
+import { Edit, Mail, Trash2, FileText, ChevronDown, Phone, Loader2, Globe, FileEdit, Link as LinkIcon, PenTool, ArrowUpRight } from 'lucide-react';
 import { useDialogStore } from '@/store/useDialogStore';
 import { EditBookingModal } from './edit-booking-modal';
 
