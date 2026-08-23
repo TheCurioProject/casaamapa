@@ -115,8 +115,8 @@ function BookingSection({
                         <span className="text-xs text-white">{booking.guests}</span>
                       </div>
                       <div className="flex flex-col gap-1 text-right">
-                        <span className="text-[9px] opacity-50 uppercase tracking-widest">Anticipo</span>
-                        <span className="text-xs text-white">{booking.depositPercentage || 50}%</span>
+                        <span className="text-[9px] opacity-50 uppercase tracking-widest">{booking.isManual ? 'Anticipo' : 'Estado de Pago'}</span>
+                        <span className="text-xs text-white">{booking.isManual ? `${booking.depositPercentage || 50}%` : 'Liquidado'}</span>
                       </div>
                     </div>
 
@@ -233,8 +233,8 @@ function BookingSection({
                                   <span className="text-sm font-medium text-white">{booking.guestPhone || 'No registrado'}</span>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                  <span className="text-[10px] opacity-50 uppercase tracking-widest">Anticipo Solicitado</span>
-                                  <span className="text-sm font-medium text-white">{booking.depositPercentage || 50}%</span>
+                                  <span className="text-[10px] opacity-50 uppercase tracking-widest">{booking.isManual ? 'Anticipo Solicitado' : 'Estado de Pago'}</span>
+                                  <span className="text-sm font-medium text-white">{booking.isManual ? `${booking.depositPercentage || 50}%` : 'Liquidación Total'}</span>
                                 </div>
                                 <div className="flex flex-col gap-1">
                                   <span className="text-[10px] opacity-50 uppercase tracking-widest">Huéspedes Totales</span>

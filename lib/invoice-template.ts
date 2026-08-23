@@ -66,10 +66,17 @@ export function getInvoiceHtml(booking: any) {
           <span class="detail-label">Total Estimado</span>
           <span class="detail-value">$${booking.totalPrice?.toLocaleString('es-MX')} MXN</span>
         </div>
+        ${booking.isManual ? `
         <div class="detail-row">
           <span class="detail-label">Anticipo Requerido</span>
           <span class="detail-value">${booking.depositPercentage}%</span>
         </div>
+        ` : `
+        <div class="detail-row">
+          <span class="detail-label">Estado de Pago</span>
+          <span class="detail-value">Liquidación Total</span>
+        </div>
+        `}
       </div>
       
       <div class="rules-section">

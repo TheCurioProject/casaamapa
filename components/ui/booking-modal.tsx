@@ -420,28 +420,26 @@ export function BookingModal() {
                           const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
                           if (d < t) return true;
                           
-                          if (!range?.from) {
-                            // If selecting check-in, cannot select a booked night.
-                            // cleaningDates represent checkout days, they are free for check-in!
-                            return bookedDates.some(bd => 
-                              new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d
-                            );
-                          } else {
-                            // If selecting check-out
+                          const isBooked = bookedDates.some(bd => new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d);
+                          const isCleaning = cleaningDates.some(cd => new Date(cd.getFullYear(), cd.getMonth(), cd.getDate()).getTime() === d);
+                          
+                          if (isBooked || isCleaning) return true;
+                          
+                          if (range?.from) {
                             const fromTime = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()).getTime();
                             if (d <= fromTime) return true; // Cannot check out before or on check-in day (same day handled by onSelect)
                             
-                            // Find next booking after check-in
-                            const nextBookedDate = bookedDates
+                            const nextDisabledDate = [...bookedDates, ...cleaningDates]
                               .map(bd => new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime())
                               .filter(time => time > fromTime)
                               .sort((a, b) => a - b)[0];
                               
-                            if (nextBookedDate && d > nextBookedDate) {
+                            if (nextDisabledDate && d > nextDisabledDate) {
                               return true;
                             }
                             return false;
                           }
+                          return false;
                         }}
                         className="custom-neumorphic-calendar font-sans !m-0"
                         locale={es}

@@ -271,7 +271,7 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
         {/* Overlay UI (Controls and Progress) */}
         <div 
           className={`absolute inset-x-0 bottom-0 p-5 md:p-8 pt-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-300 z-10 ${
-            isDragging || loadProgress < 100 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
+            isDragging || loadProgress < 100 || progress === 0 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
           }`}
           style={{ pointerEvents: isReady ? 'auto' : 'none' }}
         >
