@@ -19,18 +19,33 @@ export default async function AdminBookingsPage() {
     include: { unit: true }
   });
 
+  const blockedDates = await prisma.blockedDate.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { unit: true }
+  });
+
+  const webBookings = bookings.filter(b => !b.isManual);
+  const manualBookings = bookings.filter(b => b.isManual);
+  const otaBlocks = blockedDates.filter(b => b.isOtaBlock);
+  const manualBlocks = blockedDates.filter(b => !b.isOtaBlock);
+
   return (
     <div className="text-[var(--color-sand)] max-w-6xl mx-auto">
       <header className="mb-12">
         <h1 className="font-display text-4xl mb-2 text-white flex items-center gap-3">
           <BookOpen className="w-8 h-8 text-[var(--color-rose-3)]" />
-          Reservas
+          Reservas y Bloqueos
         </h1>
-        <p className="opacity-70 text-sm">Gestiona y revisa todas las reservas directas.</p>
+        <p className="opacity-70 text-sm">Gestiona y revisa todas las operaciones registradas en el calendario.</p>
       </header>
 
-      <Suspense fallback={<div className="p-8 text-center opacity-50">Cargando reservas...</div>}>
-        <BookingsListClient bookings={bookings} />
+      <Suspense fallback={<div className="p-8 text-center opacity-50">Cargando datos...</div>}>
+        <BookingsListClient 
+          webBookings={webBookings}
+          manualBookings={manualBookings}
+          otaBlocks={otaBlocks}
+          manualBlocks={manualBlocks}
+        />
       </Suspense>
     </div>
   );

@@ -492,7 +492,7 @@ export function AdminCalendar({
                 <div>
                   <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Origen / Motivo</p>
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5 text-sm italic">
-                    {selectedBlock.isOtaBlock ? `Bloqueo de OTA (ej. Airbnb/Booking)\nReferencia: ${selectedBlock.reason}` : selectedBlock.reason || 'Sin motivo especificado'}
+                    {selectedBlock.reason || 'Sin motivo especificado'}
                   </div>
                 </div>
               </div>

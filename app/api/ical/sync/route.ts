@@ -76,6 +76,13 @@ export async function POST(request: NextRequest) {
               }
             });
 
+            let otaName = 'OTA';
+            const lowerUrl = url.toLowerCase();
+            if (lowerUrl.includes('airbnb')) otaName = 'Airbnb';
+            else if (lowerUrl.includes('booking.com') || lowerUrl.includes('booking')) otaName = 'Booking.com';
+            else if (lowerUrl.includes('vrbo')) otaName = 'VRBO';
+            else if (lowerUrl.includes('expedia')) otaName = 'Expedia';
+
             if (!existingBlock) {
               await prisma.blockedDate.create({
                 data: {
@@ -84,7 +91,7 @@ export async function POST(request: NextRequest) {
                   endDate,
                   isOtaBlock: true,
                   otaSource: uid,
-                  reason: 'OTA Booking'
+                  reason: `Bloqueado por ${otaName}`
                 }
               });
               syncStats.added++;
