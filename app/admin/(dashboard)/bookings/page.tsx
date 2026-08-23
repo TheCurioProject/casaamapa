@@ -15,12 +15,12 @@ export default async function AdminBookingsPage() {
   if (!session) redirect('/admin/login');
 
   const bookings = await prisma.booking.findMany({
-    orderBy: { createdAt: 'desc' },
+    orderBy: { checkIn: 'desc' },
     include: { unit: true }
   });
 
   const blockedDates = await prisma.blockedDate.findMany({
-    orderBy: { createdAt: 'desc' },
+    orderBy: { startDate: 'desc' },
     include: { unit: true }
   });
 

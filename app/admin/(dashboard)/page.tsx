@@ -9,13 +9,15 @@ export default async function AdminDashboard() {
   if (!session) redirect('/admin/login');
 
   const bookings = await prisma.booking.findMany({
-    orderBy: { createdAt: 'desc' },
+    where: { checkOut: { gte: new Date() } },
+    orderBy: { checkIn: 'asc' },
     include: { unit: true },
     take: 20
   });
 
   const blockedDates = await prisma.blockedDate.findMany({
-    orderBy: { createdAt: 'desc' },
+    where: { endDate: { gte: new Date() } },
+    orderBy: { startDate: 'asc' },
     include: { unit: true },
     take: 20
   });
@@ -25,16 +27,24 @@ export default async function AdminDashboard() {
   const otaBlocks = blockedDates.filter(b => b.isOtaBlock);
   const manualBlocks = blockedDates.filter(b => !b.isOtaBlock);
 
-  const units = await prisma.unit.findMany();
+  const [totalBookings, totalRevenue, units, webBookingsCount, manualBookingsCount, otaBlocksCount, manualBlocksCount] = await Promise.all([
+    prisma.booking.count(),
+    prisma.booking.aggregate({ _sum: { totalPrice: true } }),
+    prisma.unit.findMany(),
+    prisma.booking.count({ where: { isManual: false } }),
+    prisma.booking.count({ where: { isManual: true } }),
+    prisma.blockedDate.count({ where: { isOtaBlock: true } }),
+    prisma.blockedDate.count({ where: { isOtaBlock: false } })
+  ]);
 
   const stats = {
-    total: bookings.length,
-    revenue: bookings.reduce((acc: any, curr: any) => acc + (curr.unit?.price || 0), 0),
+    total: totalBookings,
+    revenue: totalRevenue._sum.totalPrice || 0,
     units: units.length,
-    webBookingsCount: webBookings.length,
-    manualBookingsCount: manualBookings.length,
-    otaBlocksCount: otaBlocks.length,
-    manualBlocksCount: manualBlocks.length
+    webBookingsCount,
+    manualBookingsCount,
+    otaBlocksCount,
+    manualBlocksCount
   };
 
   return (
