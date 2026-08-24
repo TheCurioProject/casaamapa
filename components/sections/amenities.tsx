@@ -61,7 +61,7 @@ export function Amenities() {
             </div>
             <div>
               <h3 className="font-display text-[3.2rem] md:text-[2rem] text-white mb-[1.5vh]">Terraza Roof</h3>
-              <p className="opacity-90">Piscina de vista infinita (no climatizada), perfecta para refrescarse bajo el sol de Nayarit mientras el océano se extiende frente a ti.</p>
+              <p className="opacity-90">Piscina de vista infinita, perfecta para refrescarse bajo el sol de Nayarit mientras el océano se extiende frente a ti.</p>
             </div>
             <div>
               <h3 className="font-display text-[3.2rem] md:text-[2rem] text-white mb-[1.5vh]">Espacios Comunes</h3>

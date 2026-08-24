@@ -201,7 +201,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         {/* Custom Animated Scrollbar - absolute to modal, doesn't scroll with content */}
         <motion.div
           style={{ scaleY }}
-          className="absolute top-4 right-2 bottom-4 w-1.5 md:w-2 bg-[var(--color-rose-3)] origin-top z-50 rounded-full opacity-80"
+          className="hidden md:block absolute top-4 right-2 bottom-4 w-1.5 md:w-2 bg-[var(--color-rose-3)] origin-top z-50 rounded-full opacity-80"
         />
 
         {/* Scrollable Content Container */}

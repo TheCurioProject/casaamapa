@@ -125,13 +125,13 @@ export function EditBookingModal({
 
   const modifiersStyles = {
     currentBooking: {
-      color: 'var(--color-ink)',
-      backgroundColor: 'rgba(230, 160, 90, 0.3)', // Amber color for "being edited"
+      color: 'white',
+      backgroundColor: 'var(--color-rose-3)',
       fontWeight: 'bold',
       borderRadius: '50%',
       ...( !isInteracted ? {
-        boxShadow: '0 0 15px rgba(230, 160, 90, 0.8)',
-        border: '1px solid rgba(230, 160, 90, 0.5)',
+        boxShadow: '0 0 15px var(--color-rose-3)',
+        border: '1px solid var(--color-rose-3)',
       } : {})
     }
   };
@@ -235,7 +235,7 @@ export function EditBookingModal({
                   <div className="mb-4 flex items-center justify-between">
                     <span className="text-sm font-bold opacity-70 uppercase tracking-widest">Unidad: {selectedUnit?.name}</span>
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold">
-                      <div className="w-3 h-3 bg-[rgba(230,160,90,0.3)] rounded-full border border-[var(--color-ink)]" />
+                      <div className="w-3 h-3 bg-[var(--color-rose-3)] rounded-full border border-[var(--color-ink)]" />
                       Fechas Actuales
                     </div>
                   </div>
