@@ -7,6 +7,13 @@ import { signOut } from '@/auth';
 export const metadata = {
   title: 'Admin - Casa Amapa',
   robots: 'noindex, nofollow',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 import { GlobalDialog } from '@/components/ui/global-dialog';

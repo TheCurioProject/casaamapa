@@ -45,12 +45,6 @@ export const metadata: Metadata = {
     canonical: "/",
     languages: { "es": "/es", "en": "/en" },
   },
-  icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
-  },
-
   openGraph: {
     title: "Casa Amapa — Departamentos boutique en Playa Chacala",
     description: "Un refugio entre la selva y el mar. Tres departamentos boutique con piscina infinity en la Riviera Nayarit.",
