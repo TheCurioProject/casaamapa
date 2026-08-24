@@ -312,7 +312,7 @@ function BookingSection({
   );
 }
 
-function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, handleDeleteBlock, loadingAction }: any) {
+function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expandedId, toggleExpand, handleDeleteBlock, loadingAction }: any) {
   if (!blocks || blocks.length === 0) return null;
 
   return (
@@ -332,46 +332,173 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, handleD
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-white/5 border-b border-white/10">
+      {/* Mobile View */}
+      <div className="md:hidden flex flex-col gap-4 p-4">
+        {blocks.map((block: any) => {
+          const isExpanded = expandedId === block.id;
+          return (
+            <motion.div 
+              layout
+              key={block.id} 
+              onClick={() => toggleExpand(block.id)}
+              className={`bg-white/5 border rounded-[20px] p-5 flex flex-col gap-4 relative cursor-pointer overflow-hidden transition-colors ${
+                isExpanded ? 'border-[var(--color-rose-3)] bg-white/10 shadow-lg' : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              <motion.div layout className="flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-white text-base flex items-center gap-2">
+                    {block.reason || 'Sin motivo'}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest bg-white/10 text-white/70`}>
+                    {block.isOtaBlock ? 'OTA' : 'Manual'}
+                  </span>
+                  <motion.div 
+                    animate={{ rotate: isExpanded ? 180 : 0 }} 
+                    transition={{ duration: 0.3 }}
+                    className="text-white/50"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </motion.div>
+                </div>
+              </motion.div>
+              
+              <motion.div layout className="flex items-center gap-2">
+                <span className="bg-black/20 text-white/80 border border-white/10 px-2 py-1 rounded text-xs font-semibold tracking-wide capitalize">
+                  {block.unit?.name || block.apartmentId}
+                </span>
+              </motion.div>
+
+              <motion.div layout className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Desde</span>
+                  <span className="text-xs font-medium text-white/90">
+                    {format(new Date(block.startDate), 'd MMM', { locale: es })}
+                  </span>
+                </div>
+                <div className="flex flex-col text-right">
+                  <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Hasta</span>
+                  <span className="text-xs font-medium text-white/90">
+                    {format(new Date(block.endDate), 'd MMM yyyy', { locale: es })}
+                  </span>
+                </div>
+              </motion.div>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex flex-col gap-4 overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
+                      <p className="text-white/70 text-[10px] italic mb-2">
+                        {block.isOtaBlock ? 
+                          'Este bloqueo ha sido importado desde una plataforma externa.' : 
+                          'Bloqueo creado manualmente.'}
+                      </p>
+                      <button 
+                        onClick={() => handleDeleteBlock(block.id)}
+                        disabled={loadingAction === block.id}
+                        className="w-full bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30 py-3 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/30 transition-colors"
+                      >
+                        {loadingAction === block.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Eliminar Bloqueo
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-white/5 border-b border-white/10 uppercase tracking-widest text-[10px] opacity-70">
             <tr>
-              <th className="px-8 py-5 text-[0.65rem] uppercase tracking-widest font-semibold opacity-60 text-white">Motivo / Origen</th>
-              <th className="px-8 py-5 text-[0.65rem] uppercase tracking-widest font-semibold opacity-60 text-white">Unidad</th>
-              <th className="px-8 py-5 text-[0.65rem] uppercase tracking-widest font-semibold opacity-60 text-white">Desde / Hasta</th>
-              <th className="px-8 py-5 text-[0.65rem] uppercase tracking-widest font-semibold opacity-60 text-white text-right">Acciones</th>
+              <th className="px-6 py-4 font-medium">Motivo / Origen</th>
+              <th className="px-6 py-4 font-medium">Unidad</th>
+              <th className="px-6 py-4 font-medium">Fechas</th>
+              <th className="px-6 py-4 text-center">Detalles</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {blocks.map((block: any) => (
-              <tr key={block.id} className="hover:bg-white/5 transition-colors group">
-                <td className="px-8 py-5">
-                  <div className="font-medium text-white text-base">{block.reason || 'Sin motivo'}</div>
-                </td>
-                <td className="px-8 py-5">
-                  <span className="bg-black/20 border border-white/10 text-white/90 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide">
-                    {block.unit?.name || block.apartmentId}
-                  </span>
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-3 opacity-80 text-xs text-white">
-                    <span>{format(new Date(block.startDate), 'dd MMM yyyy', { locale: es })}</span>
-                    <ArrowUpRight className="w-3 h-3 opacity-40" />
-                    <span>{format(new Date(block.endDate), 'dd MMM yyyy', { locale: es })}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  <button 
-                    onClick={() => handleDeleteBlock(block.id)}
-                    disabled={loadingAction === block.id}
-                    className="inline-flex bg-red-500/10 text-red-400 hover:bg-red-500/20 px-3 py-2 rounded-lg transition-colors text-xs items-center gap-2 disabled:opacity-50"
+            {blocks.map((block: any) => {
+              const isExpanded = expandedId === block.id;
+              return (
+                <React.Fragment key={block.id}>
+                  <tr 
+                    onClick={() => toggleExpand(block.id)}
+                    className={`transition-colors group cursor-pointer ${isExpanded ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   >
-                    {loadingAction === block.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className="font-medium text-white flex items-center gap-2">
+                            {block.reason || 'Sin motivo'}
+                          </p>
+                          <span className="inline-block mt-1 bg-white/10 text-white/70 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-widest">
+                            {block.isOtaBlock ? 'OTA' : 'Manual'}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 capitalize">{block.unit?.name || block.apartmentId}</td>
+                    <td className="px-6 py-4 opacity-80">
+                      {format(new Date(block.startDate), 'd MMM yyyy', { locale: es })} - {format(new Date(block.endDate), 'd MMM yyyy', { locale: es })}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="inline-block opacity-50 group-hover:opacity-100 transition-opacity">
+                        <ChevronDown className="w-5 h-5" />
+                      </motion.div>
+                    </td>
+                  </tr>
+                  
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <tr className="bg-white/5 border-t-0">
+                        <td colSpan={4} className="p-0">
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-6 md:px-8 grid grid-cols-3 gap-8">
+                              <div className="col-span-2 flex flex-col justify-center">
+                                <p className="text-white/70 text-sm italic max-w-lg">
+                                  {block.isOtaBlock ? 
+                                    'Este bloqueo ha sido importado automáticamente desde una OTA (plataforma externa). Si lo eliminas, podría volver a aparecer en la siguiente sincronización si la OTA sigue reportándolo.' : 
+                                    'Este es un bloqueo creado manualmente por un administrador para cerrar disponibilidad.'}
+                                </p>
+                              </div>
+                              
+                              <div className="col-span-1 flex flex-col justify-center border-l border-white/10 pl-8">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteBlock(block.id); }}
+                                  disabled={loadingAction === block.id}
+                                  className="w-full bg-[var(--color-coral)]/20 text-[var(--color-coral)] border border-[var(--color-coral)]/30 py-2.5 rounded-xl font-bold tracking-widest uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[var(--color-coral)]/30 transition-colors"
+                                >
+                                  {loadingAction === block.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                  Eliminar Bloqueo
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -519,6 +646,8 @@ export function BookingsListClient({
           icon={LinkIcon}
           colorClass="bg-[#9b4b62]/20 text-[#e0a8b9]"
           blocks={otaBlocks}
+          expandedId={expandedId}
+          toggleExpand={toggleExpand}
           handleDeleteBlock={handleDeleteBlock}
           loadingAction={loadingAction}
         />
@@ -529,6 +658,8 @@ export function BookingsListClient({
           icon={PenTool}
           colorClass="bg-[var(--color-rose-1)]/20 text-[var(--color-rose-1)]"
           blocks={manualBlocks}
+          expandedId={expandedId}
+          toggleExpand={toggleExpand}
           handleDeleteBlock={handleDeleteBlock}
           loadingAction={loadingAction}
         />

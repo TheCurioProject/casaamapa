@@ -78,14 +78,16 @@ export function BookingModal() {
 
   const toggleModal = contextSafe((open: boolean) => {
     if (open) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       gsap.set(overlayRef.current, { display: 'flex' });
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.4 });
       if (scrollContainerRef.current) {
         gsap.fromTo(scrollContainerRef.current, { y: '100%' }, { y: 0, duration: 0.5, ease: 'power3.out' });
       }
     } else {
-      document.body.style.overflow = useBookingStore.getState().isAptModalOpen ? 'hidden' : '';
+      if (!useBookingStore.getState().isAptModalOpen) {
+        document.body.classList.remove('modal-open');
+      }
       if (scrollContainerRef.current) {
         gsap.to(scrollContainerRef.current, { y: '100%', duration: 0.4, ease: 'power3.in' });
       }
@@ -248,7 +250,8 @@ export function BookingModal() {
       guestName,
       guestEmail,
       guestPhone: `${lada.code} ${guestPhone}`,
-      guests: 2 // Or make dynamic if needed
+      guests: 2, // Or make dynamic if needed
+      totalPrice
     });
 
     if (res.error || !res.booking?.id) {

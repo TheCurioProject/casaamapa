@@ -106,7 +106,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
 
   // Lock body scroll when open and handle mounting
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     
     const preventDefault = (e: TouchEvent | WheelEvent) => {
       if (containerRef.current && containerRef.current.contains(e.target as Node)) {
@@ -121,7 +121,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     document.addEventListener('wheel', preventDefault, { passive: false });
     
     return () => {
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
       document.removeEventListener('touchmove', preventDefault);
       document.removeEventListener('wheel', preventDefault);
     };

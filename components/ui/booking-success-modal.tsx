@@ -21,6 +21,7 @@ export function BookingSuccessModal() {
       const id = searchParams.get('booking_id');
       setBookingId(id);
       setIsOpen(true);
+      document.body.classList.add('modal-open');
 
       if (id && !hasSentRef.current) {
         hasSentRef.current = true;
@@ -31,10 +32,15 @@ export function BookingSuccessModal() {
         }).catch(err => console.error('Failed to auto-send invoice', err));
       }
     }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
   }, [searchParams]);
 
   const handleClose = () => {
     setIsOpen(false);
+    document.body.classList.remove('modal-open');
     // Clean up URL without reloading
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);

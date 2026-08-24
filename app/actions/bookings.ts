@@ -73,6 +73,7 @@ export async function createPendingBooking(data: {
   guestEmail: string;
   guestPhone: string;
   guests: number;
+  totalPrice?: number;
 }) {
   try {
     await cleanupExpiredPendingBookings();

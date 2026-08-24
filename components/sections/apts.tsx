@@ -257,7 +257,7 @@ export function Apts() {
         >
 
 
-          <div className="apts-hwrap h-[100svh] overflow-hidden relative">
+          <div className="apts-hwrap h-[100svh] min-h-[600px] overflow-hidden relative">
             <div className="apts-hscroll flex items-center gap-[4vw] h-full px-[8vw] will-change-transform">
               <header className="flex-[0_0_62vw] flex flex-col gap-[3vh]">
                 <p className="kicker">{c.kicker}</p>
