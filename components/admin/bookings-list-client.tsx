@@ -574,10 +574,12 @@ export function BookingsListClient({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
   const dialog = useDialogStore();
 
   React.useEffect(() => {
+    setIsMounted(true);
     const editId = searchParams?.get('edit');
     if (editId && (webBookings.some(b => b.id === editId) || manualBookings.some(b => b.id === editId))) {
       setExpandedId(editId);
@@ -662,6 +664,8 @@ export function BookingsListClient({
   };
 
   const hasAnyData = webBookings.length > 0 || manualBookings.length > 0 || otaBlocks.length > 0 || manualBlocks.length > 0;
+
+  if (!isMounted) return null;
 
   return (
     <>

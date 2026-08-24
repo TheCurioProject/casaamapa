@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { getSettings, updateSettings } from '@/app/actions/settings';
 import { Settings, Save, Mail } from 'lucide-react';
 import { SubmitButton } from '@/components/admin/submit-button';
