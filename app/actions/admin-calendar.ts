@@ -12,27 +12,26 @@ export async function createManualBlock(data: { apartmentId: string; startDate: 
       idsToCheck = [data.apartmentId, 'amapa'];
     }
 
-    const [overlappingBooking, overlappingBlock] = await Promise.all([
-      prisma.booking.findFirst({
-        where: {
-          apartmentId: { in: idsToCheck },
-          status: { in: ['pending', 'confirmed'] },
-          AND: [
-            { checkIn: { lte: data.endDate } },
-            { checkOut: { gt: data.startDate } }
-          ]
-        }
-      }),
-      prisma.blockedDate.findFirst({
-        where: {
-          apartmentId: { in: idsToCheck },
-          AND: [
-            { startDate: { lte: data.endDate } },
-            { endDate: { gte: data.startDate } }
-          ]
-        }
-      })
-    ]);
+    const overlappingBooking = await prisma.booking.findFirst({
+      where: {
+        apartmentId: { in: idsToCheck },
+        status: { in: ['pending', 'confirmed'] },
+        AND: [
+          { checkIn: { lte: data.endDate } },
+          { checkOut: { gt: data.startDate } }
+        ]
+      }
+    });
+
+    const overlappingBlock = await prisma.blockedDate.findFirst({
+      where: {
+        apartmentId: { in: idsToCheck },
+        AND: [
+          { startDate: { lte: data.endDate } },
+          { endDate: { gt: data.startDate } }
+        ]
+      }
+    });
 
     if (overlappingBooking || overlappingBlock) {
       return { error: 'Las fechas seleccionadas se solapan con una reserva o bloqueo existente.' };
@@ -141,13 +140,11 @@ export async function createManualBooking(data: {
 }
 
 export async function getAdminCalendarData() {
-  const [units, bookings, blockedDates] = await Promise.all([
-    prisma.unit.findMany({ orderBy: { price: 'asc' } }),
-    prisma.booking.findMany({
-      where: { status: { in: ['pending', 'confirmed'] } }
-    }),
-    prisma.blockedDate.findMany()
-  ]);
+  const units = await prisma.unit.findMany({ orderBy: { price: 'asc' } });
+  const bookings = await prisma.booking.findMany({
+    where: { status: { in: ['pending', 'confirmed'] } }
+  });
+  const blockedDates = await prisma.blockedDate.findMany();
 
   return { units, bookings, blockedDates };
 }
