@@ -78,7 +78,7 @@ export function BookingModal() {
 
   const toggleModal = contextSafe((open: boolean) => {
     if (open) {
-      document.body.style.overflow = useBookingStore.getState().isAptModalOpen ? 'hidden' : '';
+      document.body.style.overflow = 'hidden';
       gsap.set(overlayRef.current, { display: 'flex' });
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.4 });
       if (scrollContainerRef.current) {
@@ -111,6 +111,28 @@ export function BookingModal() {
       });
     }
   });
+
+  // Comprehensive scroll lock for mobile/iOS
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const preventDefault = (e: TouchEvent | WheelEvent) => {
+      if (scrollContainerRef.current && scrollContainerRef.current.contains(e.target as Node)) {
+        return;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('wheel', preventDefault, { passive: false });
+    
+    return () => {
+      document.removeEventListener('touchmove', preventDefault);
+      document.removeEventListener('wheel', preventDefault);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     toggleModal(isOpen);
