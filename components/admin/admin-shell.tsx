@@ -41,7 +41,7 @@ export function AdminShell({
   };
 
   return (
-    <div className="flex w-full min-h-screen bg-[var(--color-ink-2)] text-[var(--color-sand)] font-body">
+    <div className="flex w-full min-h-[100dvh] bg-[var(--color-ink-2)] text-[var(--color-sand)] font-body">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-72 flex-col fixed inset-y-0 left-0 z-50 border-r border-white/10 bg-[var(--color-ink)] shadow-2xl">
         <div className="p-10 relative">
@@ -101,7 +101,7 @@ export function AdminShell({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-72 w-full min-h-screen relative overflow-x-hidden bg-[var(--color-ink-2)]">
+      <main className="flex-1 md:ml-72 w-full min-h-[100dvh] relative overflow-x-hidden bg-[var(--color-ink-2)]">
         <div className="p-4 pt-10 md:p-12 w-full pb-32 md:pb-12 max-w-7xl mx-auto">
           {children}
         </div>
@@ -209,7 +209,7 @@ export function AdminShell({
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation */}
-      <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-[900] bg-[var(--color-ink)] border-t border-white/10 pb-safe">
+      <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-[900] bg-[var(--color-ink)] border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around px-2 py-3">
           <Link href="/admin" onClick={() => handleNavigation('/admin')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
             <LayoutDashboard className="w-5 h-5" />

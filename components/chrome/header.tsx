@@ -8,8 +8,18 @@ export function Header() {
   const { openBooking, isOpen, isAptModalOpen } = useBookingStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
-  const [headerTheme, setHeaderTheme] = useState('dark');
-  const headerThemeRef = useRef('dark');
+  const [logoTheme, setLogoTheme] = useState('dark');
+  const [reserveTheme, setReserveTheme] = useState('dark');
+  const [menuBtnTheme, setMenuBtnTheme] = useState('dark');
+  
+  const logoThemeRef = useRef('dark');
+  const reserveThemeRef = useRef('dark');
+  const menuBtnThemeRef = useRef('dark');
+  
+  const logoRef = useRef<HTMLAnchorElement>(null);
+  const reserveRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+
   const [showScrollHint, setShowScrollHint] = useState(false);
 
   // Simplest way for now to observe the current theme set by sections
@@ -17,9 +27,12 @@ export function Header() {
     // Initial theme setup in case it's already set on body
     const initialTheme = document.body.dataset.theme || 'dark';
     setTheme(initialTheme);
-    setHeaderTheme(initialTheme);
-    headerThemeRef.current = initialTheme;
-
+    setLogoTheme(initialTheme);
+    setReserveTheme(initialTheme);
+    setMenuBtnTheme(initialTheme);
+    logoThemeRef.current = initialTheme;
+    reserveThemeRef.current = initialTheme;
+    menuBtnThemeRef.current = initialTheme;
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'data-theme') {
@@ -31,18 +44,40 @@ export function Header() {
     observer.observe(document.body, { attributes: true });
     
     const checkHeaderTheme = () => {
-      // Find what element is visually behind the header right now
-      const elements = document.elementsFromPoint(window.innerWidth / 2, 30);
-      for (const el of elements) {
-        const themeEl = el.closest('[data-theme]');
-        if (themeEl) {
-          const t = themeEl.getAttribute('data-theme');
-          if (t && t !== headerThemeRef.current) {
-            setHeaderTheme(t);
-            headerThemeRef.current = t;
+      const getTheme = (elRef: React.RefObject<HTMLElement | null>) => {
+        if (!elRef.current) return null;
+        const rect = elRef.current.getBoundingClientRect();
+        // Check center of the element to trigger when it's mostly inside the section
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const elements = document.elementsFromPoint(x, y);
+        for (const el of elements) {
+          // ignore header itself if it gets caught
+          if (el.tagName === 'HEADER' || el.tagName === 'NAV') continue;
+          const themeEl = el.closest('[data-theme]');
+          if (themeEl) {
+            return themeEl.getAttribute('data-theme') || 'dark';
           }
-          break; // Found the topmost layer that defines a theme
         }
+        return 'dark';
+      };
+
+      const lTheme = getTheme(logoRef);
+      if (lTheme && lTheme !== logoThemeRef.current) {
+        setLogoTheme(lTheme);
+        logoThemeRef.current = lTheme;
+      }
+
+      const rTheme = getTheme(reserveRef);
+      if (rTheme && rTheme !== reserveThemeRef.current) {
+        setReserveTheme(rTheme);
+        reserveThemeRef.current = rTheme;
+      }
+
+      const mTheme = getTheme(menuRef);
+      if (mTheme && mTheme !== menuBtnThemeRef.current) {
+        setMenuBtnTheme(mTheme);
+        menuBtnThemeRef.current = mTheme;
       }
     };
 
@@ -105,21 +140,22 @@ export function Header() {
         transition={{ duration: 1.2, delay: 2.0, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
+          <Link ref={logoRef} href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
             Casa Amapa
           </Link>
           <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.85rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${(showScrollHint && !isOpen && !isAptModalOpen) ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-             <span className={headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
-             <span className={`animate-bounce ${headerTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
+             <span className={logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
+             <span className={`animate-bounce ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
           </div>
         </div>
         
         <div className="flex items-center gap-[10px] pointer-events-auto">
           <button 
+            ref={reserveRef}
             onClick={() => openBooking()}
             className={`
               max-md:hidden h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium
-              ${theme === 'rose' 
+              ${reserveTheme === 'rose' || reserveTheme === 'light'
                 ? 'bg-[var(--color-ink)] text-[var(--color-cream)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)]' 
                 : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] hover:bg-[var(--color-ink)]'}
               ${isOpen ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}
@@ -129,9 +165,10 @@ export function Header() {
           </button>
           
           <button 
+            ref={menuRef}
             className={`
               w-[46px] h-[46px] rounded-full grid place-items-center content-center gap-[5px] transition-all duration-300
-              ${theme === 'rose'
+              ${menuBtnTheme === 'rose' || menuBtnTheme === 'light'
                 ? 'bg-[var(--color-ink)] hover:bg-[var(--color-cream)]'
                 : 'bg-[var(--color-rose-3)] hover:bg-[var(--color-ink)]'}
               ${(isOpen || isAptModalOpen) ? 'max-md:opacity-0 max-md:pointer-events-none max-md:scale-90' : 'max-md:opacity-100 max-md:scale-100'}
@@ -140,8 +177,8 @@ export function Header() {
             aria-label="Abrir menú"
             aria-expanded={menuOpen}
           >
-            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && headerTheme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? 'translate-y-[2.75px] rotate-45' : ''}`}></i>
-            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && headerTheme !== 'rose' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? '-translate-y-[2.75px] -rotate-45' : ''}`}></i>
+            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && menuBtnTheme !== 'rose' && menuBtnTheme !== 'light' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? 'translate-y-[2.75px] rotate-45' : ''}`}></i>
+            <i className={`block w-[18px] h-[1.5px] transition-transform duration-400 ease-[var(--ease-expo)] origin-center bg-[var(--color-cream)] ${menuOpen && menuBtnTheme !== 'rose' && menuBtnTheme !== 'light' ? '!bg-[var(--color-cream)]' : ''} ${menuOpen ? '-translate-y-[2.75px] -rotate-45' : ''}`}></i>
           </button>
         </div>
       </motion.header>

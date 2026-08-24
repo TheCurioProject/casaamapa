@@ -64,7 +64,7 @@ export function getInvoiceHtml(booking: any) {
         </div>
         <div class="detail-row">
           <span class="detail-label">Total Estimado</span>
-          <span class="detail-value">$${booking.totalPrice?.toLocaleString('es-MX')} MXN</span>
+          <span class="detail-value">${booking.totalPrice ? `$${booking.totalPrice.toLocaleString('es-MX')} MXN` : 'N/A'}</span>
         </div>
         ${booking.isManual ? `
         <div class="detail-row">

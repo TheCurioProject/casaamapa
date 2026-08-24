@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -107,7 +107,12 @@ function BookingSection({
                       <div className="flex flex-col gap-1 text-right">
                         <span className="text-[9px] opacity-50 uppercase tracking-widest">Total</span>
                         <span className="text-sm font-bold text-[var(--color-rose-3)]">
-                          {booking.totalPrice ? `$${booking.totalPrice.toLocaleString('es-MX')} MXN` : 'N/A'}
+                          {(() => {
+                            if (booking.totalPrice) return `$${booking.totalPrice.toLocaleString('es-MX')} MXN`;
+                            if (!booking.unit) return 'N/A';
+                            const nights = Math.max(1, differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn)));
+                            return `$${(nights * booking.unit.price).toLocaleString('es-MX')} MXN (Est.)`;
+                          })()}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -243,7 +248,12 @@ function BookingSection({
                                 <div className="flex flex-col gap-1">
                                   <span className="text-[10px] opacity-50 uppercase tracking-widest">Total de la Reservación</span>
                                   <span className="text-lg font-bold text-[var(--color-rose-3)]">
-                                    {booking.totalPrice ? `$${booking.totalPrice.toLocaleString('es-MX')} MXN` : 'N/A'}
+                                    {(() => {
+                                      if (booking.totalPrice) return `$${booking.totalPrice.toLocaleString('es-MX')} MXN`;
+                                      if (!booking.unit) return 'N/A';
+                                      const nights = Math.max(1, differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn)));
+                                      return `$${(nights * booking.unit.price).toLocaleString('es-MX')} MXN (Est.)`;
+                                    })()}
                                   </span>
                                 </div>
                               </div>

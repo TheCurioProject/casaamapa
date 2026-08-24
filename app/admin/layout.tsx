@@ -14,7 +14,7 @@ import { GlobalDialog } from '@/components/ui/global-dialog';
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
-      <body className="min-h-screen bg-[var(--color-cream)] text-[var(--color-ink)] selection:bg-[var(--color-rose-3)] selection:text-white">
+      <body className="min-h-[100dvh] bg-[var(--color-cream)] text-[var(--color-ink)] selection:bg-[var(--color-rose-3)] selection:text-white">
         {children}
         <GlobalDialog />
       </body>
