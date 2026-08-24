@@ -50,7 +50,7 @@ function CheckoutForm({ bookingId, onSuccess }: { bookingId: string, onSuccess: 
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       <button 
         disabled={!stripe || loading} 
-        className="bg-[var(--color-rose-2)] text-[var(--color-cream)] rounded-full px-[2.4em] py-[1em] text-[0.72rem] tracking-[0.28em] uppercase font-medium mt-4 hover:bg-[var(--color-rose-3)] disabled:opacity-50"
+        className="bg-[var(--color-ink)] text-[var(--color-cream)] rounded-full px-[2.4em] py-[1em] text-[0.72rem] tracking-[0.28em] uppercase font-medium mt-4 hover:bg-black disabled:opacity-50 transition-colors"
       >
         {loading ? 'Procesando...' : 'Pagar ahora'}
       </button>

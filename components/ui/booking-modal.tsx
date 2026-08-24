@@ -574,7 +574,7 @@ export function BookingModal() {
                 {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 flex items-start gap-2 shrink-0"><AlertCircle className="w-5 h-5 shrink-0" /><p>{error}</p></div>}
 
                 {!clientSecret ? (
-                  <button disabled={loading} onClick={handleCreateBooking} className="mt-auto bg-[var(--color-rose-2)] text-[var(--color-cream)] rounded-full px-8 py-4 text-sm tracking-[0.2em] uppercase font-medium hover:bg-[var(--color-rose-3)] disabled:opacity-50 transition-all flex justify-center items-center gap-2 w-full shrink-0">
+                  <button disabled={loading} onClick={handleCreateBooking} className="mt-auto bg-[var(--color-ink)] text-[var(--color-cream)] rounded-full px-8 py-4 text-sm tracking-[0.2em] uppercase font-medium hover:bg-black disabled:opacity-50 transition-all flex justify-center items-center gap-2 w-full shrink-0">
                     {loading && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
                     {loading ? 'Procesando...' : 'Pagar de forma segura'}
                   </button>
