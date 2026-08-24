@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Download, X, Mail } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,10 +14,22 @@ export function BookingSuccessModal() {
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
 
+  const hasSentRef = useRef(false);
+
   useEffect(() => {
     if (searchParams?.get('booking_success') === 'true') {
-      setBookingId(searchParams.get('booking_id'));
+      const id = searchParams.get('booking_id');
+      setBookingId(id);
       setIsOpen(true);
+
+      if (id && !hasSentRef.current) {
+        hasSentRef.current = true;
+        fetch('/api/admin/send-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: id })
+        }).catch(err => console.error('Failed to auto-send invoice', err));
+      }
     }
   }, [searchParams]);
 
