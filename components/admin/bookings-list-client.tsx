@@ -119,10 +119,39 @@ function BookingSection({
                         <span className="text-[9px] opacity-50 uppercase tracking-widest">Huéspedes</span>
                         <span className="text-xs text-white">{booking.guests}</span>
                       </div>
-                      <div className="flex flex-col gap-1 text-right">
-                        <span className="text-[9px] opacity-50 uppercase tracking-widest">{booking.isManual ? 'Anticipo' : 'Estado de Pago'}</span>
-                        <span className="text-xs text-white">{booking.isManual ? `${booking.depositPercentage || 50}%` : 'Liquidado'}</span>
-                      </div>
+                      {booking.isManual ? (
+                        <>
+                          <div className="flex flex-col gap-1 text-right">
+                            <span className="text-[9px] opacity-50 uppercase tracking-widest">Anticipo Pagado ({booking.depositPercentage || 50}%)</span>
+                            <span className="text-xs text-white">
+                              {(() => {
+                                const total = booking.totalPrice || 0;
+                                const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                return `$${amountPaid.toLocaleString('es-MX')} MXN`;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1 col-span-2 text-right border-t border-white/5 pt-2 mt-1">
+                            <span className="text-[9px] opacity-50 uppercase tracking-widest text-[var(--color-coral)]">Resto a Pagar</span>
+                            <span className="text-sm font-bold text-[var(--color-coral)]">
+                              {(() => {
+                                const total = booking.totalPrice || 0;
+                                const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                return `$${(total - amountPaid).toLocaleString('es-MX')} MXN`;
+                              })()}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-1 text-right">
+                          <span className="text-[9px] opacity-50 uppercase tracking-widest">Estado de Pago</span>
+                          <span className="text-xs text-white flex items-center justify-end gap-1">
+                            {booking.paymentBrand ? (
+                              <span className="uppercase">{booking.paymentBrand} {booking.paymentLast4 ? `**${booking.paymentLast4}` : ''}</span>
+                            ) : 'Liquidado'}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-2 pt-2">
@@ -237,10 +266,39 @@ function BookingSection({
                                   <span className="text-[10px] opacity-50 uppercase tracking-widest flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Teléfono Huésped</span>
                                   <span className="text-sm font-medium text-white">{booking.guestPhone || 'No registrado'}</span>
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-[10px] opacity-50 uppercase tracking-widest">{booking.isManual ? 'Anticipo Solicitado' : 'Estado de Pago'}</span>
-                                  <span className="text-sm font-medium text-white">{booking.isManual ? `${booking.depositPercentage || 50}%` : 'Liquidación Total'}</span>
-                                </div>
+                                {booking.isManual ? (
+                                  <>
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] opacity-50 uppercase tracking-widest">Anticipo Pagado ({booking.depositPercentage || 50}%)</span>
+                                      <span className="text-sm font-medium text-white">
+                                        {(() => {
+                                          const total = booking.totalPrice || 0;
+                                          const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                          return `$${amountPaid.toLocaleString('es-MX')} MXN`;
+                                        })()}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] opacity-50 uppercase tracking-widest text-[var(--color-coral)]">Resto a Pagar</span>
+                                      <span className="text-sm font-bold text-[var(--color-coral)]">
+                                        {(() => {
+                                          const total = booking.totalPrice || 0;
+                                          const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                          return `$${(total - amountPaid).toLocaleString('es-MX')} MXN`;
+                                        })()}
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] opacity-50 uppercase tracking-widest">Estado de Pago</span>
+                                    <span className="text-sm font-medium text-white flex items-center gap-2">
+                                      {booking.paymentBrand ? (
+                                        <span className="uppercase">{booking.paymentBrand} {booking.paymentLast4 ? `**${booking.paymentLast4}` : ''}</span>
+                                      ) : 'Liquidado'}
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="flex flex-col gap-1">
                                   <span className="text-[10px] opacity-50 uppercase tracking-widest">Huéspedes Totales</span>
                                   <span className="text-sm font-medium text-white">{booking.guests}</span>

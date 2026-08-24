@@ -44,10 +44,29 @@ export async function POST(req: Request) {
     }
 
     try {
-      // 1. Marcar reserva como confirmada (esto automáticamente bloquea las fechas)
+      let paymentBrand = null;
+      let paymentLast4 = null;
+      
+      if (paymentIntent.latest_charge) {
+        try {
+          const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+          if (charge.payment_method_details?.card) {
+            paymentBrand = charge.payment_method_details.card.brand;
+            paymentLast4 = charge.payment_method_details.card.last4;
+          }
+        } catch (e) {
+          console.error('Failed to retrieve charge details', e);
+        }
+      }
+
+      // 1. Marcar reserva como confirmada y guardar datos de tarjeta
       const booking = await prisma.booking.update({
         where: { id: bookingId },
-        data: { status: 'confirmed' },
+        data: { 
+          status: 'confirmed',
+          paymentBrand,
+          paymentLast4
+        },
         include: { unit: true }
       });
 

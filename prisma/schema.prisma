@@ -55,6 +55,8 @@ model Booking {
   idPhotoUrl             String?  @map("id_photo_url")
   depositPercentage      Int?     @map("deposit_percentage")
   totalPrice             Float?   @map("total_price")
+  paymentBrand           String?  @map("payment_brand")
+  paymentLast4           String?  @map("payment_last4")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("bookings")

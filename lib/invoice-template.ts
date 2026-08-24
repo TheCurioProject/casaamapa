@@ -1,6 +1,53 @@
 type BookingWithUnit = any; // We'll just use any for simplicity, or we can import the type if we know it.
 
 export function getInvoiceHtml(booking: any) {
+  let paymentDetails = '';
+
+  if (booking.isManual) {
+    const total = booking.totalPrice || 0;
+    const depositPercentage = booking.depositPercentage || 0;
+    const amountPaid = total * (depositPercentage / 100);
+    const amountDue = total - amountPaid;
+
+    paymentDetails = `
+        <div class="detail-row">
+          <span class="detail-label">Total de la Reserva</span>
+          <span class="detail-value">$${total.toLocaleString('es-MX')} MXN</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Anticipo Pagado (${depositPercentage}%)</span>
+          <span class="detail-value">$${amountPaid.toLocaleString('es-MX')} MXN</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Resto a Pagar</span>
+          <span class="detail-value" style="color: #d0496c; font-weight: bold;">$${amountDue.toLocaleString('es-MX')} MXN</span>
+        </div>
+        <div style="background-color: #fff0f0; border-left: 4px solid #d0496c; padding: 12px; border-radius: 4px; margin-top: 15px; font-size: 13px; color: #d0496c; line-height: 1.5;">
+          <strong>Aviso importante:</strong> El resto a pagar deberá ser liquidado a su llegada. Una vez realizado el pago, se le entregarán las claves de acceso (códigos) y se le dará el recorrido por las instalaciones.
+        </div>
+    `;
+  } else {
+    const total = booking.totalPrice || 0;
+    const brand = booking.paymentBrand ? booking.paymentBrand.toUpperCase() : 'TARJETA';
+    const last4 = booking.paymentLast4 ? `**** ${booking.paymentLast4}` : '';
+    const brandIcon = booking.paymentBrand === 'visa' ? '💳' : booking.paymentBrand === 'mastercard' ? '💳' : '💳'; // Fallback to generic icon if no specific image is available
+
+    paymentDetails = `
+        <div class="detail-row">
+          <span class="detail-label">Total Pagado</span>
+          <span class="detail-value">$${total.toLocaleString('es-MX')} MXN</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Método de Pago</span>
+          <span class="detail-value">
+            <span style="display: inline-flex; items-center: center; gap: 5px; font-size: 14px;">
+              ${brandIcon} ${brand} ${last4}
+            </span>
+          </span>
+        </div>
+    `;
+  }
+
   return `
 <!DOCTYPE html>
 <html>
@@ -62,21 +109,7 @@ export function getInvoiceHtml(booking: any) {
           <span class="detail-label">Huéspedes</span>
           <span class="detail-value">${booking.guests}</span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">Total Estimado</span>
-          <span class="detail-value">${booking.totalPrice ? `$${booking.totalPrice.toLocaleString('es-MX')} MXN` : 'N/A'}</span>
-        </div>
-        ${booking.isManual ? `
-        <div class="detail-row">
-          <span class="detail-label">Anticipo Requerido</span>
-          <span class="detail-value">${booking.depositPercentage}%</span>
-        </div>
-        ` : `
-        <div class="detail-row">
-          <span class="detail-label">Estado de Pago</span>
-          <span class="detail-value">Liquidación Total</span>
-        </div>
-        `}
+        ${paymentDetails}
       </div>
       
       <div class="rules-section">
