@@ -64,7 +64,7 @@ export function StripePayment({ clientSecret, bookingId, chargeAmount, onSuccess
   return (
     <div>
       <p className="mb-4 opacity-80 text-sm">
-        Monto a cobrar ahora: <strong>{chargeAmount} MXN</strong>
+        Monto a cobrar ahora: <strong>{chargeAmount.toLocaleString('es-MX')} MXN</strong>
       </p>
       <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#734a62' } } }}>
         <CheckoutForm bookingId={bookingId} onSuccess={onSuccess} />

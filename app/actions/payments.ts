@@ -11,14 +11,7 @@ const resend = new Resend((process.env.RESEND_API_KEY || 're_dummy') as string);
 
 export async function createPaymentIntent(amount: number, currency: string = 'mxn', bookingId?: string) {
   try {
-    const settings = await prisma.settings.findFirst();
-    const isFullPayment = settings?.isFullPayment ?? false;
-    const depositPercentage = settings?.depositPercentage ?? 50;
-
-    let finalAmount = amount;
-    if (!isFullPayment) {
-      finalAmount = Math.round(amount * (depositPercentage / 100));
-    }
+    const finalAmount = amount;
 
     // Stripe expects amount in cents
     const paymentIntent = await stripe.paymentIntents.create({
