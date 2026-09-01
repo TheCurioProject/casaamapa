@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
@@ -8,7 +8,7 @@ import { es } from 'date-fns/locale';
 import { differenceInDays } from 'date-fns';
 import { createManualBooking, createManualBlock } from '@/app/actions/admin-calendar';
 
-type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
+type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; dailyPrices?: { date: Date | string; price: number }[] };
 
 export function ManualBookingModal({
   isOpen,
@@ -42,8 +42,38 @@ export function ManualBookingModal({
 
   const [bookingResultId, setBookingResultId] = useState('');
 
-  const nights = range?.from && range?.to ? Math.max(1, differenceInDays(range.to, range.from)) : 0;
-  const estimatedPrice = selectedUnit ? nights * selectedUnit.price : 0;
+  const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+
+  useEffect(() => {
+    if (!selectedUnit || !range?.from || !range?.to) {
+      setEstimatedPrice(0);
+      return;
+    }
+    let total = 0;
+    const nightsCount = differenceInDays(range.to, range.from);
+    if (nightsCount <= 0) {
+      setEstimatedPrice(0);
+      return;
+    }
+
+    let currentDate = new Date(range.from);
+    currentDate.setHours(12, 0, 0, 0);
+
+    for (let i = 0; i < nightsCount; i++) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      
+      const customPrice = selectedUnit.dailyPrices?.find(dp => {
+        const dpDate = new Date(dp.date);
+        dpDate.setHours(12, 0, 0, 0);
+        return dpDate.toISOString().split('T')[0] === dateStr;
+      });
+
+      total += customPrice ? customPrice.price : selectedUnit.price;
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setEstimatedPrice(total);
+  }, [selectedUnit, range]);
 
   const computedDates = useMemo(() => {
     if (!selectedUnit) return { booked: [], cleaning: [] };
@@ -322,10 +352,15 @@ export function ManualBookingModal({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Total Estimado</label>
-                      <div className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)]">
-                        ${estimatedPrice.toLocaleString('es-MX')}
-                      </div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Total Estimado ($ MXN)</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={estimatedPrice}
+                        onChange={e => setEstimatedPrice(Number(e.target.value))}
+                        className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)] focus:bg-white outline-none"
+                      />
                     </div>
                   </div>
                 </div>

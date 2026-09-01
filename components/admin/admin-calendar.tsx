@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus, Search, Filter } from 'lucide-react';
 import { ManualBookingModal } from './manual-booking-modal';
 
-type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; icalUrls?: string[] };
+type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; icalUrls?: string[]; dailyPrices?: { date: Date | string; price: number }[] };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; guestName: string; status: string; isManual: boolean };
 type BlockedDate = { id: string; apartmentId: string; startDate: Date; endDate: Date; reason: string | null; isOtaBlock: boolean };
 

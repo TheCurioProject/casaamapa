@@ -140,7 +140,10 @@ export async function createManualBooking(data: {
 }
 
 export async function getAdminCalendarData() {
-  const units = await prisma.unit.findMany({ orderBy: { price: 'asc' } });
+  const units = await prisma.unit.findMany({ 
+    orderBy: { price: 'asc' },
+    include: { dailyPrices: true }
+  });
   const bookings = await prisma.booking.findMany({
     where: { status: { in: ['pending', 'confirmed'] } }
   });
