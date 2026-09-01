@@ -15,6 +15,7 @@ model Unit {
   id          String    @id // e.g. 'tierra', 'aire', 'agua', 'amapa'
   name        String
   price       Int       // Base price in MXN
+  addStripeCommission Boolean @default(false) @map("add_stripe_commission")
   isWholeHouse Boolean  @default(false) @map("is_whole_house")
   icalUrls    String[]  @default([]) @map("ical_urls")
   bookings    Booking[]

@@ -6,11 +6,12 @@ import { revalidatePath } from 'next/cache';
 export async function updatePrice(formData: FormData) {
   const id = formData.get('id') as string;
   const price = Number(formData.get('price'));
+  const addStripeCommission = formData.get('addStripeCommission') === 'true';
 
   if (id && price > 0) {
     await prisma.unit.update({
       where: { id },
-      data: { price }
+      data: { price, addStripeCommission }
     });
     revalidatePath('/admin/units');
   }

@@ -80,20 +80,38 @@ export default async function AdminUnitsPage() {
               </form>
             </div>
 
-            <form action={updatePrice} className="flex flex-col sm:flex-row sm:items-end gap-4 mb-8">
+            <form action={updatePrice} className="flex flex-col gap-4 mb-8">
               <input type="hidden" name="id" value={unit.id} />
-              <div className="flex-1 w-full">
-                <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-2">Precio Base (MXN)</label>
-                <input 
-                  type="number" 
-                  name="price"
-                  defaultValue={unit.price}
-                  className="w-full bg-black/20 border-b-2 border-white/20 pb-3 focus:border-[var(--color-rose-3)] outline-none transition-colors text-2xl font-medium px-2 rounded-t-lg"
-                />
+              
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="flex-1 w-full">
+                  <label className="block text-xs uppercase tracking-widest font-medium opacity-70 mb-2">Precio Base (MXN)</label>
+                  <input 
+                    type="number" 
+                    name="price"
+                    defaultValue={unit.price}
+                    className="w-full bg-black/20 border-b-2 border-white/20 pb-3 focus:border-[var(--color-rose-3)] outline-none transition-colors text-2xl font-medium px-2 rounded-t-lg"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto p-3 bg-black/20 rounded-xl border border-white/5">
+                  <input 
+                    type="checkbox" 
+                    name="addStripeCommission" 
+                    value="true" 
+                    defaultChecked={unit.addStripeCommission} 
+                    id={`addStripeCommission-${unit.id}`} 
+                    className="accent-[var(--color-rose-3)] w-4 h-4" 
+                  />
+                  <label htmlFor={`addStripeCommission-${unit.id}`} className="text-[10px] uppercase tracking-widest font-medium opacity-80 cursor-pointer">
+                    Sumar 5% comisión Stripe (Público)
+                  </label>
+                </div>
+
+                <SubmitButton className="w-full sm:w-auto bg-white/10 text-white rounded-xl px-6 py-4 sm:py-3 text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors mt-2 sm:mt-0 flex justify-center h-[52px] sm:h-auto items-center">
+                  Actualizar Precio
+                </SubmitButton>
               </div>
-              <SubmitButton className="w-full sm:w-auto bg-white/10 text-white rounded-xl px-6 py-4 sm:py-3 text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors mt-2 sm:mt-0 flex justify-center">
-                Actualizar Precio
-              </SubmitButton>
             </form>
 
             <ICalForm unitId={unit.id} initialUrls={unit.icalUrls || []} />

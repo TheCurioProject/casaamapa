@@ -18,6 +18,7 @@ interface BookingUnit {
   id: string;
   name: string;
   price: number;
+  addStripeCommission?: boolean;
 }
 
 interface BookingDateInfo {
@@ -223,7 +224,8 @@ export function BookingModal() {
 
   // Derived state
   const nights = range?.to && range?.from ? Math.max(1, differenceInDays(range.to, range.from)) : (range?.from ? 1 : 0);
-  const totalPrice = selectedUnit ? nights * selectedUnit.price : 0;
+  const unitPrice = selectedUnit ? (selectedUnit.addStripeCommission ? Math.round(selectedUnit.price * 1.05) : selectedUnit.price) : 0;
+  const totalPrice = selectedUnit ? nights * unitPrice : 0;
 
   const getSmartHint = () => {
     if (!range?.from) return { text: "Selecciona tu fecha de llegada", status: "pending" };
@@ -387,7 +389,7 @@ export function BookingModal() {
                         </div>
                         <div className="mt-3 md:mt-0 md:text-right">
                           <span className="block font-sans font-bold text-xl md:text-2xl text-[var(--color-rose-3)] group-hover:scale-105 transition-transform origin-right">
-                            {unit.price.toLocaleString('es-MX')} MXN
+                            {(unit.addStripeCommission ? Math.round(unit.price * 1.05) : unit.price).toLocaleString('es-MX')} MXN
                           </span>
                           <span className="block opacity-50 text-xs tracking-widest uppercase mt-1">Por noche</span>
                         </div>
@@ -411,7 +413,7 @@ export function BookingModal() {
               <motion.div key="step2" variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col h-full pb-8">
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 2 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-2 leading-none">Tus fechas</h2>
-                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit!.name}</strong> ({selectedUnit!.price.toLocaleString()} MXN / noche)</p>
+                <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit!.name}</strong> ({unitPrice.toLocaleString('es-MX')} MXN / noche)</p>
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
                   {isOpen && !isLoadingDates && (
