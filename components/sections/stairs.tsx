@@ -223,12 +223,6 @@ export function Stairs() {
             ))}
           </div>
         </aside>
-
-        {/* Global indication for pinned section */}
-        <div className={`absolute bottom-[10vh] left-1/2 -translate-x-1/2 flex items-center gap-2 text-[0.85rem] tracking-[0.25em] uppercase transition-all duration-500 pointer-events-none whitespace-nowrap font-medium z-10 text-[var(--color-cream)] ${showHint ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <span>Continúa deslizando</span>
-          <span className="animate-bounce">↓</span>
-        </div>
       </div>
     </section>
   );
