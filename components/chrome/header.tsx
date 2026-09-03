@@ -43,47 +43,6 @@ export function Header() {
     
     observer.observe(document.body, { attributes: true });
     
-    const checkHeaderTheme = () => {
-      const getTheme = (elRef: React.RefObject<HTMLElement | null>) => {
-        if (!elRef.current) return null;
-        const rect = elRef.current.getBoundingClientRect();
-        // Check center of the element to trigger when it's mostly inside the section
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        const elements = document.elementsFromPoint(x, y);
-        for (const el of elements) {
-          // ignore header itself if it gets caught
-          if (el.tagName === 'HEADER' || el.tagName === 'NAV') continue;
-          const themeEl = el.closest('[data-theme]');
-          if (themeEl) {
-            return themeEl.getAttribute('data-theme') || 'dark';
-          }
-        }
-        return 'dark';
-      };
-
-      const lTheme = getTheme(logoRef);
-      if (lTheme && lTheme !== logoThemeRef.current) {
-        setLogoTheme(lTheme);
-        logoThemeRef.current = lTheme;
-      }
-
-      const rTheme = getTheme(reserveRef);
-      if (rTheme && rTheme !== reserveThemeRef.current) {
-        setReserveTheme(rTheme);
-        reserveThemeRef.current = rTheme;
-      }
-
-      const mTheme = getTheme(menuRef);
-      if (mTheme && mTheme !== menuBtnThemeRef.current) {
-        setMenuBtnTheme(mTheme);
-        menuBtnThemeRef.current = mTheme;
-      }
-    };
-
-    // Run once on mount
-    setTimeout(checkHeaderTheme, 100);
-
     // Inactivity scroll hint logic
     let timeout: NodeJS.Timeout;
     const checkAndShow = (delay: number) => {
@@ -98,28 +57,97 @@ export function Header() {
       }, delay);
     };
 
-    let ticking = false;
     const onScroll = () => {
       setShowScrollHint(false);
       checkAndShow(800);
-
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          checkHeaderTheme();
-          ticking = false;
-        });
-        ticking = true;
-      }
     };
     
-    // Initial timeout
     checkAndShow(1500);
     window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Precise Theme Detection with GSAP ScrollTrigger
+    import('gsap').then(({ default: gsap }) => {
+      import('gsap/dist/ScrollTrigger').then(({ default: ScrollTrigger }) => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        const sections = document.querySelectorAll<HTMLElement>('[data-theme]');
+        
+        sections.forEach((sec) => {
+          const sectionTheme = sec.getAttribute('data-theme') || 'dark';
+
+          // Logo Theme Trigger
+          ScrollTrigger.create({
+            id: 'header-theme-logo',
+            trigger: sec,
+            start: () => {
+              if (!logoRef.current) return 'top top';
+              const rect = logoRef.current.getBoundingClientRect();
+              return `top ${rect.top + rect.height / 2}px`;
+            },
+            end: () => {
+              if (!logoRef.current) return 'bottom top';
+              const rect = logoRef.current.getBoundingClientRect();
+              return `bottom ${rect.top + rect.height / 2}px`;
+            },
+            onToggle: (self) => {
+              if (self.isActive) setLogoTheme(sectionTheme);
+            },
+            invalidateOnRefresh: true,
+          });
+
+          // Reserve Button Theme Trigger
+          ScrollTrigger.create({
+            id: 'header-theme-reserve',
+            trigger: sec,
+            start: () => {
+              if (!reserveRef.current) return 'top top';
+              const rect = reserveRef.current.getBoundingClientRect();
+              return `top ${rect.top + rect.height / 2}px`;
+            },
+            end: () => {
+              if (!reserveRef.current) return 'bottom top';
+              const rect = reserveRef.current.getBoundingClientRect();
+              return `bottom ${rect.top + rect.height / 2}px`;
+            },
+            onToggle: (self) => {
+              if (self.isActive) setReserveTheme(sectionTheme);
+            },
+            invalidateOnRefresh: true,
+          });
+
+          // Menu Button Theme Trigger
+          ScrollTrigger.create({
+            id: 'header-theme-menu',
+            trigger: sec,
+            start: () => {
+              if (!menuRef.current) return 'top top';
+              const rect = menuRef.current.getBoundingClientRect();
+              return `top ${rect.top + rect.height / 2}px`;
+            },
+            end: () => {
+              if (!menuRef.current) return 'bottom top';
+              const rect = menuRef.current.getBoundingClientRect();
+              return `bottom ${rect.top + rect.height / 2}px`;
+            },
+            onToggle: (self) => {
+              if (self.isActive) setMenuBtnTheme(sectionTheme);
+            },
+            invalidateOnRefresh: true,
+          });
+        });
+        
+        ScrollTrigger.refresh();
+      });
+    });
 
     return () => {
       observer.disconnect();
       window.removeEventListener('scroll', onScroll);
       clearTimeout(timeout);
+      // Clean up ScrollTriggers for header
+      import('gsap/dist/ScrollTrigger').then(({ default: ScrollTrigger }) => {
+        ScrollTrigger.getAll().filter(st => st.vars.id?.startsWith('header-theme')).forEach(st => st.kill());
+      });
     };
   }, []);
 

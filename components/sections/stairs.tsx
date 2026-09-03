@@ -33,6 +33,53 @@ export function Stairs() {
       gsap.set(mask, { scale: isMobile ? 0.85 : 0.42 });
 
       let hintTimeout: NodeJS.Timeout;
+      let autoScrollTimeout: NodeJS.Timeout;
+      let scrollTween: gsap.core.Tween | null = null;
+
+      const stopAutoScroll = () => {
+        clearTimeout(hintTimeout);
+        clearTimeout(autoScrollTimeout);
+        setShowHint(false);
+        if (scrollTween) {
+          scrollTween.kill();
+          scrollTween = null;
+        }
+      };
+
+      const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
+        stopAutoScroll();
+        if (st.progress > 0 && st.progress < 0.98) {
+          hintTimeout = setTimeout(() => setShowHint(true), 300);
+          autoScrollTimeout = setTimeout(() => {
+            const currentY = window.scrollY;
+            const targetY = st.end;
+            const distance = targetY - currentY;
+            if (distance > 0) {
+              const proxy = { y: currentY };
+              scrollTween = gsap.to(proxy, {
+                y: targetY,
+                duration: distance / 350, // Contextual real speed approximation
+                ease: 'power2.inOut',
+                onUpdate: () => window.scrollTo(0, proxy.y)
+              });
+            }
+          }, 2000);
+        }
+      };
+
+      const handleUserInteraction = () => {
+        const st = tl.scrollTrigger;
+        if (st && st.isActive) {
+          startInactivityTimers(st);
+        } else {
+          stopAutoScroll();
+        }
+      };
+
+      window.addEventListener('wheel', handleUserInteraction, { passive: true });
+      window.addEventListener('touchstart', handleUserInteraction, { passive: true });
+      window.addEventListener('touchmove', handleUserInteraction, { passive: true });
+      window.addEventListener('mousedown', handleUserInteraction, { passive: true });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -44,19 +91,13 @@ export function Stairs() {
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            setShowHint(false);
-            clearTimeout(hintTimeout);
-            if (self.progress > 0 && self.progress < 0.95) {
-              hintTimeout = setTimeout(() => setShowHint(true), 800);
-            }
+            // If the tween is running, it's programmatic scroll, do not reset timers here.
+            // User interactions are caught by the event listeners.
           },
-          onLeave: () => {
-            setShowHint(false);
-            clearTimeout(hintTimeout);
-          },
-          onEnter: () => {
-            hintTimeout = setTimeout(() => setShowHint(true), 800);
-          }
+          onLeave: () => stopAutoScroll(),
+          onEnter: (self) => startInactivityTimers(self),
+          onEnterBack: (self) => startInactivityTimers(self),
+          onLeaveBack: () => stopAutoScroll(),
         }
       });
 
@@ -182,6 +223,12 @@ export function Stairs() {
             ))}
           </div>
         </aside>
+
+        {/* Global indication for pinned section */}
+        <div className={`absolute bottom-[10vh] left-1/2 -translate-x-1/2 flex items-center gap-2 text-[0.85rem] tracking-[0.25em] uppercase transition-all duration-500 pointer-events-none whitespace-nowrap font-medium z-10 text-[var(--color-cream)] ${showHint ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <span>Continúa deslizando</span>
+          <span className="animate-bounce">↓</span>
+        </div>
       </div>
     </section>
   );

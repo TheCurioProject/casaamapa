@@ -107,23 +107,8 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
   // Lock body scroll when open and handle mounting
   useEffect(() => {
     document.body.classList.add('modal-open');
-    
-    const preventDefault = (e: TouchEvent | WheelEvent) => {
-      if (containerRef.current && containerRef.current.contains(e.target as Node)) {
-        return;
-      }
-      if (e.cancelable) {
-        e.preventDefault();
-      }
-    };
-    
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    document.addEventListener('wheel', preventDefault, { passive: false });
-    
     return () => {
       document.body.classList.remove('modal-open');
-      document.removeEventListener('touchmove', preventDefault);
-      document.removeEventListener('wheel', preventDefault);
     };
   }, []);
 
@@ -207,6 +192,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         {/* Scrollable Content Container */}
         <div 
           ref={scrollRef}
+          data-lenis-prevent="true"
           className="flex-1 w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain"
         >
           {/* Header & Close Button */}
