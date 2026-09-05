@@ -234,7 +234,7 @@ export function Apts() {
           .to({}, { duration: 0.22 });
 
         const startDeskInactivityTimers = (st: globalThis.ScrollTrigger) => {
-          if (st.progress > 0 && st.progress < 0.98) {
+          if (st.progress >= 0 && st.progress < 0.98) {
             AutoScrollManager.schedule(() => {
               const currentY = window.scrollY;
               
@@ -248,8 +248,11 @@ export function Apts() {
                  const targetX = panelCenter - window.innerWidth / 2;
                  const clampedX = Math.max(0, Math.min(targetX, maxScrollX));
                  
-                 // Map horizontal progress to vertical scroll distance. The timeline duration for horizontal is 0.85
-                 const progress = (clampedX / maxScrollX) * 0.85;
+                 // Map horizontal distance to time in the timeline. The x tween duration is 0.85.
+                 const time = (clampedX / maxScrollX) * 0.85;
+                 // The total timeline duration is 0.85 + 0.22 = 1.07. Progress = time / 1.07.
+                 const progress = time / 1.07;
+                 
                  markers.push(st.start + totalDist * progress);
               });
               markers.push(st.end);
