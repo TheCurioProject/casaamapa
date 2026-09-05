@@ -5,6 +5,8 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { linesReveal, fadeReveal } from '@/lib/animations';
 
+import { AutoScrollManager } from '@/lib/auto-scroll';
+
 export function Stairs() {
   const steps = [
     { n: '01', t: 'La sombra', d: 'El recibimiento fresco. El primer silencio de la casa.' },
@@ -20,8 +22,6 @@ export function Stairs() {
     linesReveal('.js-lines');
     fadeReveal('.js-fade');
 
-    // Spiral SVG path logic removed as spiralDrawPath element does not exist
-
     const stage = document.querySelector('.spiral-stage');
     const mask = document.querySelector('.spiral-mask');
     const wrap = document.querySelector('.spiral-imgwrap');
@@ -32,30 +32,14 @@ export function Stairs() {
       const isMobile = window.innerWidth < 768;
       gsap.set(mask, { scale: isMobile ? 0.85 : 0.42 });
 
-      let hintTimeout: NodeJS.Timeout;
-      let autoScrollTimeout: NodeJS.Timeout;
-      let scrollTween: any = null;
-
-      const stopAutoScroll = () => {
-        clearTimeout(hintTimeout);
-        clearTimeout(autoScrollTimeout);
-        setShowHint(false);
-        if (scrollTween) {
-          scrollTween.kill();
-          scrollTween = null;
-        }
-      };
-
       const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
-        stopAutoScroll();
         if (st.progress > 0 && st.progress < 0.98) {
-          hintTimeout = setTimeout(() => setShowHint(true), 300);
-          autoScrollTimeout = setTimeout(() => {
+          setShowHint(true);
+          AutoScrollManager.schedule(() => {
             const currentY = window.scrollY;
             const totalDist = st.end - st.start;
             
             // Markers calculated from the GSAP timeline proportion (total duration 5.52)
-            // This ensures we stop exactly when each text step finishes animating in.
             const p1 = st.start + totalDist * 0.315; // Step 02 fully visible
             const p2 = st.start + totalDist * 0.465; // Step 03 fully visible
             const p3 = st.start + totalDist * 0.755; // Step 04 fully visible
@@ -68,9 +52,12 @@ export function Stairs() {
             }
 
             const proxy = { y: currentY };
-            scrollTween = gsap.timeline({
+            const scrollTween = gsap.timeline({
               onUpdate: () => window.scrollTo(0, proxy.y)
             });
+
+            // Register the animation globally to prevent conflicts
+            AutoScrollManager.run(scrollTween);
 
             const addStep = (target: number, duration: number, readDelay: number, ease = 'power3.inOut') => {
               if (currentY < target - 20) {
@@ -91,16 +78,16 @@ export function Stairs() {
             addStep(p3, 1.2, 2.2); // Give a bit more time for the final step
             addStep(pNext, 1.8, 0, 'expo.inOut'); // Smoothly glide exactly to the next section
 
-          }, 2000);
+          }, 1000); // 1s inactivity timer
         }
       };
 
       const handleUserInteraction = () => {
+        AutoScrollManager.interact(); // Kill tweens and clear timers immediately
+        setShowHint(false);
         const st = tl.scrollTrigger;
         if (st && st.isActive) {
           startInactivityTimers(st);
-        } else {
-          stopAutoScroll();
         }
       };
 
@@ -122,10 +109,10 @@ export function Stairs() {
             // If the tween is running, it's programmatic scroll, do not reset timers here.
             // User interactions are caught by the event listeners.
           },
-          onLeave: () => stopAutoScroll(),
+          onLeave: () => AutoScrollManager.interact(),
           onEnter: (self) => startInactivityTimers(self),
           onEnterBack: (self) => startInactivityTimers(self),
-          onLeaveBack: () => stopAutoScroll(),
+          onLeaveBack: () => AutoScrollManager.interact(),
         }
       });
 

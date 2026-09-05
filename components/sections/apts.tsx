@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/dist/ScrollTrigger';
 import { linesReveal, fadeReveal, parallaxAll } from '@/lib/animations';
+import { AutoScrollManager } from '@/lib/auto-scroll';
 
 gsap.registerPlugin(ScrollTrigger);
 import { AptModal, AptData } from '@/components/ui/apt-modal';
@@ -138,12 +139,59 @@ export function Apts() {
     if (!isDesktop) {
       const mobSection = document.querySelector('#apartamentos-m');
       if (mobSection) {
-        ScrollTrigger.create({
+        const mobSt = ScrollTrigger.create({
           trigger: mobSection,
           start: 'bottom bottom',
           end: '+=100%',
           pin: true,
           pinSpacing: true,
+        });
+
+        const startMobInactivityTimers = () => {
+          AutoScrollManager.schedule(() => {
+             const currentY = window.scrollY;
+             const panels = Array.from(mobSection.querySelectorAll('article'));
+             
+             // Dynamic markers based on exactly where elements are in the document right now
+             const markers = panels.map(p => window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05);
+             markers.push(mobSt.end);
+
+             const proxy = { y: currentY };
+             const scrollTween = gsap.timeline({
+               onUpdate: () => window.scrollTo(0, proxy.y)
+             });
+             AutoScrollManager.run(scrollTween);
+
+             const addStep = (target: number, duration: number, readDelay: number) => {
+               if (currentY < target - 20) {
+                 scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
+                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+               }
+             };
+
+             markers.forEach(m => addStep(m, 1.2, 1.8));
+          }, 1000);
+        };
+
+        const handleMobUserInteraction = () => {
+           AutoScrollManager.interact();
+           const bounds = mobSection.getBoundingClientRect();
+           // If the section is in view, restart the inactivity timer
+           if (bounds.top < window.innerHeight && bounds.bottom > 0) {
+              startMobInactivityTimers();
+           }
+        };
+
+        window.addEventListener('wheel', handleMobUserInteraction, { passive: true });
+        window.addEventListener('touchstart', handleMobUserInteraction, { passive: true });
+        window.addEventListener('touchmove', handleMobUserInteraction, { passive: true });
+        
+        // Kick off mobile auto-scroll manually once if we scroll into view
+        ScrollTrigger.create({
+          trigger: mobSection,
+          start: 'top 80%',
+          once: true,
+          onEnter: () => startMobInactivityTimers()
         });
       }
     }
@@ -175,6 +223,46 @@ export function Apts() {
         })
           .to({}, { duration: 0.22 });
 
+        const startDeskInactivityTimers = (st: globalThis.ScrollTrigger) => {
+          if (st.progress > 0 && st.progress < 0.98) {
+            AutoScrollManager.schedule(() => {
+              const currentY = window.scrollY;
+              
+              const panels = Array.from(cont.querySelectorAll('article'));
+              const maxScrollX = cont.scrollWidth + window.innerWidth * 0.08 - window.innerWidth;
+              const totalDist = st.end - st.start;
+              
+              const markers: number[] = [];
+              panels.forEach(panel => {
+                 const panelCenter = panel.offsetLeft + panel.offsetWidth / 2;
+                 const targetX = panelCenter - window.innerWidth / 2;
+                 const clampedX = Math.max(0, Math.min(targetX, maxScrollX));
+                 
+                 // Map horizontal progress to vertical scroll distance. The timeline duration for horizontal is 0.85
+                 const progress = (clampedX / maxScrollX) * 0.85;
+                 markers.push(st.start + totalDist * progress);
+              });
+              markers.push(st.end);
+
+              const proxy = { y: currentY };
+              const scrollTween = gsap.timeline({
+                onUpdate: () => window.scrollTo(0, proxy.y)
+              });
+              AutoScrollManager.run(scrollTween);
+
+              const addStep = (target: number, duration: number, readDelay: number) => {
+                if (currentY < target - 20) {
+                  scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
+                  if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+                }
+              };
+
+              markers.forEach(m => addStep(m, 1.2, 2.0));
+
+            }, 1000);
+          }
+        };
+
         // Add horizontal touch drag support to drive vertical scroll
         let touchStartX = 0;
         let touchStartY = 0;
@@ -182,14 +270,17 @@ export function Apts() {
         let isHorizontalSwipe = false;
 
         const handleTouchStart = (e: Event) => {
+          AutoScrollManager.interact();
           const evt = e as TouchEvent;
           touchStartX = evt.touches[0].clientX;
           touchStartY = evt.touches[0].clientY;
           lastTouchX = touchStartX;
           isHorizontalSwipe = false;
+          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
         };
 
         const handleTouchMove = (e: Event) => {
+          AutoScrollManager.interact();
           const evt = e as TouchEvent;
           const currentX = evt.touches[0].clientX;
           const currentY = evt.touches[0].clientY;
@@ -207,19 +298,25 @@ export function Apts() {
             window.scrollBy({ top: diffX * 2.5 });
             lastTouchX = currentX;
           }
+          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
         };
 
         const handleWheel = (e: Event) => {
+          AutoScrollManager.interact();
           const evt = e as WheelEvent;
           if (Math.abs(evt.deltaX) > Math.abs(evt.deltaY)) {
             if (evt.cancelable) evt.preventDefault();
             window.scrollBy({ top: evt.deltaX });
           }
+          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
         };
 
         wrap.addEventListener('touchstart', handleTouchStart, { passive: true });
         wrap.addEventListener('touchmove', handleTouchMove, { passive: false });
         wrap.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // If coming from stairs programmatic scroll, it will trigger onEnter
+        tl.scrollTrigger!.vars.onEnter = () => startDeskInactivityTimers(tl.scrollTrigger!);
       }
     }
   }, { scope: container });
