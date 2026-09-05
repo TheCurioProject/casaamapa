@@ -34,7 +34,7 @@ export function Stairs() {
 
       let hintTimeout: NodeJS.Timeout;
       let autoScrollTimeout: NodeJS.Timeout;
-      let scrollTween: gsap.core.Tween | null = null;
+      let scrollTween: any = null;
 
       const stopAutoScroll = () => {
         clearTimeout(hintTimeout);
@@ -52,17 +52,39 @@ export function Stairs() {
           hintTimeout = setTimeout(() => setShowHint(true), 300);
           autoScrollTimeout = setTimeout(() => {
             const currentY = window.scrollY;
-            const targetY = st.end;
-            const distance = targetY - currentY;
-            if (distance > 0) {
-              const proxy = { y: currentY };
-              scrollTween = gsap.to(proxy, {
-                y: targetY,
-                duration: Math.max(1.5, distance / 1000), // Faster, dynamic speed
-                ease: 'expo.inOut', // Modern fluid motion graphics style ease
-                onUpdate: () => window.scrollTo(0, proxy.y)
-              });
-            }
+            const totalDist = st.end - st.start;
+            
+            // Markers calculated from the GSAP timeline proportion (total duration 5.52)
+            // This ensures we stop exactly when each text step finishes animating in.
+            const p1 = st.start + totalDist * 0.315; // Step 02 fully visible
+            const p2 = st.start + totalDist * 0.465; // Step 03 fully visible
+            const p3 = st.start + totalDist * 0.755; // Step 04 fully visible
+            const pNext = st.end + window.innerHeight; // Scroll until 'departamentos' covers screen
+
+            const proxy = { y: currentY };
+            scrollTween = gsap.timeline({
+              onUpdate: () => window.scrollTo(0, proxy.y)
+            });
+
+            const addStep = (target: number, duration: number, readDelay: number) => {
+              if (currentY < target - 20) {
+                scrollTween.to(proxy, {
+                  y: target,
+                  duration: duration,
+                  ease: 'power3.inOut'
+                });
+                if (readDelay > 0) {
+                  scrollTween.to({}, { duration: readDelay }); // Pause for reading
+                }
+              }
+            };
+
+            // Dynamic sequence: snappy transition -> pause to read
+            addStep(p1, 1.2, 1.8);
+            addStep(p2, 1.2, 1.8);
+            addStep(p3, 1.2, 2.2); // Give a bit more time for the final step
+            addStep(pNext, 1.5, 0); // Finish by scrolling to the next section
+
           }, 2000);
         }
       };
