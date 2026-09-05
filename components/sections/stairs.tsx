@@ -44,12 +44,10 @@ export function Stairs() {
             const p2 = st.start + totalDist * 0.465; // Step 03 fully visible
             const p3 = st.start + totalDist * 0.755; // Step 04 fully visible
             
-            // Dynamically find exact scroll position for #apartamentos to cover screen
-            let pNext = st.end + window.innerHeight;
-            const aptsSection = document.querySelector('#apartamentos');
-            if (aptsSection) {
-               pNext = window.scrollY + aptsSection.getBoundingClientRect().top;
-            }
+            // After the pin ends, st.end IS the scroll position where #apartamentos starts.
+            // Using getBoundingClientRect() is wrong here because the pin distorts the DOM layout.
+            // We add a small offset (half a viewport height) so the section is nicely centered on arrival.
+            const pNext = st.end + window.innerHeight * 0.1;
 
             const proxy = { y: currentY };
             const scrollTween = gsap.timeline({
@@ -109,7 +107,8 @@ export function Stairs() {
             // If the tween is running, it's programmatic scroll, do not reset timers here.
             // User interactions are caught by the event listeners.
           },
-          onLeave: () => AutoScrollManager.interact(),
+          // Note: onLeave intentionally omitted — killing the auto-scroll tween here
+          // would stop the animation mid-flight when crossing into the next section.
           onEnter: (self) => startInactivityTimers(self),
           onEnterBack: (self) => startInactivityTimers(self),
           onLeaveBack: () => AutoScrollManager.interact(),
