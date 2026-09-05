@@ -153,9 +153,13 @@ export function Apts() {
             const panels = Array.from(mobSection.querySelectorAll('article'));
 
             // Measure panel positions at call time (after pin is active)
-            const markers = panels.map(p =>
-              window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05
-            );
+            const markers = [];
+            // First step: Portada (title of the section)
+            markers.push(window.scrollY + mobSection.getBoundingClientRect().top);
+
+            panels.forEach(p => {
+              markers.push(window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05);
+            });
             markers.push(mobSt.end);
 
             const proxy = { y: currentY };
@@ -164,14 +168,22 @@ export function Apts() {
             });
             AutoScrollManager.run(scrollTween);
 
+            let isFirstStep = true;
             const addStep = (target: number, duration: number, readDelay: number) => {
               if (currentY < target - 20) {
-                scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
+                const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
+                isFirstStep = false;
+                scrollTween.to(proxy, { y: target, duration, ease });
                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
               }
             };
 
-            markers.forEach(m => addStep(m, 1.2, 1.8));
+            addStep(markers[0], 1.5, 2.2); // Portada
+            addStep(markers[1], 1.2, 1.8); // Tierra
+            addStep(markers[2], 1.2, 1.8); // Agua
+            addStep(markers[3], 1.2, 1.8); // Aire
+            addStep(markers[4], 1.2, 0);   // End
+
           }, 1000);
         };
 
@@ -183,26 +195,54 @@ export function Apts() {
           }
         };
 
-        window.addEventListener('wheel', handleMobUserInteraction, { passive: true });
-        window.addEventListener('touchstart', handleMobUserInteraction, { passive: true });
-        window.addEventListener('touchmove', handleMobUserInteraction, { passive: true });
+        const cleanupMobListeners = () => {
+          window.removeEventListener('wheel', handleMobUserInteraction);
+          window.removeEventListener('touchstart', handleMobUserInteraction);
+          window.removeEventListener('touchmove', handleMobUserInteraction);
+        };
 
-        // Start tour when arriving from stairs auto-scroll (CustomEvent) or on natural entry
+        const addMobListeners = () => {
+          window.addEventListener('wheel', handleMobUserInteraction, { passive: true });
+          window.addEventListener('touchstart', handleMobUserInteraction, { passive: true });
+          window.addEventListener('touchmove', handleMobUserInteraction, { passive: true });
+        };
+
+        ScrollTrigger.create({
+          trigger: mobSection,
+          start: 'top 80%',
+          end: 'bottom top',
+          onEnter: () => {
+            addMobListeners();
+            startMobInactivityTimers();
+          },
+          onEnterBack: () => {
+            addMobListeners();
+            startMobInactivityTimers();
+          },
+          onLeave: () => {
+            AutoScrollManager.interact();
+            cleanupMobListeners();
+          },
+          onLeaveBack: () => {
+            AutoScrollManager.interact();
+            cleanupMobListeners();
+          }
+        });
+
+        // Start tour when arriving from stairs auto-scroll (CustomEvent)
         const onStairsDone = () => {
           const bounds = mobSection.getBoundingClientRect();
           if (bounds.top < window.innerHeight && bounds.bottom > 0) {
             startMobInactivityTimers();
           }
         };
-        window.addEventListener('stairs-tour-complete', onStairsDone, { once: true });
+        window.addEventListener('stairs-tour-complete', onStairsDone);
 
-        // Also trigger on natural scroll-in
-        ScrollTrigger.create({
-          trigger: mobSection,
-          start: 'top 80%',
-          once: true,
-          onEnter: () => startMobInactivityTimers()
-        });
+        // Cleanup on unmount
+        return () => {
+          cleanupMobListeners();
+          window.removeEventListener('stairs-tour-complete', onStairsDone);
+        };
       }
     }
 
@@ -212,6 +252,13 @@ export function Apts() {
       const prog = document.querySelector('.apts-prog');
 
       if (wrap && cont && prog) {
+        // Clean up listeners when leaving the section to prevent interference
+        const cleanupListeners = () => {
+          window.removeEventListener('touchstart', handleTouchStart);
+          window.removeEventListener('touchmove', handleTouchMove);
+          window.removeEventListener('wheel', handleWheel);
+        };
+
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: wrap,
@@ -222,6 +269,16 @@ export function Apts() {
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               gsap.set(prog, { scaleX: self.progress });
+            },
+            onEnter: (self) => startDeskInactivityTimers(self),
+            onEnterBack: (self) => startDeskInactivityTimers(self),
+            onLeaveBack: () => {
+              AutoScrollManager.interact();
+              cleanupListeners();
+            },
+            onLeave: () => {
+              AutoScrollManager.interact();
+              cleanupListeners();
             }
           }
         });
@@ -234,7 +291,7 @@ export function Apts() {
           .to({}, { duration: 0.22 });
 
         const startDeskInactivityTimers = (st: globalThis.ScrollTrigger) => {
-          if (st.progress >= 0 && st.progress < 0.98) {
+          if (st.progress >= 0 && st.progress <= 1) {
             AutoScrollManager.schedule(() => {
               const currentY = window.scrollY;
               
@@ -243,14 +300,15 @@ export function Apts() {
               const totalDist = st.end - st.start;
               
               const markers: number[] = [];
+              // First step: Portada (header perfectly centered/visible)
+              markers.push(st.start);
+
               panels.forEach(panel => {
                  const panelCenter = panel.offsetLeft + panel.offsetWidth / 2;
                  const targetX = panelCenter - window.innerWidth / 2;
                  const clampedX = Math.max(0, Math.min(targetX, maxScrollX));
                  
-                 // Map horizontal distance to time in the timeline. The x tween duration is 0.85.
                  const time = (clampedX / maxScrollX) * 0.85;
-                 // The total timeline duration is 0.85 + 0.22 = 1.07. Progress = time / 1.07.
                  const progress = time / 1.07;
                  
                  markers.push(st.start + totalDist * progress);
@@ -263,15 +321,24 @@ export function Apts() {
               });
               AutoScrollManager.run(scrollTween);
 
+              let isFirstStep = true;
               const addStep = (target: number, duration: number, readDelay: number) => {
                 if (currentY < target - 20) {
-                  scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
+                  // Use a smoother curve if this is the first tween added (resuming from mid-scroll)
+                  const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
+                  isFirstStep = false;
+                  
+                  scrollTween.to(proxy, { y: target, duration, ease });
                   if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
                 }
               };
 
-              markers.forEach(m => addStep(m, 1.2, 2.0));
-
+              // Add steps sequentially
+              addStep(markers[0], 1.5, 2.2); // Portada
+              addStep(markers[1], 1.2, 2.0); // Tierra
+              addStep(markers[2], 1.2, 2.0); // Agua
+              addStep(markers[3], 1.2, 2.0); // Aire
+              addStep(markers[4], 1.2, 0);   // Salida
             }, 1000);
           }
         };
@@ -333,18 +400,13 @@ export function Apts() {
           const st = tl.scrollTrigger;
           if (st) startDeskInactivityTimers(st);
         };
-        window.addEventListener('stairs-tour-complete', onStairsDone, { once: true });
+        window.addEventListener('stairs-tour-complete', onStairsDone);
 
-        // Also trigger on natural scroll-in via ScrollTrigger
-        const aptsHwrapSt = tl.scrollTrigger;
-        if (aptsHwrapSt) {
-          ScrollTrigger.create({
-            trigger: wrap,
-            start: 'top 80%',
-            once: true,
-            onEnter: () => startDeskInactivityTimers(aptsHwrapSt)
-          });
-        }
+        // Make sure we remove the CustomEvent listener on unmount/re-run
+        return () => {
+          cleanupListeners();
+          window.removeEventListener('stairs-tour-complete', onStairsDone);
+        };
       }
     }
   }, { scope: container });

@@ -33,7 +33,7 @@ export function Stairs() {
 
       const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
         // progress >= 0 so onEnter at top of section also schedules the tour
-        if (st.progress >= 0 && st.progress < 0.98) {
+        if (st.progress >= 0 && st.progress <= 1) {
           setShowHint(true);
           AutoScrollManager.schedule(() => {
             const currentY = window.scrollY;
@@ -52,8 +52,11 @@ export function Stairs() {
 
             AutoScrollManager.run(scrollTween);
 
-            const addStep = (target: number, duration: number, readDelay: number, ease = 'power3.inOut') => {
+            let isFirstStep = true;
+            const addStep = (target: number, duration: number, readDelay: number) => {
               if (currentY < target - 20) {
+                const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
+                isFirstStep = false;
                 scrollTween.to(proxy, { y: target, duration, ease });
                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
               }
