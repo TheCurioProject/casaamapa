@@ -52,26 +52,15 @@ export function Stairs() {
           hintTimeout = setTimeout(() => setShowHint(true), 300);
           autoScrollTimeout = setTimeout(() => {
             const currentY = window.scrollY;
-            const apts = document.querySelector('#apartamentos');
-            const targetY = apts ? apts.getBoundingClientRect().top + window.scrollY : st.end;
+            const targetY = st.end;
             const distance = targetY - currentY;
             if (distance > 0) {
               const proxy = { y: currentY };
               scrollTween = gsap.to(proxy, {
                 y: targetY,
-                duration: distance / 150, // Base speed
-                ease: 'none',
-                onUpdate: () => {
-                  window.scrollTo(0, proxy.y);
-                  
-                  // Adjust speed dynamically based on timeline time (contextual)
-                  const t = tl.time();
-                  const isFast = (t > 0.55 && t < 1.27) || (t > 1.72 && t < 2.57) || (t > 3.02 && t < 4.62);
-                  
-                  if (scrollTween) {
-                    gsap.to(scrollTween, { timeScale: isFast ? 3.5 : 0.6, duration: 0.4, overwrite: true });
-                  }
-                }
+                duration: Math.max(1.5, distance / 1000), // Faster, dynamic speed
+                ease: 'expo.inOut', // Modern fluid motion graphics style ease
+                onUpdate: () => window.scrollTo(0, proxy.y)
               });
             }
           }, 2000);
