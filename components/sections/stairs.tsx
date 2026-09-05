@@ -4,7 +4,6 @@ import { useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { linesReveal, fadeReveal } from '@/lib/animations';
-
 import { AutoScrollManager } from '@/lib/auto-scroll';
 
 export function Stairs() {
@@ -33,57 +32,51 @@ export function Stairs() {
       gsap.set(mask, { scale: isMobile ? 0.85 : 0.42 });
 
       const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
-        if (st.progress > 0 && st.progress < 0.98) {
+        // progress >= 0 so onEnter at top of section also schedules the tour
+        if (st.progress >= 0 && st.progress < 0.98) {
           setShowHint(true);
           AutoScrollManager.schedule(() => {
             const currentY = window.scrollY;
             const totalDist = st.end - st.start;
-            
-            // Markers calculated from the GSAP timeline proportion (total duration 5.52)
-            const p1 = st.start + totalDist * 0.315; // Step 02 fully visible
-            const p2 = st.start + totalDist * 0.465; // Step 03 fully visible
-            const p3 = st.start + totalDist * 0.755; // Step 04 fully visible
-            
-            // After the pin ends, st.end IS the scroll position where #apartamentos starts.
-            // Using getBoundingClientRect() is wrong here because the pin distorts the DOM layout.
-            // We add a small offset (half a viewport height) so the section is nicely centered on arrival.
-            const pNext = st.end + window.innerHeight * 0.1;
+
+            const p1 = st.start + totalDist * 0.315; // Step 02 visible
+            const p2 = st.start + totalDist * 0.465; // Step 03 visible
+            const p3 = st.start + totalDist * 0.755; // Step 04 visible
+            // st.end is exactly where the pin releases = start of #apartamentos
+            const pNext = st.end;
 
             const proxy = { y: currentY };
             const scrollTween = gsap.timeline({
-              onUpdate: () => window.scrollTo(0, proxy.y)
+              onUpdate: () => window.scrollTo(0, proxy.y),
+              onComplete: () => {
+                // Signal apts.tsx to start the sequential departments tour
+                window.dispatchEvent(new CustomEvent('stairs-tour-complete'));
+              }
             });
 
-            // Register the animation globally to prevent conflicts
             AutoScrollManager.run(scrollTween);
 
             const addStep = (target: number, duration: number, readDelay: number, ease = 'power3.inOut') => {
               if (currentY < target - 20) {
-                scrollTween.to(proxy, {
-                  y: target,
-                  duration: duration,
-                  ease: ease
-                });
-                if (readDelay > 0) {
-                  scrollTween.to({}, { duration: readDelay }); // Pause for reading
-                }
+                scrollTween.to(proxy, { y: target, duration, ease });
+                if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
               }
             };
 
-            // Dynamic sequence: snappy transition -> pause to read
             addStep(p1, 1.2, 1.8);
             addStep(p2, 1.2, 1.8);
-            addStep(p3, 1.2, 2.2); // Give a bit more time for the final step
-            addStep(pNext, 1.8, 0, 'expo.inOut'); // Smoothly glide exactly to the next section
+            addStep(p3, 1.2, 2.2);
+            addStep(pNext, 1.8, 0, 'expo.inOut');
 
-          }, 1000); // 1s inactivity timer
+          }, 1000);
         }
       };
 
       const handleUserInteraction = () => {
-        AutoScrollManager.interact(); // Kill tweens and clear timers immediately
+        AutoScrollManager.interact();
         setShowHint(false);
         const st = tl.scrollTrigger;
+        // Only restart the inactivity timer while still inside the stairs section
         if (st && st.isActive) {
           startInactivityTimers(st);
         }
@@ -103,15 +96,20 @@ export function Stairs() {
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            // If the tween is running, it's programmatic scroll, do not reset timers here.
-            // User interactions are caught by the event listeners.
+          onUpdate: () => {
+            // interactions caught by event listeners
           },
-          // Note: onLeave intentionally omitted — killing the auto-scroll tween here
-          // would stop the animation mid-flight when crossing into the next section.
           onEnter: (self) => startInactivityTimers(self),
           onEnterBack: (self) => startInactivityTimers(self),
           onLeaveBack: () => AutoScrollManager.interact(),
+          onLeave: () => {
+            // Remove stairs listeners when leaving so they don't kill the
+            // apts.tsx auto-scroll tween through the shared AutoScrollManager
+            window.removeEventListener('wheel', handleUserInteraction);
+            window.removeEventListener('touchstart', handleUserInteraction);
+            window.removeEventListener('touchmove', handleUserInteraction);
+            window.removeEventListener('mousedown', handleUserInteraction);
+          }
         }
       });
 
@@ -121,33 +119,31 @@ export function Stairs() {
 
       let t = 0.55;
       stepEls.forEach((s, i) => {
-        if (!i) return; 
-        
-        if (i === 1) t += 0.72; // Gap before Step 02
-        else if (i === 2) t += 0.85; // Gap before Step 03
-        else if (i === 3) t += 1.6; // Much larger gap before Step 04 (appreciate Step 03)
+        if (!i) return;
+
+        if (i === 1) t += 0.72;
+        else if (i === 2) t += 0.85;
+        else if (i === 3) t += 1.6;
 
         tl.to(stepEls[i - 1], { autoAlpha: 0, y: -16, duration: 0.3 }, t)
-          .fromTo(s, { autoAlpha: 0, y: 20 }, { 
-            autoAlpha: 1, 
-            y: 0, 
+          .fromTo(s, { autoAlpha: 0, y: 20 }, {
+            autoAlpha: 1,
+            y: 0,
             duration: 0.4,
             onComplete() { s.classList.add('is-active'); },
-            onReverseComplete() { 
-              stepEls[i - 1].classList.add('is-active'); 
-              s.classList.remove('is-active'); 
+            onReverseComplete() {
+              stepEls[i - 1].classList.add('is-active');
+              s.classList.remove('is-active');
             }
           }, t + 0.05);
 
-        // Image crossfade logic based on the step index
         if (i === 2) {
           tl.to('.img-luz', { autoAlpha: 1, duration: 0.8 }, t - 0.2);
         } else if (i === 3) {
           tl.to('.img-cielo', { autoAlpha: 1, duration: 0.8 }, t - 0.2);
         }
       });
-      
-      // Hold the final frame (Step 04) for a long duration before unpinning
+
       tl.set({}, {}, t + 1.8);
     }
   }, { scope: container });

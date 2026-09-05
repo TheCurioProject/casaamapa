@@ -149,44 +149,54 @@ export function Apts() {
 
         const startMobInactivityTimers = () => {
           AutoScrollManager.schedule(() => {
-             const currentY = window.scrollY;
-             const panels = Array.from(mobSection.querySelectorAll('article'));
-             
-             // Dynamic markers based on exactly where elements are in the document right now
-             const markers = panels.map(p => window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05);
-             markers.push(mobSt.end);
+            const currentY = window.scrollY;
+            const panels = Array.from(mobSection.querySelectorAll('article'));
 
-             const proxy = { y: currentY };
-             const scrollTween = gsap.timeline({
-               onUpdate: () => window.scrollTo(0, proxy.y)
-             });
-             AutoScrollManager.run(scrollTween);
+            // Measure panel positions at call time (after pin is active)
+            const markers = panels.map(p =>
+              window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05
+            );
+            markers.push(mobSt.end);
 
-             const addStep = (target: number, duration: number, readDelay: number) => {
-               if (currentY < target - 20) {
-                 scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
-                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
-               }
-             };
+            const proxy = { y: currentY };
+            const scrollTween = gsap.timeline({
+              onUpdate: () => window.scrollTo(0, proxy.y)
+            });
+            AutoScrollManager.run(scrollTween);
 
-             markers.forEach(m => addStep(m, 1.2, 1.8));
+            const addStep = (target: number, duration: number, readDelay: number) => {
+              if (currentY < target - 20) {
+                scrollTween.to(proxy, { y: target, duration, ease: 'power3.inOut' });
+                if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+              }
+            };
+
+            markers.forEach(m => addStep(m, 1.2, 1.8));
           }, 1000);
         };
 
         const handleMobUserInteraction = () => {
-           AutoScrollManager.interact();
-           const bounds = mobSection.getBoundingClientRect();
-           // If the section is in view, restart the inactivity timer
-           if (bounds.top < window.innerHeight && bounds.bottom > 0) {
-              startMobInactivityTimers();
-           }
+          AutoScrollManager.interact();
+          const bounds = mobSection.getBoundingClientRect();
+          if (bounds.top < window.innerHeight && bounds.bottom > 0) {
+            startMobInactivityTimers();
+          }
         };
 
         window.addEventListener('wheel', handleMobUserInteraction, { passive: true });
         window.addEventListener('touchstart', handleMobUserInteraction, { passive: true });
         window.addEventListener('touchmove', handleMobUserInteraction, { passive: true });
-        
-        // Kick off mobile auto-scroll manually once if we scroll into view
+
+        // Start tour when arriving from stairs auto-scroll (CustomEvent) or on natural entry
+        const onStairsDone = () => {
+          const bounds = mobSection.getBoundingClientRect();
+          if (bounds.top < window.innerHeight && bounds.bottom > 0) {
+            startMobInactivityTimers();
+          }
+        };
+        window.addEventListener('stairs-tour-complete', onStairsDone, { once: true });
+
+        // Also trigger on natural scroll-in
         ScrollTrigger.create({
           trigger: mobSection,
           start: 'top 80%',
@@ -314,9 +324,24 @@ export function Apts() {
         wrap.addEventListener('touchstart', handleTouchStart, { passive: true });
         wrap.addEventListener('touchmove', handleTouchMove, { passive: false });
         wrap.addEventListener('wheel', handleWheel, { passive: false });
-        
-        // If coming from stairs programmatic scroll, it will trigger onEnter
-        tl.scrollTrigger!.vars.onEnter = () => startDeskInactivityTimers(tl.scrollTrigger!);
+
+        // Start department tour when arriving from stairs auto-scroll (CustomEvent)
+        const onStairsDone = () => {
+          const st = tl.scrollTrigger;
+          if (st) startDeskInactivityTimers(st);
+        };
+        window.addEventListener('stairs-tour-complete', onStairsDone, { once: true });
+
+        // Also trigger on natural scroll-in via ScrollTrigger
+        const aptsHwrapSt = tl.scrollTrigger;
+        if (aptsHwrapSt) {
+          ScrollTrigger.create({
+            trigger: wrap,
+            start: 'top 80%',
+            once: true,
+            onEnter: () => startDeskInactivityTimers(aptsHwrapSt)
+          });
+        }
       }
     }
   }, { scope: container });
