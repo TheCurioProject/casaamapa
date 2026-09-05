@@ -47,11 +47,7 @@ export function Stairs() {
 
             const proxy = { y: currentY };
             const scrollTween = gsap.timeline({
-              onUpdate: () => window.scrollTo(0, proxy.y),
-              onComplete: () => {
-                // Signal apts.tsx to start the sequential departments tour
-                window.dispatchEvent(new CustomEvent('stairs-tour-complete'));
-              }
+              onUpdate: () => window.scrollTo(0, proxy.y)
             });
 
             AutoScrollManager.run(scrollTween);
@@ -66,7 +62,23 @@ export function Stairs() {
             addStep(p1, 1.2, 1.8);
             addStep(p2, 1.2, 1.8);
             addStep(p3, 1.2, 2.2);
-            addStep(pNext, 1.8, 0, 'expo.inOut');
+
+            // The final cross-section scroll to #apartamentos cannot use the GSAP proxy
+            // because window.scrollTo() inside a GSAP onUpdate is overridden by the
+            // scrub:1 pin machinery when crossing the st.end boundary.
+            // We use rafScroll (pure requestAnimationFrame) which bypasses GSAP entirely.
+            if (currentY < pNext - 20) {
+              scrollTween.add(() => {
+                AutoScrollManager.rafScroll(pNext, 1.8, () => {
+                  window.dispatchEvent(new CustomEvent('stairs-tour-complete'));
+                });
+              });
+            } else {
+              // Already at or past the target, dispatch immediately after a brief delay
+              scrollTween.add(() => {
+                setTimeout(() => window.dispatchEvent(new CustomEvent('stairs-tour-complete')), 100);
+              });
+            }
 
           }, 1000);
         }
