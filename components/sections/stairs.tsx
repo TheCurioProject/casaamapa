@@ -59,19 +59,25 @@ export function Stairs() {
             const p1 = st.start + totalDist * 0.315; // Step 02 fully visible
             const p2 = st.start + totalDist * 0.465; // Step 03 fully visible
             const p3 = st.start + totalDist * 0.755; // Step 04 fully visible
-            const pNext = st.end + window.innerHeight; // Scroll until 'departamentos' covers screen
+            
+            // Dynamically find exact scroll position for #apartamentos to cover screen
+            let pNext = st.end + window.innerHeight;
+            const aptsSection = document.querySelector('#apartamentos');
+            if (aptsSection) {
+               pNext = window.scrollY + aptsSection.getBoundingClientRect().top;
+            }
 
             const proxy = { y: currentY };
             scrollTween = gsap.timeline({
               onUpdate: () => window.scrollTo(0, proxy.y)
             });
 
-            const addStep = (target: number, duration: number, readDelay: number) => {
+            const addStep = (target: number, duration: number, readDelay: number, ease = 'power3.inOut') => {
               if (currentY < target - 20) {
                 scrollTween.to(proxy, {
                   y: target,
                   duration: duration,
-                  ease: 'power3.inOut'
+                  ease: ease
                 });
                 if (readDelay > 0) {
                   scrollTween.to({}, { duration: readDelay }); // Pause for reading
@@ -83,7 +89,7 @@ export function Stairs() {
             addStep(p1, 1.2, 1.8);
             addStep(p2, 1.2, 1.8);
             addStep(p3, 1.2, 2.2); // Give a bit more time for the final step
-            addStep(pNext, 1.5, 0); // Finish by scrolling to the next section
+            addStep(pNext, 1.8, 0, 'expo.inOut'); // Smoothly glide exactly to the next section
 
           }, 2000);
         }
