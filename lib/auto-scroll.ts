@@ -47,8 +47,8 @@ export class AutoScrollManager {
    * Helper to set scroll position, syncing with Lenis if available.
    */
   static setScroll(y: number) {
-    if (typeof window !== 'undefined' && window.lenis) {
-      window.lenis.scrollTo(y, { immediate: true });
+    if (typeof window !== 'undefined' && window.appLenis) {
+      window.appLenis.scrollTo(y, { immediate: true });
     } else {
       window.scrollTo(0, y);
     }
@@ -66,8 +66,8 @@ export class AutoScrollManager {
       this.scrollTween = null;
     }
 
-    if (typeof window !== 'undefined' && window.lenis) {
-      window.lenis.scrollTo(targetY, {
+    if (typeof window !== 'undefined' && window.appLenis) {
+      window.appLenis.scrollTo(targetY, {
         duration: durationSec,
         lock: false,
         onComplete: () => {
