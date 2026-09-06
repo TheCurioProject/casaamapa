@@ -52,13 +52,25 @@ export function Stairs() {
 
             AutoScrollManager.run(scrollTween);
 
+            let prevMarker = st.start;
+            let virtualY = currentY;
             let isFirstStep = true;
             const addStep = (target: number, duration: number, readDelay: number) => {
-              if (currentY < target - 20) {
+              const stepDist = target - prevMarker;
+              prevMarker = target;
+              
+              if (virtualY < target - 20) {
                 const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
                 isFirstStep = false;
-                scrollTween.to(proxy, { y: target, duration, ease });
+                
+                const speed = stepDist > 0 ? stepDist / duration : 1000;
+                const remainingDist = target - virtualY;
+                const adjDuration = Math.max(0.2, speed > 0 ? remainingDist / speed : duration);
+                
+                scrollTween.to(proxy, { y: target, duration: adjDuration, ease });
                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+                
+                virtualY = target;
               }
             };
 
@@ -70,9 +82,16 @@ export function Stairs() {
             // because window.scrollTo() inside a GSAP onUpdate is overridden by the
             // scrub:1 pin machinery when crossing the st.end boundary.
             // We use rafScroll (pure requestAnimationFrame) which bypasses GSAP entirely.
-            if (currentY < pNext - 20) {
+            if (virtualY < pNext - 20) {
+              const pNextDist = pNext - p3;
+              const speed = pNextDist > 0 ? pNextDist / 1.8 : 1000;
+              
               scrollTween.add(() => {
-                AutoScrollManager.rafScroll(pNext, 1.8, () => {
+                const currentYAtAdd = window.scrollY;
+                const remainingDist = pNext - currentYAtAdd;
+                const adjDuration = Math.max(0.2, speed > 0 ? remainingDist / speed : 1.8);
+                
+                AutoScrollManager.rafScroll(pNext, adjDuration, () => {
                   window.dispatchEvent(new CustomEvent('stairs-tour-complete'));
                 });
               });
@@ -83,11 +102,17 @@ export function Stairs() {
               });
             }
 
-          }, 1000);
+          });
         }
       };
 
-      const handleUserInteraction = () => {
+      const handleUserInteraction = (e?: Event) => {
+        if (e && e.type === 'keydown') {
+          const evt = e as KeyboardEvent;
+          const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'Home', 'End'];
+          if (!navKeys.includes(evt.code)) return;
+        }
+        
         AutoScrollManager.interact();
         setShowHint(false);
         const st = tl.scrollTrigger;
@@ -101,6 +126,7 @@ export function Stairs() {
       window.addEventListener('touchstart', handleUserInteraction, { passive: true });
       window.addEventListener('touchmove', handleUserInteraction, { passive: true });
       window.addEventListener('mousedown', handleUserInteraction, { passive: true });
+      window.addEventListener('keydown', handleUserInteraction, { passive: true });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -124,6 +150,7 @@ export function Stairs() {
             window.removeEventListener('touchstart', handleUserInteraction);
             window.removeEventListener('touchmove', handleUserInteraction);
             window.removeEventListener('mousedown', handleUserInteraction);
+            window.removeEventListener('keydown', handleUserInteraction);
           }
         }
       });

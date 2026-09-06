@@ -156,6 +156,7 @@ export function Apts() {
           wrap.removeEventListener('wheel', handleWheel);
           window.removeEventListener('pointerdown', handlePointerDown);
           window.removeEventListener('pointerup', handleInteractionEnd);
+          window.removeEventListener('keydown', handleKeyDown);
         };
 
         const tl = gsap.timeline({
@@ -220,15 +221,26 @@ export function Apts() {
               });
               AutoScrollManager.run(scrollTween);
 
+              let prevMarker = st.start;
+              let virtualY = currentY;
               let isFirstStep = true;
               const addStep = (target: number, duration: number, readDelay: number) => {
-                if (currentY < target - 20) {
+                const stepDist = target - prevMarker;
+                prevMarker = target;
+                
+                if (virtualY < target - 20) {
                   // Use a smoother curve if this is the first tween added (resuming from mid-scroll)
                   const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
                   isFirstStep = false;
                   
-                  scrollTween.to(proxy, { y: target, duration, ease });
+                  const speed = stepDist > 0 ? stepDist / duration : 1000;
+                  const remainingDist = target - virtualY;
+                  const adjDuration = Math.max(0.2, speed > 0 ? remainingDist / speed : duration);
+                  
+                  scrollTween.to(proxy, { y: target, duration: adjDuration, ease });
                   if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+                  
+                  virtualY = target;
                 }
               };
 
@@ -238,7 +250,7 @@ export function Apts() {
               addStep(markers[2], 1.2, 2.0); // Agua
               addStep(markers[3], 1.2, 2.0); // Aire
               addStep(markers[4], 1.2, 0);   // Salida
-            }, 1000);
+            });
           }
         };
 
@@ -300,6 +312,17 @@ export function Apts() {
           AutoScrollManager.interact();
         };
 
+        const handleKeyDown = (e: Event) => {
+          const evt = e as KeyboardEvent;
+          const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'Home', 'End'];
+          if (navKeys.includes(evt.code)) {
+            AutoScrollManager.interact();
+            if (tl.scrollTrigger && tl.scrollTrigger.isActive) {
+              startDeskInactivityTimers(tl.scrollTrigger);
+            }
+          }
+        };
+
         wrap.addEventListener('touchstart', handleTouchStart, { passive: true });
         wrap.addEventListener('touchmove', handleTouchMove, { passive: false });
         wrap.addEventListener('touchend', handleInteractionEnd, { passive: true });
@@ -307,6 +330,7 @@ export function Apts() {
         wrap.addEventListener('wheel', handleWheel, { passive: false });
         window.addEventListener('pointerdown', handlePointerDown, { passive: true });
         window.addEventListener('pointerup', handleInteractionEnd, { passive: true });
+        window.addEventListener('keydown', handleKeyDown, { passive: true });
 
         // Start department tour when arriving from stairs auto-scroll (CustomEvent)
         const onStairsDone = () => {

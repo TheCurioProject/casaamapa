@@ -23,9 +23,9 @@ export class AutoScrollManager {
   }
 
   /**
-   * Schedule a callback to run after a specific delay of inactivity (default 1000ms).
+   * Schedule a callback to run after a specific delay of inactivity (default 2200ms).
    */
-  static schedule(callback: () => void, delayMs = 1000) {
+  static schedule(callback: () => void, delayMs = 2200) {
     this.interact(); // Clear previous timers and animations
     this.inactivityTimeout = setTimeout(() => {
       callback();
