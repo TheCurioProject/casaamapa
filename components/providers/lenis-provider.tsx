@@ -4,6 +4,12 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/dist/ScrollTrigger';
 
+declare global {
+  interface Window {
+    lenis: Lenis;
+  }
+}
+
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
 
@@ -21,6 +27,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       touchMultiplier: 1.3,
     });
     lenisRef.current = lenis;
+    window.lenis = lenis;
 
     // Synchronize Lenis scrolling with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
@@ -68,6 +75,8 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
+      // @ts-ignore
+      delete window.lenis;
     };
   }, []);
 

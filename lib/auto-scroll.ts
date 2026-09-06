@@ -44,6 +44,17 @@ export class AutoScrollManager {
   }
 
   /**
+   * Helper to set scroll position, syncing with Lenis if available.
+   */
+  static setScroll(y: number) {
+    if (typeof window !== 'undefined' && window.lenis) {
+      window.lenis.scrollTo(y, { immediate: true });
+    } else {
+      window.scrollTo(0, y);
+    }
+  }
+
+  /**
    * Scroll to a target Y position using requestAnimationFrame — completely
    * independent of GSAP. Use this when crossing GSAP pin boundaries, where
    * window.scrollTo() inside a GSAP onUpdate can be ignored by the pin/scrub.
@@ -53,6 +64,19 @@ export class AutoScrollManager {
     if (this.scrollTween) {
       this.scrollTween.kill();
       this.scrollTween = null;
+    }
+
+    if (typeof window !== 'undefined' && window.lenis) {
+      window.lenis.scrollTo(targetY, {
+        duration: durationSec,
+        lock: false,
+        onComplete: () => {
+          this.scrollTween = null;
+          onComplete?.();
+        }
+      });
+      this.scrollTween = { kill: () => {} };
+      return;
     }
 
     const startY = window.scrollY;
@@ -68,7 +92,7 @@ export class AutoScrollManager {
 
     const tick = (now: number) => {
       const t = Math.min((now - startTime) / durationMs, 1);
-      window.scrollTo(0, Math.round(startY + (targetY - startY) * ease(t)));
+      this.setScroll(Math.round(startY + (targetY - startY) * ease(t)));
       if (t < 1) {
         rafId = requestAnimationFrame(tick);
       } else {

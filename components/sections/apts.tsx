@@ -217,7 +217,7 @@ export function Apts() {
 
               const proxy = { y: currentY };
               const scrollTween = gsap.timeline({
-                onUpdate: () => window.scrollTo(0, proxy.y)
+                onUpdate: () => AutoScrollManager.setScroll(proxy.y)
               });
               AutoScrollManager.run(scrollTween);
 
