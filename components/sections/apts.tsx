@@ -137,113 +137,8 @@ export function Apts() {
     const isDesktop = window.matchMedia('(min-width: 1024px) and (orientation: landscape)').matches;
 
     if (!isDesktop) {
-      const mobSection = document.querySelector('#apartamentos-m');
-      if (mobSection) {
-        const mobSt = ScrollTrigger.create({
-          trigger: mobSection,
-          start: 'bottom bottom',
-          end: '+=100%',
-          pin: true,
-          pinSpacing: true,
-        });
-
-        const startMobInactivityTimers = () => {
-          AutoScrollManager.schedule(() => {
-            const currentY = window.scrollY;
-            const panels = Array.from(mobSection.querySelectorAll('article'));
-
-            // Measure panel positions at call time (after pin is active)
-            const markers = [];
-            // First step: Portada (title of the section)
-            markers.push(window.scrollY + mobSection.getBoundingClientRect().top);
-
-            panels.forEach(p => {
-              markers.push(window.scrollY + p.getBoundingClientRect().top - window.innerHeight * 0.05);
-            });
-            markers.push(mobSt.end);
-
-            const proxy = { y: currentY };
-            const scrollTween = gsap.timeline({
-              onUpdate: () => window.scrollTo(0, proxy.y)
-            });
-            AutoScrollManager.run(scrollTween);
-
-            let isFirstStep = true;
-            const addStep = (target: number, duration: number, readDelay: number) => {
-              if (currentY < target - 20) {
-                const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
-                isFirstStep = false;
-                scrollTween.to(proxy, { y: target, duration, ease });
-                if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
-              }
-            };
-
-            addStep(markers[0], 1.5, 2.2); // Portada
-            addStep(markers[1], 1.2, 1.8); // Tierra
-            addStep(markers[2], 1.2, 1.8); // Agua
-            addStep(markers[3], 1.2, 1.8); // Aire
-            addStep(markers[4], 1.2, 0);   // End
-
-          }, 1000);
-        };
-
-        const handleMobUserInteraction = () => {
-          AutoScrollManager.interact();
-          const bounds = mobSection.getBoundingClientRect();
-          if (bounds.top < window.innerHeight && bounds.bottom > 0) {
-            startMobInactivityTimers();
-          }
-        };
-
-        const cleanupMobListeners = () => {
-          window.removeEventListener('wheel', handleMobUserInteraction);
-          window.removeEventListener('touchstart', handleMobUserInteraction);
-          window.removeEventListener('touchmove', handleMobUserInteraction);
-        };
-
-        const addMobListeners = () => {
-          window.addEventListener('wheel', handleMobUserInteraction, { passive: true });
-          window.addEventListener('touchstart', handleMobUserInteraction, { passive: true });
-          window.addEventListener('touchmove', handleMobUserInteraction, { passive: true });
-        };
-
-        ScrollTrigger.create({
-          trigger: mobSection,
-          start: 'top 80%',
-          end: 'bottom top',
-          onEnter: () => {
-            addMobListeners();
-            startMobInactivityTimers();
-          },
-          onEnterBack: () => {
-            addMobListeners();
-            startMobInactivityTimers();
-          },
-          onLeave: () => {
-            AutoScrollManager.interact();
-            cleanupMobListeners();
-          },
-          onLeaveBack: () => {
-            AutoScrollManager.interact();
-            cleanupMobListeners();
-          }
-        });
-
-        // Start tour when arriving from stairs auto-scroll (CustomEvent)
-        const onStairsDone = () => {
-          const bounds = mobSection.getBoundingClientRect();
-          if (bounds.top < window.innerHeight && bounds.bottom > 0) {
-            startMobInactivityTimers();
-          }
-        };
-        window.addEventListener('stairs-tour-complete', onStairsDone);
-
-        // Cleanup on unmount
-        return () => {
-          cleanupMobListeners();
-          window.removeEventListener('stairs-tour-complete', onStairsDone);
-        };
-      }
+      // Mobile layout relies solely on native scrolling. Auto-scroll removed as requested.
+      return () => {};
     }
 
     if (isDesktop) {
@@ -254,9 +149,13 @@ export function Apts() {
       if (wrap && cont && prog) {
         // Clean up listeners when leaving the section to prevent interference
         const cleanupListeners = () => {
-          window.removeEventListener('touchstart', handleTouchStart);
-          window.removeEventListener('touchmove', handleTouchMove);
-          window.removeEventListener('wheel', handleWheel);
+          wrap.removeEventListener('touchstart', handleTouchStart);
+          wrap.removeEventListener('touchmove', handleTouchMove);
+          wrap.removeEventListener('touchend', handleInteractionEnd);
+          wrap.removeEventListener('touchcancel', handleInteractionEnd);
+          wrap.removeEventListener('wheel', handleWheel);
+          window.removeEventListener('pointerdown', handlePointerDown);
+          window.removeEventListener('pointerup', handleInteractionEnd);
         };
 
         const tl = gsap.timeline({
@@ -356,7 +255,6 @@ export function Apts() {
           touchStartY = evt.touches[0].clientY;
           lastTouchX = touchStartX;
           isHorizontalSwipe = false;
-          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
         };
 
         const handleTouchMove = (e: Event) => {
@@ -378,7 +276,12 @@ export function Apts() {
             window.scrollBy({ top: diffX * 2.5 });
             lastTouchX = currentX;
           }
-          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
+        };
+
+        const handleInteractionEnd = () => {
+          if (tl.scrollTrigger && tl.scrollTrigger.isActive) {
+            startDeskInactivityTimers(tl.scrollTrigger);
+          }
         };
 
         const handleWheel = (e: Event) => {
@@ -388,12 +291,22 @@ export function Apts() {
             if (evt.cancelable) evt.preventDefault();
             window.scrollBy({ top: evt.deltaX });
           }
-          if (tl.scrollTrigger && tl.scrollTrigger.isActive) startDeskInactivityTimers(tl.scrollTrigger);
+          if (tl.scrollTrigger && tl.scrollTrigger.isActive) {
+            startDeskInactivityTimers(tl.scrollTrigger);
+          }
+        };
+
+        const handlePointerDown = () => {
+          AutoScrollManager.interact();
         };
 
         wrap.addEventListener('touchstart', handleTouchStart, { passive: true });
         wrap.addEventListener('touchmove', handleTouchMove, { passive: false });
+        wrap.addEventListener('touchend', handleInteractionEnd, { passive: true });
+        wrap.addEventListener('touchcancel', handleInteractionEnd, { passive: true });
         wrap.addEventListener('wheel', handleWheel, { passive: false });
+        window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+        window.addEventListener('pointerup', handleInteractionEnd, { passive: true });
 
         // Start department tour when arriving from stairs auto-scroll (CustomEvent)
         const onStairsDone = () => {
