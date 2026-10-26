@@ -78,20 +78,21 @@ bloqueo inmediatamente después de confirmar, pero cada OTA decide cuándo volve
 leer el feed; iCal no garantiza bloqueo instantáneo. Para garantía en segundos se
 necesita un channel manager o las APIs oficiales de cada OTA.
 
-## Operaciones pendientes antes de declarar producción corregida
+## Estado después del despliegue
 
 1. Rotar de inmediato la contraseña `admin` de producción.
 2. Las migraciones `20261025223000_harden_booking_payments` y
    `20261025234500_include_attention_in_booking_lock` ya fueron aplicadas; el diff
-   contra producción está vacío. Falta desplegar el código que utiliza esas columnas.
+   contra producción está vacío. El código que utiliza esas columnas quedó desplegado
+   en Vercel desde `main`.
 3. Confirmar en Stripe Workbench el endpoint exacto
    `https://www.casaamapa.com/api/webhooks/stripe`, eventos requeridos y `whsec_`
    del mismo entorno live.
 4. Confirmar en Resend que el dominio de `EMAIL_FROM` está verificado.
 5. Ejecutar una reserva live de monto controlado, verificar 200 del webhook,
    registro confirmado, feed iCal, correo del huésped/admin y luego reembolsarla.
-6. Revisar antes del deployment los cambios visuales locales preexistentes: el
-   worktree ya estaba modificado en 26 archivos ajenos al incidente.
+6. El dominio público, disponibilidad, páginas de departamentos y feed iCal
+   respondieron correctamente en las pruebas de humo posteriores al despliegue.
 
 ## Verificación local realizada
 
