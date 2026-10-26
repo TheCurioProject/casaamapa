@@ -68,7 +68,8 @@ que el incidente se repita en reservas futuras.
    feeds y se envían emails idempotentes.
 4. Auditoría: eventos Stripe, errores y timestamps de correo quedan persistidos.
 5. Serverless: ninguna tarea depende de memoria local o de que el navegador siga
-   abierto; los crons de Vercel corrigen estados incompletos.
+   abierto; los crons de Vercel corrigen estados incompletos. En Hobby operan una
+   vez al día; frecuencias de 10/30 minutos requieren Vercel Pro.
 
 ## Límites de la sincronización OTA
 

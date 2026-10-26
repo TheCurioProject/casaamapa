@@ -42,9 +42,11 @@ npx prisma generate
 npm run build
 ```
 
-No se debe usar `prisma db push` en producción. El deployment de Vercel necesita
-un plan que acepte las frecuencias definidas en `vercel.json` (reconciliación de
-pagos cada 10 minutos y sincronización iCal cada 30 minutos).
+No se debe usar `prisma db push` en producción. `vercel.json` usa una ejecución
+diaria por tarea para ser compatible con Vercel Hobby. El webhook de Stripe y el
+retorno del navegador confirman pagos en tiempo real; el cron es una red de
+seguridad. Para sincronizar iCal cada 30 minutos y reconciliar pagos cada 10
+minutos, cambia esas frecuencias después de actualizar el proyecto a Vercel Pro.
 
 ### Release candidate y Stripe Test
 
