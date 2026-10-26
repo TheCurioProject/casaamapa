@@ -27,15 +27,18 @@ export function SettingsForm({ initialSettings }: { initialSettings: { depositPe
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div>
-        <label className="block text-sm font-medium mb-2">Modalidad de cobro</label>
+        <p className="text-sm text-gray-600 mb-4">
+          Solo aplica a reservas creadas en el panel. El checkout del sitio web siempre cobra el 100%.
+        </p>
+        <label className="block text-sm font-medium mb-2">Cobro predeterminado para reservas manuales</label>
         <select 
           name="paymentMode" 
           value={isFull ? 'full' : 'deposit'} 
           onChange={(e) => setIsFull(e.target.value === 'full')}
           className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-rose-200 outline-none"
         >
-          <option value="deposit">Cobrar anticipo (Depósito)</option>
-          <option value="full">Cobrar 100% al reservar</option>
+          <option value="deposit">Registrar anticipo</option>
+          <option value="full">Registrar pago completo (100%)</option>
         </select>
       </div>
       

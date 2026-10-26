@@ -24,19 +24,19 @@ export async function GET(
     const bookings = await prisma.booking.findMany({
       where: {
         apartmentId: { in: idsToCheck },
-        status: { in: ['confirmed', 'pending'] },
+        status: { in: ['confirmed', 'attention_required'] },
       },
     });
 
     let icalContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Casa Amapa//Booking System//ES\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n`;
 
-    bookings.forEach((booking: any) => {
+    bookings.forEach((booking) => {
       icalContent += `BEGIN:VEVENT\r\n`;
       icalContent += `UID:${booking.id}@casaamapa.com\r\n`;
       icalContent += `DTSTAMP:${formatICalDate(booking.createdAt)}\r\n`;
       icalContent += `DTSTART;VALUE=DATE:${formatICalDate(booking.checkIn).substring(0, 8)}\r\n`;
       icalContent += `DTEND;VALUE=DATE:${formatICalDate(booking.checkOut).substring(0, 8)}\r\n`;
-      icalContent += `SUMMARY:Reserva - ${booking.guestName}\r\n`;
+      icalContent += `SUMMARY:Reservado\r\n`;
       icalContent += `STATUS:CONFIRMED\r\n`;
       icalContent += `END:VEVENT\r\n`;
     });

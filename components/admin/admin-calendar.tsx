@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus, Search, Filter } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock, User, RefreshCw, Plus, Search, Filter, Trash2, Loader2 } from 'lucide-react';
 import { ManualBookingModal } from './manual-booking-modal';
+import { useDialogStore } from '@/store/useDialogStore';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; icalUrls?: string[]; dailyPrices?: { date: Date | string; price: number }[] };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; guestName: string; status: string; isManual: boolean };
@@ -15,11 +16,13 @@ type BlockedDate = { id: string; apartmentId: string; startDate: Date; endDate: 
 export function AdminCalendar({
   units,
   bookings,
-  blockedDates
+  blockedDates,
+  manualDepositPercentage,
 }: {
   units: Unit[];
   bookings: Booking[];
   blockedDates: BlockedDate[];
+  manualDepositPercentage: number;
 }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [isSyncing, setIsSyncing] = useState(false);
@@ -29,7 +32,11 @@ export function AdminCalendar({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterUnit, setFilterUnit] = useState<string>('all');
   const [selectedBlock, setSelectedBlock] = useState<BlockedDate | null>(null);
-  
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const dialog = useDialogStore();
+
   const router = useRouter();
 
   const daysInMonth = eachDayOfInterval({
@@ -52,17 +59,37 @@ export function AdminCalendar({
     }
   };
 
+  const handleDeleteBlock = (blockId: string) => {
+    dialog.confirm({
+      title: '¿Eliminar Bloqueo?',
+      description: 'Si es un bloqueo de OTA, podría volver a aparecer en la siguiente sincronización si sigue en la plataforma original. ¿Estás seguro?',
+      type: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setLoadingAction(blockId);
+        try {
+          await fetch(`/api/admin/calendar/${blockId}`, { method: 'DELETE' });
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          dialog.alert({ title: 'Error', description: 'Ocurrió un error al intentar eliminar el bloqueo.', type: 'danger' });
+          setLoadingAction(null);
+        }
+      }
+    });
+  };
+
   const getStatusForDayAndUnit = (date: Date, unitId: string) => {
     const targetDate = startOfDay(date);
-    
+
     // Check bookings
     const booking = bookings.find(b => {
       const start = startOfDay(new Date(b.checkIn));
       const end = startOfDay(new Date(b.checkOut));
-      const unitMatch = b.apartmentId === unitId || 
-        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) || 
+      const unitMatch = b.apartmentId === unitId ||
+        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
-      
+
       return unitMatch && targetDate >= start && targetDate < end; // checkout day is not occupied
     });
 
@@ -75,8 +102,8 @@ export function AdminCalendar({
     const block = blockedDates.find(b => {
       const start = startOfDay(new Date(b.startDate));
       const end = startOfDay(new Date(b.endDate));
-      const unitMatch = b.apartmentId === unitId || 
-        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) || 
+      const unitMatch = b.apartmentId === unitId ||
+        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
 
       return unitMatch && targetDate >= start && targetDate <= end;
@@ -107,15 +134,15 @@ export function AdminCalendar({
             {format(currentMonth, 'MMMM yyyy', { locale: es })}
           </h2>
         </div>
-        
+
         <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-4 w-full md:w-auto">
           {/* Filters */}
           <div className="flex flex-1 md:flex-none flex-col md:flex-row gap-2">
             <div className="flex items-center gap-2 bg-black/20 rounded-xl border border-white/10 px-3 py-2">
               <Search className="w-4 h-4 text-white/50 shrink-0" />
-              <input 
-                type="text" 
-                placeholder="Buscar huésped..." 
+              <input
+                type="text"
+                placeholder="Buscar huésped..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-transparent border-none text-xs text-white outline-none w-full min-w-[120px]"
@@ -123,7 +150,7 @@ export function AdminCalendar({
             </div>
             <div className="flex items-center gap-2 bg-black/20 rounded-xl border border-white/10 px-3 py-2">
               <Filter className="w-4 h-4 text-white/50 shrink-0" />
-              <select 
+              <select
                 value={filterUnit}
                 onChange={(e) => setFilterUnit(e.target.value)}
                 className="bg-transparent border-none text-xs text-white outline-none w-full appearance-none cursor-pointer pr-4"
@@ -137,7 +164,7 @@ export function AdminCalendar({
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <button 
+            <button
               onClick={() => setIsModalOpen(true)}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[var(--color-rose-3)] hover:bg-[var(--color-rose-2)] text-[var(--color-ink)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors shadow-lg"
             >
@@ -145,7 +172,7 @@ export function AdminCalendar({
               <span className="hidden sm:inline">Bloqueo / Reserva</span>
               <span className="sm:hidden">Nuevo</span>
             </button>
-            <button 
+            <button
               onClick={handleSync}
               disabled={isSyncing || !hasIcalUrls}
               className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 px-3 md:px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50"
@@ -173,7 +200,7 @@ export function AdminCalendar({
         {(() => {
           const start = startOfMonth(currentMonth);
           const end = endOfMonth(currentMonth);
-          
+
           const monthBookings = bookings.filter(b => {
             const bStart = new Date(b.checkIn);
             const bEnd = new Date(b.checkOut);
@@ -204,13 +231,13 @@ export function AdminCalendar({
 
           return activities.map((act, idx) => {
             const unit = units.find(u => u.id === (act.type === 'booking' ? (act as Booking).apartmentId : (act as BlockedDate).apartmentId));
-            
+
             if (act.type === 'booking') {
               const b = act as Booking;
               return (
-                <div 
-                  key={`booking-${b.id}-${idx}`} 
-                  onClick={() => router.push(`/admin/bookings?edit=${b.id}`)}
+                <div
+                  key={`booking-${b.id}-${idx}`}
+                  onClick={() => setSelectedBooking(b)}
                   className="bg-white/5 border border-white/10 rounded-[20px] p-5 flex flex-col gap-3 relative overflow-hidden group cursor-pointer hover:bg-white/10 transition-colors"
                 >
                   <div className="flex justify-between items-start">
@@ -225,7 +252,7 @@ export function AdminCalendar({
                       {b.isManual ? 'Manual' : 'Web'}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="bg-black/20 text-white/80 border border-white/10 px-2 py-1 rounded text-xs font-semibold tracking-wide capitalize">
                       {unit?.name || b.apartmentId}
@@ -261,7 +288,7 @@ export function AdminCalendar({
                       {b.isOtaBlock ? 'OTA' : 'Manual'}
                     </span>
                   </div>
-                  
+
                   <p className="text-xs opacity-70 italic">{b.reason || 'Sin motivo especificado'}</p>
 
                   <div className="flex items-center gap-2">
@@ -295,7 +322,7 @@ export function AdminCalendar({
       <div className="hidden md:flex bg-white/5 rounded-3xl border border-white/10 relative overflow-hidden flex-col">
         <div className="overflow-x-auto w-full pb-4 custom-scrollbar">
           <div className="w-max pr-8">
-            
+
             {/* Header Row (Days) */}
             <div className="flex border-b border-white/10 sticky top-0 bg-[var(--color-ink-2)] z-30 shadow-sm">
               <div className="w-48 shrink-0 p-4 font-bold text-sm tracking-widest uppercase opacity-90 sticky left-0 z-40 bg-[var(--color-ink-2)] border-r border-white/10 flex items-center shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
@@ -303,8 +330,8 @@ export function AdminCalendar({
               </div>
               <div className="flex flex-1 relative overflow-hidden">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                  <motion.div 
-                    key={currentMonth.toISOString()} 
+                  <motion.div
+                    key={currentMonth.toISOString()}
                     custom={direction}
                     variants={slideVariants}
                     initial="enter"
@@ -333,12 +360,12 @@ export function AdminCalendar({
                     <span className="font-bold text-sm truncate">{unit.name}</span>
                     {unit.isWholeHouse && <span className="text-[9px] text-[var(--color-rose-3)] uppercase tracking-widest mt-1">Casa Completa</span>}
                   </div>
-                  
+
                   {/* Days Grid */}
                   <div className="flex flex-1 relative overflow-hidden">
                     <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                      <motion.div 
-                        key={currentMonth.toISOString()} 
+                      <motion.div
+                        key={currentMonth.toISOString()}
                         custom={direction}
                         variants={slideVariants}
                         initial="enter"
@@ -357,14 +384,14 @@ export function AdminCalendar({
                             // Reserva Web (Directa): Rojo (red-500), Manual: Rosa Claro
                             cellColor = isManual ? 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]' : 'bg-red-500 border-red-500';
                             const textColor = isManual ? 'text-[var(--color-ink)]' : 'text-white';
-                            
+
                             const isStart = isSameDay(new Date((status.data as Booking).checkIn), day) || day.getDate() === 1;
                             content = isStart ? <User className={`w-4 h-4 ${textColor}`} /> : null;
                           } else if (status?.type === 'block') {
                             const isOta = (status.data as BlockedDate).isOtaBlock;
                             cellColor = isOta ? 'bg-[#9b4b62] border-[#9b4b62]' : 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]'; // manual block same as manual booking or white/20
                             const textColor = isOta ? 'text-white' : 'text-[var(--color-ink)]';
-                            
+
                             const isStart = isSameDay(new Date((status.data as BlockedDate).startDate), day) || day.getDate() === 1;
                             content = isStart ? <Lock className={`w-3 h-3 ${textColor} opacity-80`} /> : null;
                           }
@@ -374,15 +401,15 @@ export function AdminCalendar({
                           const pastOverlay = isPast ? 'bg-black/30 opacity-60 grayscale' : '';
 
                           return (
-                            <div 
-                              key={day.toISOString()} 
+                            <div
+                              key={day.toISOString()}
                               className={`w-14 shrink-0 border-r border-white/5 relative h-16 flex items-center p-0.5 ${isPast && !status ? 'cursor-not-allowed' : ''}`}
                             >
                               {status ? (
-                                <div 
+                                <div
                                   onClick={
-                                    !isPast 
-                                      ? status.type === 'booking' ? () => router.push(`/admin/bookings?edit=${status.data.id}`) 
+                                    !isPast
+                                      ? status.type === 'booking' ? () => setSelectedBooking(status.data as Booking)
                                       : status.type === 'block' ? () => setSelectedBlock(status.data as BlockedDate) : undefined
                                       : undefined
                                   }
@@ -441,29 +468,103 @@ export function AdminCalendar({
       `}</style>
 
       {isModalOpen && (
-        <ManualBookingModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <ManualBookingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
           units={units}
           bookings={bookings}
           blockedDates={blockedDates}
+          defaultDepositPercentage={manualDepositPercentage}
         />
       )}
+
+      {/* Booking Details Modal */}
+      <AnimatePresence>
+        {selectedBooking && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              onClick={() => setSelectedBooking(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-sm bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden text-[var(--color-ink)] p-8"
+            >
+              <div className="flex items-center gap-3 mb-6 text-[var(--color-rose-3)]">
+                <User className="w-6 h-6" />
+                <h3 className="font-display text-2xl">Detalles de la Reserva</h3>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Huésped</p>
+                  <p className="font-semibold capitalize text-lg">{selectedBooking.guestName}</p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Unidad</p>
+                  <p className="font-semibold capitalize text-lg">{units.find(u => u.id === selectedBooking.apartmentId)?.name}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-black/5 p-3 rounded-xl border border-black/5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Check-in</p>
+                    <p className="font-semibold">{format(new Date(selectedBooking.checkIn), 'd MMM', { locale: es })}</p>
+                  </div>
+                  <div className="bg-black/5 p-3 rounded-xl border border-black/5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Check-out</p>
+                    <p className="font-semibold">{format(new Date(selectedBooking.checkOut), 'd MMM', { locale: es })}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Origen</p>
+                  <span className={`inline-block px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest ${
+                      selectedBooking.isManual ? 'bg-[var(--color-rose-1)]/20 text-[var(--color-rose-1)] border border-[var(--color-rose-1)]/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                    }`}>
+                      {selectedBooking.isManual ? 'Manual' : 'Web'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push(`/admin/bookings?edit=${selectedBooking.id}`)}
+                  className="w-full py-3 bg-[var(--color-rose-3)] text-[var(--color-ink)] rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-[var(--color-rose-2)] flex items-center justify-center gap-2"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="w-full py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Block Details Modal */}
       <AnimatePresence>
         {selectedBlock && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-md"
               onClick={() => setSelectedBlock(null)}
             />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-sm bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden text-[var(--color-ink)] p-8"
             >
@@ -471,13 +572,13 @@ export function AdminCalendar({
                 <Lock className="w-6 h-6" />
                 <h3 className="font-display text-2xl">Detalles del Bloqueo</h3>
               </div>
-              
+
               <div className="space-y-4 mb-8">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Unidad</p>
                   <p className="font-semibold capitalize text-lg">{units.find(u => u.id === selectedBlock.apartmentId)?.name}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5">
                     <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Desde</p>
@@ -493,16 +594,31 @@ export function AdminCalendar({
                   <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Origen / Motivo</p>
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5 text-sm italic">
                     {selectedBlock.reason || 'Sin motivo especificado'}
+                    {selectedBlock.isOtaBlock && (
+                      <p className="text-[10px] text-[var(--color-coral)] mt-2 font-bold uppercase tracking-widest">
+                        Nota: Al eliminar un bloqueo de OTA, la próxima sincronización podría volver a traerlo si no lo has eliminado primero en Airbnb/Booking.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <button 
-                onClick={() => setSelectedBlock(null)}
-                className="w-full py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black"
-              >
-                Cerrar
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleDeleteBlock(selectedBlock.id)}
+                  disabled={loadingAction === selectedBlock.id}
+                  className="w-full py-3 bg-[var(--color-coral)]/10 text-[var(--color-coral)] rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-[var(--color-coral)]/20 flex items-center justify-center gap-2 border border-[var(--color-coral)]/20"
+                >
+                  {loadingAction === selectedBlock.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  Eliminar
+                </button>
+                <button
+                  onClick={() => setSelectedBlock(null)}
+                  className="w-full py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black"
+                >
+                  Cerrar
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

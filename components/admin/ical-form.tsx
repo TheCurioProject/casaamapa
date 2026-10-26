@@ -11,7 +11,7 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [exportUrl, setExportUrl] = useState(`https://amapachacala.com/api/ical/export/${unitId}/calendar.ics`);
+  const [exportUrl, setExportUrl] = useState(`https://www.casaamapa.com/api/ical/export/${unitId}/calendar.ics`);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

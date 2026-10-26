@@ -1,13 +1,34 @@
-type BookingWithUnit = any; // We'll just use any for simplicity, or we can import the type if we know it.
+type InvoiceBooking = {
+  id: string;
+  guestName: string;
+  checkIn: Date;
+  checkOut: Date;
+  guests: number;
+  isManual: boolean;
+  totalPrice: number | null;
+  depositPercentage: number | null;
+  paymentAmountCents: number | null;
+  amountPaidCents: number;
+  paymentBrand: string | null;
+  paymentLast4: string | null;
+  unit: { name: string };
+};
 
-export function getInvoiceHtml(booking: any) {
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+  })[character]!);
+}
+
+export function getInvoiceHtml(booking: InvoiceBooking) {
+  const total = booking.totalPrice ?? 0;
+  const depositPercentage = booking.depositPercentage ?? 100;
+  const expectedPaid = (booking.paymentAmountCents ?? Math.round(total * depositPercentage)) / 100;
+  const amountPaid = booking.amountPaidCents > 0 ? booking.amountPaidCents / 100 : expectedPaid;
+  const amountDue = Math.max(0, total - amountPaid);
   let paymentDetails = '';
 
-  if (booking.isManual) {
-    const total = booking.totalPrice || 0;
-    const depositPercentage = booking.depositPercentage || 0;
-    const amountPaid = total * (depositPercentage / 100);
-    const amountDue = total - amountPaid;
+  if (amountDue > 0) {
 
     paymentDetails = `
         <div class="detail-row">
@@ -27,7 +48,6 @@ export function getInvoiceHtml(booking: any) {
         </div>
     `;
   } else {
-    const total = booking.totalPrice || 0;
     const brand = booking.paymentBrand ? booking.paymentBrand.toUpperCase() : 'TARJETA';
     const last4 = booking.paymentLast4 ? `**** ${booking.paymentLast4}` : '';
     const brandIcon = booking.paymentBrand === 'visa' ? '💳' : booking.paymentBrand === 'mastercard' ? '💳' : '💳'; // Fallback to generic icon if no specific image is available
@@ -40,7 +60,7 @@ export function getInvoiceHtml(booking: any) {
         <div class="detail-row">
           <span class="detail-label">Método de Pago</span>
           <span class="detail-value">
-            <span style="display: inline-flex; items-center: center; gap: 5px; font-size: 14px;">
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 14px;">
               ${brandIcon} ${brand} ${last4}
             </span>
           </span>
@@ -93,17 +113,17 @@ export function getInvoiceHtml(booking: any) {
     </div>
     
     <div class="content">
-      <h2 class="greeting">¡Hola ${booking.guestName}!</h2>
-      <p style="font-size: 15px; line-height: 1.6; color: #555;">Tu reserva para <strong>${booking.unit.name}</strong> ha sido registrada exitosamente. A continuación, te compartimos los detalles y las normas de la casa.</p>
+      <h2 class="greeting">¡Hola ${escapeHtml(booking.guestName)}!</h2>
+      <p style="font-size: 15px; line-height: 1.6; color: #555;">Tu reserva para <strong>${escapeHtml(booking.unit.name)}</strong> ha sido registrada exitosamente. A continuación, te compartimos los detalles y las normas de la casa.</p>
       
       <div class="booking-details">
         <div class="detail-row">
           <span class="detail-label">Llegada</span>
-          <span class="detail-value">${new Date(booking.checkIn).toLocaleDateString('es-MX')} a partir de las 3:00 PM</span>
+          <span class="detail-value">${new Date(booking.checkIn).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })} a partir de las 3:00 PM</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Salida</span>
-          <span class="detail-value">${new Date(booking.checkOut).toLocaleDateString('es-MX')} antes de las 11:00 AM</span>
+          <span class="detail-value">${new Date(booking.checkOut).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })} antes de las 11:00 AM</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Huéspedes</span>

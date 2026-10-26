@@ -1,21 +1,25 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { Link, usePathname } from '@/i18n/routing';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 
 export function Header() {
   const { openBooking, isOpen, isAptModalOpen } = useBookingStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isDeptExpanded, setIsDeptExpanded] = useState(false);
+  const pathname = usePathname();
+  const isDeptPage = pathname?.includes('/departamentos/');
+
   const [theme, setTheme] = useState('dark');
   const [logoTheme, setLogoTheme] = useState('dark');
   const [reserveTheme, setReserveTheme] = useState('dark');
   const [menuBtnTheme, setMenuBtnTheme] = useState('dark');
-  
+
   const logoThemeRef = useRef('dark');
   const reserveThemeRef = useRef('dark');
   const menuBtnThemeRef = useRef('dark');
-  
+
   const logoRef = useRef<HTMLAnchorElement>(null);
   const reserveRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
@@ -40,9 +44,9 @@ export function Header() {
         }
       });
     });
-    
+
     observer.observe(document.body, { attributes: true });
-    
+
     // Inactivity scroll hint logic
     let timeout: NodeJS.Timeout;
     const checkAndShow = (delay: number) => {
@@ -61,7 +65,7 @@ export function Header() {
       setShowScrollHint(false);
       checkAndShow(800);
     };
-    
+
     checkAndShow(1500);
     window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -71,7 +75,7 @@ export function Header() {
         gsap.registerPlugin(ScrollTrigger);
 
         const sections = document.querySelectorAll<HTMLElement>('[data-theme]');
-        
+
         sections.forEach((sec) => {
           const sectionTheme = sec.getAttribute('data-theme') || 'dark';
 
@@ -135,7 +139,7 @@ export function Header() {
             invalidateOnRefresh: true,
           });
         });
-        
+
         ScrollTrigger.refresh();
       });
     });
@@ -161,38 +165,57 @@ export function Header() {
 
   return (
     <>
-      <motion.header 
+      <motion.header
         className="fixed top-0 left-0 right-0 px-[var(--spacing-pad-x)] pt-[clamp(20px,3vh,48px)] pb-0 z-[110] flex justify-between items-start pointer-events-none"
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1.2, delay: 2.0, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link ref={logoRef} href="#llegada" className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
-            Casa Amapa
+          <Link ref={logoRef as any} href={isDeptPage ? '/' : '#llegada'} className="flex flex-col group">
+            <span className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
+              Casa Amapa
+            </span>
+            <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.85rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 whitespace-nowrap font-medium font-sans ${isDeptPage ? 'opacity-90 translate-y-0 group-hover:opacity-100' : ((showScrollHint && !isOpen && !isAptModalOpen) ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2')}`}>
+               {isDeptPage ? (
+                 <>
+                   <motion.span
+                     className={`inline-block ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}
+                     animate={{ x: [-4, 0, -4] }}
+                     transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                   >
+                     ←
+                   </motion.span>
+                   <span className={logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>
+                     Volver al inicio
+                   </span>
+                 </>
+               ) : (
+                 <>
+                   <span className={logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
+                   <span className={`animate-bounce ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
+                 </>
+               )}
+            </div>
           </Link>
-          <div className={`absolute top-full left-0 mt-1 flex items-center gap-2 text-[0.85rem] md:text-[0.8rem] tracking-[0.25em] uppercase transition-all duration-700 pointer-events-none whitespace-nowrap font-medium ${(showScrollHint && !isOpen && !isAptModalOpen) ? 'opacity-60 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-             <span className={logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}>Continúa deslizando</span>
-             <span className={`animate-bounce ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'}`}>↓</span>
-          </div>
         </div>
-        
+
         <div className="flex items-center gap-[10px] pointer-events-auto">
-          <button 
+          <button
             ref={reserveRef}
             onClick={() => openBooking()}
             className={`
               max-md:hidden h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium
               ${reserveTheme === 'rose' || reserveTheme === 'light'
-                ? 'bg-[var(--color-ink)] text-[var(--color-cream)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)]' 
+                ? 'bg-[var(--color-ink)] text-[var(--color-cream)] hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)]'
                 : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] hover:bg-[var(--color-ink)]'}
               ${isOpen ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}
             `}
           >
             Reservar
           </button>
-          
-          <button 
+
+          <button
             ref={menuRef}
             className={`
               w-[46px] h-[46px] rounded-full grid place-items-center content-center gap-[5px] transition-all duration-300
@@ -214,7 +237,7 @@ export function Header() {
       {/* Menú Overlay Animado */}
       <AnimatePresence>
         {menuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -223,29 +246,64 @@ export function Header() {
             className={`fixed top-[calc(clamp(20px,3vh,48px)+54px)] right-[var(--spacing-pad-x)] w-[min(320px,calc(100vw-var(--spacing-pad-x)*2))] p-[3.5vh_4vw_3vh] rounded-[20px] flex flex-col gap-[2.5vh] shadow-[0_20px_60px_rgba(20,8,20,0.4)] z-[105] border border-[rgba(61,36,56,0.06)] transition-colors duration-500 ${theme === 'rose' ? 'bg-[var(--color-ink)]' : 'bg-[var(--color-rose-3)]'}`}
           >
             <nav className="flex flex-col gap-[0.6vh]">
-              {[
-                { id: 'ubicacion', n: '01', t: 'Encuéntranos', ext: 'https://www.google.com/maps/search/?api=1&query=Casa+Amapa,+Playa+Chacala,+Nayarit' },
-                { id: 'apartamentos', n: '02', t: 'Departamentos' }
-              ].map((item, i) => (
-                <motion.a 
-                  key={item.id}
-                  href={item.ext || `#${item.id}`} 
-                  target={item.ext ? "_blank" : undefined}
-                  rel={item.ext ? "noopener noreferrer" : undefined}
-                  onClick={() => setMenuOpen(false)}
+              <motion.a
+                href="https://www.google.com/maps/search/?api=1&query=Casa+Amapa,+Playa+Chacala,+Nayarit"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 5 }}
+                transition={{ delay: 0.05, duration: 0.3, ease: 'easeOut' }}
+                className={`flex items-baseline gap-[0.8em] py-[0.4em] px-[0.1em] font-medium text-lg text-[var(--color-cream)] border-b border-[rgba(249,241,239,0.1)] transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`}
+              >
+                <em className="not-italic text-[0.65rem] tracking-[0.3em] text-[var(--color-cream)] opacity-60">01</em>
+                Encuéntranos
+              </motion.a>
+
+              <div className="flex flex-col border-b border-[rgba(249,241,239,0.1)]">
+                <motion.button
+                  onClick={() => setIsDeptExpanded(!isDeptExpanded)}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 5 }}
-                  transition={{ delay: 0.05 + i * 0.04, duration: 0.3, ease: 'easeOut' }}
-                  className={`flex items-baseline gap-[0.8em] py-[0.4em] px-[0.1em] font-medium text-lg text-[var(--color-cream)] border-b border-[rgba(249,241,239,0.1)] transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`}
+                  transition={{ delay: 0.09, duration: 0.3, ease: 'easeOut' }}
+                  className={`flex items-center w-full gap-[0.8em] py-[0.4em] px-[0.1em] font-medium text-lg text-[var(--color-cream)] transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`}
                 >
-                  <em className="not-italic text-[0.65rem] tracking-[0.3em] text-[var(--color-cream)] opacity-60">{item.n}</em>
-                  {item.t}
-                </motion.a>
-              ))}
+                  <em className="not-italic text-[0.65rem] tracking-[0.3em] text-[var(--color-cream)] opacity-60">02</em>
+                  <span className="flex-1 text-left">Departamentos</span>
+                  <motion.span
+                    animate={{ rotate: isDeptExpanded ? 180 : 0 }}
+                    className="ml-auto text-[0.55rem] opacity-60"
+                  >
+                    ▼
+                  </motion.span>
+                </motion.button>
+                <AnimatePresence>
+                  {isDeptExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden flex flex-col pl-[2.8em] gap-[0.8em] pb-[0.8em]"
+                    >
+                      {['Tierra', 'Agua', 'Aire'].map((dept) => (
+                        <Link
+                          key={dept}
+                          href={`/departamentos/${dept.toLowerCase()}`}
+                          onClick={() => setMenuOpen(false)}
+                          className={`font-medium text-[0.95rem] text-[var(--color-cream)] opacity-70 transition-opacity hover:opacity-100 ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`}
+                        >
+                          {dept}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </nav>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -253,14 +311,14 @@ export function Header() {
               className="flex flex-col gap-4 pt-[0.2rem] text-[0.65rem] tracking-[0.16em] uppercase text-[var(--color-cream)] opacity-80"
             >
               <a href="mailto:admin.casaamapa@gmail.com" className={`transition-colors break-all ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`}>admin.casaamapa@gmail.com</a>
-              
+
               <div className="flex items-center gap-5 mt-1">
                 {/* Facebook */}
-                <a href="#" className={`transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`} aria-label="Facebook">
+                <a href="https://www.facebook.com/share/19XYZvU5LQ/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className={`transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`} aria-label="Facebook">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="16" height="16" fill="currentColor"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"/></svg>
                 </a>
                 {/* Instagram */}
-                <a href="#" className={`transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`} aria-label="Instagram">
+                <a href="https://www.instagram.com/casaamapa.mx?stkn=Z2hrNHN0b3M0YjA2&utm_source=qr" target="_blank" rel="noopener noreferrer" className={`transition-colors ${theme === 'rose' ? 'hover:text-[var(--color-rose-3)]' : 'hover:text-[var(--color-ink)]'}`} aria-label="Instagram">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16" fill="currentColor"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
                 </a>
                 {/* WhatsApp */}
@@ -273,12 +331,12 @@ export function Header() {
         )}
       </AnimatePresence>
       {/* Mobile Floating Booking Button */}
-      <button 
+      <button
         onClick={() => openBooking()}
         className={`
           md:hidden fixed z-[110] h-[46px] px-[1.8em] flex items-center justify-center rounded-full text-[0.8rem] tracking-[0.22em] uppercase transition-all duration-300 font-medium shadow-[0_10px_30px_rgba(61,36,56,0.3)]
-          ${theme === 'rose' 
-            ? 'bg-[var(--color-ink)] text-[var(--color-cream)] active:bg-[var(--color-cream)] active:text-[var(--color-ink)]' 
+          ${theme === 'rose'
+            ? 'bg-[var(--color-ink)] text-[var(--color-cream)] active:bg-[var(--color-cream)] active:text-[var(--color-ink)]'
             : 'bg-[var(--color-rose-3)] text-[var(--color-cream)] active:bg-[var(--color-ink)]'}
           ${isOpen ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}
         `}

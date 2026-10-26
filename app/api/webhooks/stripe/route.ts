@@ -1,120 +1,57 @@
-import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { prisma } from '@/lib/db';
-import { Resend } from 'resend';
-import { BookingConfirmationEmail } from '@/components/emails/booking-confirmation';
-import { AdminNotificationEmail } from '@/components/emails/admin-notification';
-import { getInvoiceHtml } from '@/lib/invoice-template';
+import { after, NextResponse } from 'next/server';
+import type Stripe from 'stripe';
+import { getStripe, getStripeWebhookSecret } from '@/lib/stripe';
+import { processStripeEvent } from '@/lib/payment-processing';
+import { sendBookingNotifications } from '@/lib/notifications';
 
-const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || 'sk_test_dummy') as string, {
-  apiVersion: '2026-07-29.dahlia' as any,
-});
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
-const resend = new Resend((process.env.RESEND_API_KEY || 're_dummy') as string);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-export async function POST(req: Request) {
-  if (!webhookSecret) {
-    return NextResponse.json({ error: 'Stripe webhook secret is not set in environment variables.' }, { status: 500 });
+export async function POST(request: Request) {
+  let webhookSecret: string;
+  try {
+    webhookSecret = getStripeWebhookSecret();
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Webhook is not configured' }, { status: 500 });
   }
 
-  const payload = await req.text();
-  const signature = req.headers.get('stripe-signature');
+  const signature = request.headers.get('stripe-signature');
+  if (!signature) return NextResponse.json({ error: 'Missing Stripe signature' }, { status: 400 });
 
-  if (!signature) {
-    return NextResponse.json({ error: 'No stripe signature found.' }, { status: 400 });
-  }
-
+  const stripe = getStripe();
   let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(await request.text(), signature, webhookSecret);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Stripe webhook signature verification failed:', message);
+    return NextResponse.json({ error: 'Invalid Stripe signature' }, { status: 400 });
+  }
 
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-  } catch (err: any) {
-    console.error(`Webhook signature verification failed: ${err.message}`);
-    return NextResponse.json({ error: 'Webhook signature verification failed.' }, { status: 400 });
-  }
-
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    const bookingId = paymentIntent.metadata?.bookingId;
-
-    if (!bookingId) {
-      console.error('No bookingId found in payment intent metadata.');
-      return NextResponse.json({ error: 'No bookingId found in payment intent metadata.' }, { status: 400 });
+    let expandedIntent: Stripe.PaymentIntent | undefined;
+    if (event.type.startsWith('payment_intent.')) {
+      const snapshot = event.data.object as Stripe.PaymentIntent;
+      expandedIntent = await stripe.paymentIntents.retrieve(snapshot.id, { expand: ['latest_charge'] });
     }
+    const result = await processStripeEvent(event, expandedIntent);
+    const booking = 'booking' in result ? result.booking : null;
+    const duplicateBookingId = 'bookingId' in result ? result.bookingId : null;
+    const bookingId = booking?.id ?? duplicateBookingId;
 
-    try {
-      let paymentBrand = null;
-      let paymentLast4 = null;
-      
-      if (paymentIntent.latest_charge) {
-        try {
-          const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
-          if (charge.payment_method_details?.card) {
-            paymentBrand = charge.payment_method_details.card.brand;
-            paymentLast4 = charge.payment_method_details.card.last4;
-          }
-        } catch (e) {
-          console.error('Failed to retrieve charge details', e);
-        }
-      }
-
-      // 1. Marcar reserva como confirmada y guardar datos de tarjeta
-      const booking = await prisma.booking.update({
-        where: { id: bookingId },
-        data: { 
-          status: 'confirmed',
-          paymentBrand,
-          paymentLast4
-        },
-        include: { unit: true }
-      });
-
-      if (!booking) {
-        throw new Error('Booking not found in database.');
-      }
-
-      const settings = await prisma.settings.findFirst();
-      const adminEmail = settings?.adminEmail;
-      
-      const amountPaid = paymentIntent.amount / 100;
-
-      // 2. Generar Invoice en HTML para el correo del huésped
-      const invoiceHtml = getInvoiceHtml(booking as any); // using cast because of type differences potentially
-
-      // 3. Enviar Invoice/Confirmación al cliente
-      await resend.emails.send({
-        from: 'Casa Amapa <reservas@casaamapa.mx>',
-        to: [booking.guestEmail],
-        subject: `Confirmación de reserva e Invoice - Casa Amapa (${booking.unit.name})`,
-        html: invoiceHtml, // Mandamos el invoice como HTML en vez de React Component
-      });
-
-      // 4. Enviar notificación y copia al Admin
-      if (adminEmail) {
-        await resend.emails.send({
-          from: 'Casa Amapa <reservas@casaamapa.mx>',
-          to: [adminEmail],
-          subject: `Nueva Reserva Confirmada: ${booking.apartmentId} - Casa Amapa`,
-          react: AdminNotificationEmail({
-            guestName: booking.guestName,
-            guestEmail: booking.guestEmail,
-            guestPhone: booking.guestPhone,
-            apartmentName: booking.apartmentId,
-            checkIn: booking.checkIn,
-            checkOut: booking.checkOut,
-            amount: amountPaid,
-            guests: booking.guests
-          }) as React.ReactElement,
+    if ((booking?.status === 'confirmed' || duplicateBookingId) && bookingId) {
+      after(async () => {
+        await sendBookingNotifications(bookingId).catch((error) => {
+          console.error(`Could not send notifications for booking ${bookingId}:`, error);
         });
-      }
-
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      console.error('Error processing webhook event:', error);
-      return NextResponse.json({ error: 'Error processing webhook event' }, { status: 500 });
+      });
     }
-  }
 
-  return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error(`Stripe event ${event.id} processing failed:`, error);
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+  }
 }

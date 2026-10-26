@@ -12,17 +12,17 @@ datasource db {
 }
 
 model Unit {
-  id          String    @id // e.g. 'tierra', 'aire', 'agua', 'amapa'
-  name        String
-  price       Int       // Base price in MXN
-  addStripeCommission Boolean @default(false) @map("add_stripe_commission")
-  isWholeHouse Boolean  @default(false) @map("is_whole_house")
-  icalUrls    String[]  @default([]) @map("ical_urls")
-  bookings    Booking[]
-  blockedDates BlockedDate[]
-  dailyPrices DailyPrice[]
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id                  String        @id // e.g. 'tierra', 'aire', 'agua', 'amapa'
+  name                String
+  price               Int // Base price in MXN
+  addStripeCommission Boolean       @default(false) @map("add_stripe_commission")
+  isWholeHouse        Boolean       @default(false) @map("is_whole_house")
+  icalUrls            String[]      @default([]) @map("ical_urls")
+  bookings            Booking[]
+  blockedDates        BlockedDate[]
+  dailyPrices         DailyPrice[]
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("units")
 }
@@ -41,25 +41,36 @@ model DailyPrice {
 }
 
 model Booking {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  apartmentId            String   @map("apartment_id")
-  unit                   Unit     @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
-  checkIn                DateTime @map("check_in") @db.Date
-  checkOut               DateTime @map("check_out") @db.Date
-  status                 String   @default("pending")
-  stripePaymentIntentId  String?  @map("stripe_payment_intent_id")
-  guestName              String   @map("guest_name")
-  guestEmail             String   @map("guest_email")
-  guestPhone             String   @map("guest_phone")
-  guests                 Int      @default(2)
-  isManual               Boolean  @default(false) @map("is_manual")
-  idPhotoUrl             String?  @map("id_photo_url")
-  depositPercentage      Int?     @map("deposit_percentage")
-  totalPrice             Float?   @map("total_price")
-  paymentBrand           String?  @map("payment_brand")
-  paymentLast4           String?  @map("payment_last4")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apartmentId             String    @map("apartment_id")
+  unit                    Unit      @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  checkIn                 DateTime  @map("check_in") @db.Date
+  checkOut                DateTime  @map("check_out") @db.Date
+  status                  String    @default("pending")
+  stripePaymentIntentId   String?   @unique @map("stripe_payment_intent_id")
+  guestName               String    @map("guest_name")
+  guestEmail              String    @map("guest_email")
+  guestPhone              String    @map("guest_phone")
+  guests                  Int       @default(2)
+  isManual                Boolean   @default(false) @map("is_manual")
+  idPhotoUrl              String?   @map("id_photo_url")
+  depositPercentage       Int?      @map("deposit_percentage")
+  totalPrice              Float?    @map("total_price")
+  paymentBrand            String?   @map("payment_brand")
+  paymentLast4            String?   @map("payment_last4")
+  paymentAmountCents      Int?      @map("payment_amount_cents")
+  amountPaidCents         Int       @default(0) @map("amount_paid_cents")
+  currency                String    @default("mxn")
+  expiresAt               DateTime? @map("expires_at") @db.Timestamptz
+  paidAt                  DateTime? @map("paid_at") @db.Timestamptz
+  paymentFailureReason    String?   @map("payment_failure_reason") @db.Text
+  confirmationEmailSentAt DateTime? @map("confirmation_email_sent_at") @db.Timestamptz
+  adminNotificationSentAt DateTime? @map("admin_notification_sent_at") @db.Timestamptz
+  notificationError       String?   @map("notification_error") @db.Text
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([status, expiresAt])
   @@map("bookings")
 }
 
@@ -75,6 +86,7 @@ model AdminUser {
 
 model Settings {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key               String   @unique @default("default")
   depositPercentage Int      @default(50) @map("deposit_percentage")
   isFullPayment     Boolean  @default(false) @map("is_full_payment")
   adminEmail        String?  @map("admin_email")
@@ -92,8 +104,10 @@ model BlockedDate {
   reason      String?  @db.Text
   isOtaBlock  Boolean  @default(false) @map("is_ota_block")
   otaSource   String?  @map("ota_source") @db.Text
+  externalUid String?  @map("external_uid") @db.Text
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  @@unique([apartmentId, otaSource, externalUid])
   @@index([startDate, endDate])
   @@index([apartmentId])
   @@map("blocked_dates")
@@ -101,9 +115,23 @@ model BlockedDate {
 
 model SyncLog {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  status    String   // "SUCCESS" or "ERROR"
+  status    String // "SUCCESS" or "ERROR"
   message   String   @db.Text
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("sync_logs")
+}
+
+model StripeWebhookEvent {
+  id              String    @id
+  type            String
+  paymentIntentId String?   @map("payment_intent_id")
+  bookingId       String?   @map("booking_id") @db.Uuid
+  error           String?   @db.Text
+  receivedAt      DateTime  @default(now()) @map("received_at") @db.Timestamptz
+  processedAt     DateTime? @map("processed_at") @db.Timestamptz
+
+  @@index([paymentIntentId])
+  @@index([bookingId])
+  @@map("stripe_webhook_events")
 }

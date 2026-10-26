@@ -25,7 +25,7 @@ export async function GET(
 
     // CROSS-BLOCKING LOGIC
     // Determine which units' availability affects the requested unit.
-    let relatedUnitIds = [unitId];
+    let relatedUnitIds = [targetUnit.id];
 
     if (targetUnit.isWholeHouse) {
       // If requesting the whole house, we must block dates if ANY unit is booked/blocked.
@@ -44,7 +44,7 @@ export async function GET(
     const bookings = await prisma.booking.findMany({
       where: {
         apartmentId: { in: relatedUnitIds },
-        status: { not: 'cancelled' } // Only valid bookings block dates
+        status: { in: ['confirmed', 'attention_required'] }
       }
     });
 

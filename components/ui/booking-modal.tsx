@@ -4,14 +4,14 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useBookingStore } from '@/lib/store';
 import { useLoaderStore } from '@/store/useLoaderStore';
-import { createPendingBooking, getApartmentBookings, getUnits } from '@/app/actions/bookings';
+import { getApartmentBookings, getUnits } from '@/app/actions/bookings';
 import dynamic from 'next/dynamic';
 import { es } from 'date-fns/locale';
-import { differenceInDays, isWithinInterval, parseISO, isSameDay } from 'date-fns';
+import { differenceInDays, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
-import 'react-day-picker/dist/style.css';
-import { createPaymentIntent } from '@/app/actions/payments';
+import 'react-day-picker/src/style.css';
+import { createCheckout } from '@/app/actions/payments';
 import type { DateRange } from 'react-day-picker';
 
 interface BookingUnit {
@@ -19,6 +19,7 @@ interface BookingUnit {
   name: string;
   price: number;
   addStripeCommission?: boolean;
+  dailyPrices?: { date: Date | string; price: number }[];
 }
 
 interface BookingDateInfo {
@@ -73,6 +74,7 @@ export function BookingModal() {
   const [bookingId, setBookingId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [chargeAmount, setChargeAmount] = useState(0);
+  const [serverTotalPrice, setServerTotalPrice] = useState<number | null>(null);
 
   // GSAP logic for modal open/close (kept to maintain current behavior)
   const { contextSafe } = useGSAP({ scope: overlayRef });
@@ -109,6 +111,7 @@ export function BookingModal() {
             setSuccess(false);
             setBookingId('');
             setClientSecret('');
+            setServerTotalPrice(null);
           }, 300);
         }
       });
@@ -201,7 +204,7 @@ export function BookingModal() {
               checkIn.setHours(12, 0, 0, 0);
               checkOut.setHours(12, 0, 0, 0);
 
-              let current = new Date(checkIn);
+              const current = new Date(checkIn);
               while (current < checkOut) {
                 booked.push(new Date(current));
                 current.setDate(current.getDate() + 1);
@@ -225,7 +228,26 @@ export function BookingModal() {
   // Derived state
   const nights = range?.to && range?.from ? Math.max(1, differenceInDays(range.to, range.from)) : (range?.from ? 1 : 0);
   const unitPrice = selectedUnit ? (selectedUnit.addStripeCommission ? Math.round(selectedUnit.price * 1.05) : selectedUnit.price) : 0;
-  const totalPrice = selectedUnit ? nights * unitPrice : 0;
+  const totalPrice = (() => {
+    if (!selectedUnit || !range?.from || nights < 1) return 0;
+    const dateKey = (date: Date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const customPrices = new Map(
+      (selectedUnit.dailyPrices ?? []).map((item) => {
+        const date = new Date(item.date);
+        return [dateKey(date), item.price];
+      }),
+    );
+    let total = 0;
+    const current = new Date(range.from);
+    for (let index = 0; index < nights; index += 1) {
+      const basePrice = customPrices.get(dateKey(current)) ?? selectedUnit.price;
+      total += selectedUnit.addStripeCommission ? Math.round(basePrice * 1.05) : basePrice;
+      current.setDate(current.getDate() + 1);
+    }
+    return total;
+  })();
+  const displayedTotalPrice = serverTotalPrice ?? totalPrice;
 
   const getSmartHint = () => {
     if (!range?.from) return { text: "Selecciona tu fecha de llegada", status: "pending" };
@@ -243,38 +265,32 @@ export function BookingModal() {
       return;
     }
 
-    const checkOutDate = range.to || new Date(range.from.getTime() + 24 * 60 * 60 * 1000); // Check out next day if 1 night selected
+    const checkOutDate = !range.to || isSameDay(range.from, range.to)
+      ? new Date(range.from.getTime() + 24 * 60 * 60 * 1000)
+      : range.to;
+    const localDate = (date: Date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-    const res = await createPendingBooking({
+    const payment = await createCheckout({
       apartmentId: selectedUnit!.id,
-      checkIn: range.from,
-      checkOut: checkOutDate,
+      checkIn: localDate(range.from),
+      checkOut: localDate(checkOutDate),
       guestName,
       guestEmail,
       guestPhone: `${lada.code} ${guestPhone}`,
-      guests: 2, // Or make dynamic if needed
-      totalPrice
+      guests: 2,
     });
 
-    if (res.error || !res.booking?.id) {
-      setError(res.error || 'Error creando reservación');
-      setLoading(false);
-      return;
-    }
-
-    setBookingId(res.booking.id);
-
-    // Initialize Payment Intent
-    const payment = await createPaymentIntent(totalPrice, 'mxn', res.booking.id);
-
-    if (payment.error || !payment.clientSecret) {
+    if (payment.error || !payment.clientSecret || !payment.bookingId) {
       setError(payment.error || 'Error iniciando el pago');
       setLoading(false);
       return;
     }
 
+    setBookingId(payment.bookingId);
     setClientSecret(payment.clientSecret);
     setChargeAmount(payment.chargeAmount || 0);
+    setServerTotalPrice(payment.totalPrice || 0);
     setLoading(false);
     setStep(4);
   };
@@ -513,7 +529,7 @@ export function BookingModal() {
                   {(smartHint.status === 'complete' || smartHint.status === 'partial') && (
                     <div className="flex justify-between items-end mt-2 pt-2 border-t border-[rgba(94,58,80,0.1)]">
                       <span className="text-xs uppercase tracking-widest opacity-60">Total</span>
-                      <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{totalPrice.toLocaleString('es-MX')} MXN</span>
+                      <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{displayedTotalPrice.toLocaleString('es-MX')} MXN</span>
                     </div>
                   )}
                 </div>
@@ -593,8 +609,8 @@ export function BookingModal() {
                     <span className="font-medium">{guestName}</span>
                   </div>
                   <div className="flex justify-between items-end pt-2">
-                    <span className="opacity-70 text-xs uppercase tracking-widest">Total a pagar</span>
-                    <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{totalPrice.toLocaleString('es-MX')} MXN</span>
+                    <span className="opacity-70 text-xs uppercase tracking-widest">Total de la reserva</span>
+                    <span className="font-sans font-bold text-2xl text-[var(--color-rose-3)]">{displayedTotalPrice.toLocaleString('es-MX')} MXN</span>
                   </div>
                 </div>
 
@@ -611,7 +627,6 @@ export function BookingModal() {
                       clientSecret={clientSecret}
                       bookingId={bookingId}
                       chargeAmount={chargeAmount}
-                      onSuccess={() => setSuccess(true)}
                     />
                   </div>
                 )}

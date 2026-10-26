@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getInvoiceHtml } from '@/lib/invoice-template';
+import { auth } from '@/auth';
 
 export async function GET(request: Request, { params }: { params: Promise<{ bookingId: string }> }) {
   try {
+    const session = await auth();
+    if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
     const { bookingId } = await params;
 
     const booking = await prisma.booking.findUnique({

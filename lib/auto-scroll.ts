@@ -7,6 +7,14 @@ export class AutoScrollManager {
   private static scrollTween: gsap.core.Timeline | gsap.core.Tween | KillableAnim | null = null;
   private static inactivityTimeout: NodeJS.Timeout | null = null;
 
+  private static canAutoScroll(): boolean {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.replace(/\/$/, '') || '/';
+    if (path !== '/' && path !== '/es' && path !== '/en') return false;
+    if (document.body.classList.contains('modal-open')) return false;
+    return true;
+  }
+
   /**
    * Stop any ongoing auto-scroll animation and clear the inactivity timer.
    * Call this on user interaction (scroll, touch).
@@ -23,12 +31,14 @@ export class AutoScrollManager {
   }
 
   /**
-   * Schedule a callback to run after a specific delay of inactivity (default 2200ms).
+   * Schedule a callback to run after a specific delay of inactivity (default 2000ms).
    */
-  static schedule(callback: () => void, delayMs = 2200) {
+  static schedule(callback: () => void, delayMs = 2000) {
     this.interact(); // Clear previous timers and animations
+    if (!this.canAutoScroll()) return;
+
     this.inactivityTimeout = setTimeout(() => {
-      callback();
+      if (this.canAutoScroll()) callback();
     }, delayMs);
   }
 
@@ -37,6 +47,10 @@ export class AutoScrollManager {
    * Kills any previously running scroll animation to prevent "tirones" (jerks).
    */
   static run(animation: gsap.core.Timeline | gsap.core.Tween) {
+    if (!this.canAutoScroll()) {
+      animation.kill();
+      return;
+    }
     if (this.scrollTween) {
       this.scrollTween.kill();
     }
@@ -60,6 +74,8 @@ export class AutoScrollManager {
    * window.scrollTo() inside a GSAP onUpdate can be ignored by the pin/scrub.
    */
   static rafScroll(targetY: number, durationSec: number, onComplete?: () => void) {
+    if (!this.canAutoScroll()) return;
+
     // Kill any running animation first
     if (this.scrollTween) {
       this.scrollTween.kill();
@@ -75,7 +91,13 @@ export class AutoScrollManager {
           onComplete?.();
         }
       });
-      this.scrollTween = { kill: () => {} };
+      this.scrollTween = {
+        kill: () => {
+          if (typeof window !== 'undefined' && window.appLenis) {
+            window.appLenis.scrollTo(window.scrollY, { immediate: true });
+          }
+        }
+      };
       return;
     }
 
@@ -91,6 +113,10 @@ export class AutoScrollManager {
         : (2 - Math.pow(2, -20 * t + 10)) / 2;
 
     const tick = (now: number) => {
+      if (!this.canAutoScroll()) {
+        this.scrollTween = null;
+        return;
+      }
       const t = Math.min((now - startTime) / durationMs, 1);
       this.setScroll(Math.round(startY + (targetY - startY) * ease(t)));
       if (t < 1) {

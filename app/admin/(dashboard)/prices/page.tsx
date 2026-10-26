@@ -6,7 +6,14 @@ import { DollarSign } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
+import { activeBookingWhere } from '@/lib/booking';
+
 export default async function AdminPricesPage() {
+  const session = await auth();
+  if (!session) redirect('/admin/login');
+
   const units = await prisma.unit.findMany({
     orderBy: { name: 'asc' },
   });
@@ -20,7 +27,7 @@ export default async function AdminPricesPage() {
     where: {
       checkOut: { gte: startDate },
       checkIn: { lte: endDate },
-      status: { not: 'cancelled' },
+      AND: [activeBookingWhere()],
     },
   });
 

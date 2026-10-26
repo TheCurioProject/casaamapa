@@ -15,13 +15,15 @@ export function ManualBookingModal({
   onClose,
   units,
   bookings,
-  blockedDates
+  blockedDates,
+  defaultDepositPercentage,
 }: {
   isOpen: boolean;
   onClose: () => void;
   units: Unit[];
   bookings: any[];
   blockedDates: any[];
+  defaultDepositPercentage: number;
 }) {
   const [step, setStep] = useState(1);
   const [type, setType] = useState<'booking' | 'block'>('booking');
@@ -35,7 +37,7 @@ export function ManualBookingModal({
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
-  const [depositPercentage, setDepositPercentage] = useState(50);
+  const [depositPercentage, setDepositPercentage] = useState(defaultDepositPercentage);
   
   // Block fields
   const [reason, setReason] = useState('');
@@ -292,9 +294,9 @@ export function ManualBookingModal({
                     
                     if (isBooked || isCleaning) return true;
                     
-                    if (range?.from) {
+                    if (range?.from && !range?.to) {
                       const fromTime = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()).getTime();
-                      if (d <= fromTime) return true;
+                      if (d < fromTime) return true;
                       
                       const nextDisabledDate = [...computedDates.booked, ...computedDates.cleaning]
                         .map(bd => new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime())
@@ -344,7 +346,7 @@ export function ManualBookingModal({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">% Depósito Anticipo</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">% Anticipo manual</label>
                       <select value={depositPercentage} onChange={e => setDepositPercentage(Number(e.target.value))} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-white/50 focus:bg-white outline-none">
                         <option value={0}>0%</option>
                         <option value={50}>50%</option>

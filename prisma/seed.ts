@@ -5,17 +5,19 @@ async function main() {
   console.log('Seeding database...');
 
   // 1. Seed Admin User
-  const passwordHash = await bcrypt.hash('amapa33', 10);
-  
-  await prisma.adminUser.upsert({
-    where: { username: 'admin' },
-    update: { password: passwordHash },
-    create: {
-      username: 'admin',
-      password: passwordHash,
-    },
-  });
-  console.log('Admin user seeded.');
+  const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  if (initialPassword) {
+    if (initialPassword.length < 12) throw new Error('ADMIN_INITIAL_PASSWORD must contain at least 12 characters');
+    const passwordHash = await bcrypt.hash(initialPassword, 12);
+    await prisma.adminUser.upsert({
+      where: { username: 'admin' },
+      update: {},
+      create: { username: 'admin', password: passwordHash },
+    });
+    console.log('Admin user ensured.');
+  } else {
+    console.log('ADMIN_INITIAL_PASSWORD not set; admin user seed skipped.');
+  }
 
   // 2. Seed Units
   const units = [
@@ -64,6 +66,7 @@ async function main() {
   if (settingsCount === 0) {
     await prisma.settings.create({
       data: {
+        key: 'default',
         depositPercentage: 50,
         isFullPayment: false,
       }

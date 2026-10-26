@@ -9,7 +9,7 @@ import { differenceInDays, startOfDay, isSameDay } from 'date-fns';
 import { getBookingById, updateBooking, getAdminCalendarData } from '@/app/actions/admin-calendar';
 import { useLoaderStore } from '@/store/useLoaderStore';
 
-type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
+type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; dailyPrices?: { date: Date | string; price: number }[] };
 type Booking = { id: string; checkIn: Date; checkOut: Date; guestName: string; guestEmail: string; guestPhone: string; idPhotoUrl: string | null; depositPercentage: number | null; totalPrice: number | null; apartmentId: string; status: string };
 type Block = { id: string; startDate: Date; endDate: Date; apartmentId: string };
 
@@ -28,7 +28,7 @@ export function EditBookingModal({
   const [units, setUnits] = useState<Unit[]>([]);
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [allBlocks, setAllBlocks] = useState<Block[]>([]);
-  
+
   const [range, setRange] = useState<DateRange | undefined>();
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
@@ -36,9 +36,10 @@ export function EditBookingModal({
   const [idPhotoUrl, setIdPhotoUrl] = useState('');
   const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(50);
-  
+
   const [isInteracted, setIsInteracted] = useState(false);
-  
+  const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+
   const [error, setError] = useState('');
   const { showLoader, hideLoader } = useLoaderStore();
 
@@ -49,9 +50,9 @@ export function EditBookingModal({
           getBookingById(bookingId),
           getAdminCalendarData()
         ]);
-        
+
         if (bookingRes.error || !bookingRes.booking) throw new Error(bookingRes.error || 'Error loading booking');
-        
+
         const b = bookingRes.booking;
         setBooking(b as unknown as Booking);
         setRange({ from: new Date(b.checkIn), to: new Date(b.checkOut) });
@@ -59,7 +60,8 @@ export function EditBookingModal({
         setGuestEmail(b.guestEmail || '');
         setGuestPhone(b.guestPhone || '');
         setIdPhotoUrl(b.idPhotoUrl || '');
-        setDepositPercentage(b.depositPercentage || 50);
+        setDepositPercentage(b.depositPercentage ?? 50);
+        setEstimatedPrice(b.totalPrice || 0);
 
         setUnits(calendarRes.units);
         setAllBookings(calendarRes.bookings as unknown as Booking[]);
@@ -75,8 +77,28 @@ export function EditBookingModal({
 
   const selectedUnit = units.find(u => u.id === booking?.apartmentId);
   const nights = range?.from && range?.to ? Math.max(1, differenceInDays(range.to, range.from)) : 0;
-  // Calculate price dynamically if dates change
-  const estimatedPrice = selectedUnit ? nights * selectedUnit.price : (booking?.totalPrice || 0);
+
+  useEffect(() => {
+    if (!isInteracted || !selectedUnit || !range?.from || !range?.to) return;
+    let total = 0;
+    const nightsCount = differenceInDays(range.to, range.from);
+    if (nightsCount <= 0) return;
+
+    let currentDate = new Date(range.from);
+    currentDate.setHours(12, 0, 0, 0);
+
+    for (let i = 0; i < nightsCount; i++) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const customPrice = selectedUnit.dailyPrices?.find(dp => {
+        const dpDate = new Date(dp.date);
+        dpDate.setHours(12, 0, 0, 0);
+        return dpDate.toISOString().split('T')[0] === dateStr;
+      });
+      total += customPrice ? customPrice.price : selectedUnit.price;
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setEstimatedPrice(total);
+  }, [range, selectedUnit, isInteracted]);
 
   // Filter out the current booking dates to allow re-selecting them
   const isDateDisabled = (date: Date) => {
@@ -86,26 +108,26 @@ export function EditBookingModal({
 
     // Check overlaps with OTHER bookings for this unit
     const unitId = booking.apartmentId;
-    
+
     for (const b of allBookings) {
       if (b.id === booking.id) continue; // skip self
-      
+
       const bStart = startOfDay(new Date(b.checkIn));
       const bEnd = startOfDay(new Date(b.checkOut));
-      const unitMatch = b.apartmentId === unitId || 
-        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) || 
+      const unitMatch = b.apartmentId === unitId ||
+        (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
-      
+
       if (unitMatch && target >= bStart && target < bEnd) return true;
     }
 
     for (const bl of allBlocks) {
       const blStart = startOfDay(new Date(bl.startDate));
       const blEnd = startOfDay(new Date(bl.endDate));
-      const unitMatch = bl.apartmentId === unitId || 
-        (units.find(u => u.id === bl.apartmentId)?.isWholeHouse) || 
+      const unitMatch = bl.apartmentId === unitId ||
+        (units.find(u => u.id === bl.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
-      
+
       if (unitMatch && target >= blStart && target <= blEnd) return true;
     }
 
@@ -157,12 +179,12 @@ export function EditBookingModal({
       if (idPhotoFile) {
         const formData = new FormData();
         formData.append('file', idPhotoFile);
-        
+
         const uploadRes = await fetch('/api/admin/upload-id', {
           method: 'POST',
           body: formData
         });
-        
+
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok || !uploadData.success) {
           throw new Error(uploadData.error || 'Error subiendo la imagen.');
@@ -180,7 +202,7 @@ export function EditBookingModal({
         depositPercentage,
         totalPrice: estimatedPrice
       });
-      
+
       if (res.error) throw new Error(res.error);
       setStep(3); // Success step
     } catch (err: any) {
@@ -194,17 +216,17 @@ export function EditBookingModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
         onClick={onClose}
       />
-      
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-        animate={{ opacity: 1, scale: 1, y: 0 }} 
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90vh]"
       >
@@ -239,7 +261,7 @@ export function EditBookingModal({
                       Fechas Actuales
                     </div>
                   </div>
-                  
+
                   <div className="calendar-wrapper bg-white/40 p-4 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] mb-6 flex justify-center">
                     <DayPicker
                       mode="range"
@@ -293,10 +315,15 @@ export function EditBookingModal({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Total Estimado</label>
-                        <div className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)]">
-                          ${estimatedPrice.toLocaleString('es-MX')}
-                        </div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Total Estimado ($ MXN)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={estimatedPrice}
+                          onChange={e => setEstimatedPrice(Number(e.target.value))}
+                          className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)] focus:bg-white outline-none"
+                        />
                       </div>
                     </div>
                   </div>
@@ -315,7 +342,7 @@ export function EditBookingModal({
                   <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
                   <h3 className="font-bold text-2xl mb-2">¡Operación exitosa!</h3>
                   <p className="opacity-70 mb-8">La reserva ha sido actualizada correctamente.</p>
-                  
+
                   <button onClick={() => window.location.reload()} className="w-full py-3 bg-[var(--color-rose-3)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-[var(--color-rose-2)]">
                     Volver
                   </button>

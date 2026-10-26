@@ -28,11 +28,11 @@ export default async function AdminDashboard() {
   const manualBlocks = blockedDates.filter(b => !b.isOtaBlock);
 
   // Avoid Promise.all to prevent PostgreSQL connection limit (pool size 15) exhaustion
-  const totalBookings = await prisma.booking.count();
-  const totalRevenue = await prisma.booking.aggregate({ _sum: { totalPrice: true } });
+  const totalBookings = await prisma.booking.count({ where: { status: 'confirmed' } });
+  const totalRevenue = await prisma.booking.aggregate({ where: { status: 'confirmed' }, _sum: { totalPrice: true } });
   const units = await prisma.unit.findMany();
-  const webBookingsCount = await prisma.booking.count({ where: { isManual: false } });
-  const manualBookingsCount = await prisma.booking.count({ where: { isManual: true } });
+  const webBookingsCount = await prisma.booking.count({ where: { isManual: false, status: 'confirmed' } });
+  const manualBookingsCount = await prisma.booking.count({ where: { isManual: true, status: 'confirmed' } });
   const otaBlocksCount = await prisma.blockedDate.count({ where: { isOtaBlock: true } });
   const manualBlocksCount = await prisma.blockedDate.count({ where: { isOtaBlock: false } });
 

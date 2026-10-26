@@ -122,11 +122,11 @@ function BookingSection({
                       {booking.isManual ? (
                         <>
                           <div className="flex flex-col gap-1 text-right">
-                            <span className="text-[9px] opacity-50 uppercase tracking-widest">Anticipo Pagado ({booking.depositPercentage || 50}%)</span>
+                            <span className="text-[9px] opacity-50 uppercase tracking-widest">Anticipo Registrado ({booking.depositPercentage ?? 50}%)</span>
                             <span className="text-xs text-white">
                               {(() => {
                                 const total = booking.totalPrice || 0;
-                                const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                const amountPaid = total * ((booking.depositPercentage ?? 50) / 100);
                                 return `$${amountPaid.toLocaleString('es-MX')} MXN`;
                               })()}
                             </span>
@@ -136,7 +136,7 @@ function BookingSection({
                             <span className="text-sm font-bold text-[var(--color-coral)]">
                               {(() => {
                                 const total = booking.totalPrice || 0;
-                                const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                const amountPaid = total * ((booking.depositPercentage ?? 50) / 100);
                                 return `$${(total - amountPaid).toLocaleString('es-MX')} MXN`;
                               })()}
                             </span>
@@ -269,11 +269,11 @@ function BookingSection({
                                 {booking.isManual ? (
                                   <>
                                     <div className="flex flex-col gap-1">
-                                      <span className="text-[10px] opacity-50 uppercase tracking-widest">Anticipo Pagado ({booking.depositPercentage || 50}%)</span>
+                                      <span className="text-[10px] opacity-50 uppercase tracking-widest">Anticipo Registrado ({booking.depositPercentage ?? 50}%)</span>
                                       <span className="text-sm font-medium text-white">
                                         {(() => {
                                           const total = booking.totalPrice || 0;
-                                          const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                          const amountPaid = total * ((booking.depositPercentage ?? 50) / 100);
                                           return `$${amountPaid.toLocaleString('es-MX')} MXN`;
                                         })()}
                                       </span>
@@ -283,7 +283,7 @@ function BookingSection({
                                       <span className="text-sm font-bold text-[var(--color-coral)]">
                                         {(() => {
                                           const total = booking.totalPrice || 0;
-                                          const amountPaid = total * ((booking.depositPercentage || 50) / 100);
+                                          const amountPaid = total * ((booking.depositPercentage ?? 50) / 100);
                                           return `$${(total - amountPaid).toLocaleString('es-MX')} MXN`;
                                         })()}
                                       </span>

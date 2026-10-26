@@ -40,26 +40,13 @@ interface AptModalProps {
 function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   const { scrollYProgress } = useScroll({ container: scrollRef });
   const scaleY = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001
   });
-
-  // Immersive cinematic effect based on scroll position
-  // Widen the ranges slightly to make the transition smoother and more progressive 'frame by frame'
-  const backgroundColor = useTransform(
-    scrollYProgress, 
-    [0.40, 0.55, 0.60, 0.75], 
-    ['#F8E8EC', '#42242C', '#42242C', '#F8E8EC']
-  );
-  const textColor = useTransform(
-    scrollYProgress, 
-    [0.40, 0.55, 0.60, 0.75], 
-    ['#42242C', '#FCF3F6', '#FCF3F6', '#42242C']
-  );
 
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [cleaningDates, setCleaningDates] = useState<Date[]>([]);
@@ -73,25 +60,22 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         if (res && res.bookings) {
           const booked: Date[] = [];
           const cleaning: Date[] = [];
-          
+
           res.bookings.forEach((booking: any) => {
-            // Aseguramos que se instancien como Date y evitamos problemas de UTC
             const checkIn = new Date(booking.checkIn);
             const checkOut = new Date(booking.checkOut);
             checkIn.setHours(12, 0, 0, 0);
             checkOut.setHours(12, 0, 0, 0);
-            
-            // Días ocupados: Desde Check-in hasta un día antes del Check-out
+
             let current = new Date(checkIn);
             while (current < checkOut) {
               booked.push(new Date(current));
               current.setDate(current.getDate() + 1);
             }
-            
-            // Día de limpieza: El día exacto de Check-out (+1)
+
             cleaning.push(new Date(checkOut));
           });
-          
+
           setBookedDates(booked);
           setCleaningDates(cleaning);
         }
@@ -104,7 +88,6 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     loadBookings();
   }, [localApt.name]);
 
-  // Lock body scroll when open and handle mounting
   useEffect(() => {
     document.body.classList.add('modal-open');
     return () => {
@@ -112,7 +95,6 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     };
   }, []);
 
-  // Swipe down to close logic
   const touchState = useRef({ startY: 0, currentY: 0, isDragging: false });
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -127,7 +109,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     const currentY = e.targetTouches[0].clientY;
     const diff = currentY - touchState.current.startY;
 
-    if (diff > 0) { // Only pull down
+    if (diff > 0) {
       containerRef.current.style.transform = `translateY(${diff}px)`;
     }
   };
@@ -140,10 +122,8 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     const diff = currentY - touchState.current.startY;
 
     if (diff > 120) {
-      // Threshold met, close modal
       onClose();
     } else {
-      // Revert back
       containerRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
       containerRef.current.style.transform = '';
       setTimeout(() => {
@@ -152,7 +132,6 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
     }
   };
 
-  // Icons mapping for specs
   const getIconForSpec = (spec: string) => {
     const s = spec.toLowerCase();
     if (s.includes('huésped') || s.includes('persona') || s.includes('adulto')) return <Users className="w-5 h-5 opacity-60" />;
@@ -180,31 +159,25 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        style={{ backgroundColor, color: textColor }}
-        className="w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl relative flex flex-col shadow-2xl transform-gpu overflow-hidden"
+        className="bg-[var(--color-ink)] text-[var(--color-cream)] w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-5xl rounded-t-[32px] md:rounded-3xl relative flex flex-col shadow-2xl transform-gpu overflow-hidden"
       >
-        {/* Custom Animated Scrollbar - absolute to modal, doesn't scroll with content */}
         <motion.div
           style={{ scaleY }}
           className="hidden md:block absolute top-4 right-2 bottom-4 w-1.5 md:w-2 bg-[var(--color-rose-3)] origin-top z-50 rounded-full opacity-80"
         />
 
-        {/* Scrollable Content Container */}
-        <div 
+        <div
           ref={scrollRef}
           data-lenis-prevent="true"
           className="flex-1 w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain"
         >
-          {/* Header & Close Button */}
           <div className="sticky top-0 z-10 flex flex-col bg-transparent pb-4 pt-2 md:pt-4 pointer-events-none">
-            {/* Drag Handle for All Touch Devices */}
             <div className="w-full flex justify-center pt-2 pb-2 pointer-events-auto">
               <div className="w-12 h-1.5 bg-[rgba(94,58,80,0.2)] rounded-full" />
             </div>
-            
+
             <div className="flex justify-end items-start px-4 md:px-6 pointer-events-auto w-full">
-              {/* Close Button */}
-              <button 
+              <button
                 onClick={onClose}
                 className="group flex items-center hover:opacity-70 transition-opacity p-2 -m-2"
               >
@@ -217,7 +190,6 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
           </div>
 
           <div className="px-6 md:px-12 pb-24">
-            {/* Title Section */}
           <div className="mt-4 mb-16 text-center md:text-left">
             <span className="font-display text-[var(--color-rose-3)] tracking-widest uppercase text-base md:text-lg block mb-4">
               Departamento {localApt.num}
@@ -226,12 +198,11 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
             <p className="font-display italic text-3xl md:text-4xl text-[var(--color-rose-3)]">{localApt.tag}</p>
           </div>
 
-          {/* Description & Specs Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 mb-20">
             <div>
               <p className="text-xl md:text-2xl leading-relaxed opacity-80">{localApt.desc}</p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-4">
               {localApt.specs.map((spec, i) => (
                 <div key={i} className="flex flex-col items-start gap-1">
@@ -246,28 +217,25 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
             </div>
           </div>
 
-          {/* Virtual Tour Section */}
           <div className="mb-24 relative">
-            <div className="flex items-center justify-center md:justify-between mb-2 md:mb-8 border-b-0 md:border-b border-[rgba(94,58,80,0.1)] pb-0 md:pb-4">
+            <div className="flex items-center justify-center md:justify-between mb-2 md:mb-8 border-b-0 md:border-b border-white/10 pb-0 md:pb-4">
               <h3 className="font-display text-4xl md:text-5xl text-center md:text-left w-full md:w-auto">Recorrido Virtual</h3>
             </div>
-            
+
             <div className="-mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full">
               <VirtualTour aptId={localApt.name.toLowerCase()} />
             </div>
           </div>
 
-          {/* Aesthetic Calendar Section */}
-          <div className="bg-white/10 rounded-[2rem] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.05)] border border-white/5">
-            <div className="flex flex-col md:flex-row gap-12 items-center md:items-start justify-between">
+          <div className="bg-white/5 rounded-[2rem] p-4 sm:p-6 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/10">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-start justify-between">
               <div className="max-w-sm text-center md:text-left">
                 <CalendarIcon className="w-8 h-8 text-[var(--color-rose-3)] mb-6 mx-auto md:mx-0" />
                 <h3 className="font-display text-5xl mb-4">Disponibilidad</h3>
                 <p className="text-lg opacity-70 mb-4">
                   Selecciona tus fechas para verificar la disponibilidad en este refugio.
                 </p>
-                
-                {/* Leyenda de Colores */}
+
                 <div className="flex flex-col gap-2 mb-8 items-center md:items-start text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-md bg-[var(--color-coral)]" />
@@ -279,20 +247,20 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
                   </div>
                 </div>
 
-                <button 
+                <button
                   onClick={() => {
                     onClose();
                     useBookingStore.getState().openBooking(localApt.name.toLowerCase());
                   }}
-                  className="bg-[var(--color-ink)] text-[var(--color-sand)] px-8 py-4 rounded-full uppercase tracking-widest text-sm hover:bg-black transition-colors w-full md:w-auto"
+                  className="bg-[var(--color-cream)] text-[var(--color-ink)] px-8 py-4 rounded-full uppercase tracking-widest text-sm hover:bg-[var(--color-rose-1)] transition-colors w-full md:w-auto font-bold"
                 >
                   Solicitar Reserva
                 </button>
               </div>
-              
+
               <div className="calendar-wrapper relative w-full md:w-auto flex justify-center overflow-hidden md:overflow-visible">
                 {isLoadingBookings && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-sand)]/50 backdrop-blur-sm rounded-3xl">
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-ink)]/50 backdrop-blur-sm rounded-3xl">
                     <div className="w-8 h-8 border-2 border-[var(--color-rose-3)] border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
@@ -305,15 +273,14 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
                       const today = new Date();
                       const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
                       if (d < t) return true;
-                      return [...bookedDates, ...cleaningDates].some(bd => 
+                      return [...bookedDates, ...cleaningDates].some(bd =>
                         new Date(bd.getFullYear(), bd.getMonth(), bd.getDate()).getTime() === d
                       );
                     }}
-                    className="font-sans custom-neumorphic-calendar read-only-calendar !m-0"
+                    className="font-sans custom-neumorphic-calendar dark-theme-calendar read-only-calendar !m-0"
                     locale={es}
                   />
-                  
-                  {/* Leyenda del calendario */}
+
                   <div className="flex justify-center gap-4 mt-6 text-[0.65rem] uppercase tracking-widest font-semibold opacity-70 flex-wrap w-full px-4">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[var(--color-coral)] block shadow-sm"></span>
@@ -342,7 +309,7 @@ function AptModalContent({ localApt, onClose }: { localApt: AptData, onClose: ()
 export function AptModal({ apt, isOpen, onClose }: AptModalProps) {
   const [mounted, setMounted] = useState(false);
   const [localApt, setLocalApt] = useState(apt);
-  
+
   // Persist apt data for exit animation
   useEffect(() => {
     if (apt) setLocalApt(apt);

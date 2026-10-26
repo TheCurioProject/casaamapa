@@ -118,9 +118,17 @@ p, h1, h2, h3, h4, span, li {
   --rdp-accent-background-color: var(--color-rose-1) !important;
   --rdp-day-height: 48px;
   --rdp-day-width: 48px;
+  --rdp-disabled-opacity: 1; /* Override v10 default (0.5) so booked/cleaning days keep full opacity */
+  --rdp-day_button-border-radius: 12px;
   
   font-family: var(--font-body);
   margin: 0 auto;
+}
+
+/* Ensure v10 disabled modifier doesn't reduce opacity for custom-colored days */
+.rdp-disabled.rdp-day_booked,
+.rdp-disabled.rdp-day_cleaning {
+  opacity: 1 !important;
 }
 
 /* Custom Solid DayPicker Styling */
@@ -135,7 +143,8 @@ p, h1, h2, h3, h4, span, li {
   border: 1px solid rgba(94,58,80,0.05);
 }
 
-.custom-neumorphic-calendar table {
+.custom-neumorphic-calendar table,
+.custom-neumorphic-calendar .rdp-month_grid {
   border-collapse: separate;
   border-spacing: 4px;
   margin: 0 auto;
@@ -165,7 +174,7 @@ p, h1, h2, h3, h4, span, li {
   border-radius: inherit;
 }
 
-.custom-neumorphic-calendar .rdp-day:not(.rdp-day_disabled):not(.rdp-day_booked):not(.rdp-day_cleaning):hover {
+.custom-neumorphic-calendar .rdp-day:not(.rdp-day_disabled):not(.rdp-disabled):not(.rdp-day_booked):not(.rdp-day_cleaning):hover {
   background: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(94,58,80,0.08);
@@ -219,41 +228,61 @@ p, h1, h2, h3, h4, span, li {
   border: 2px solid var(--color-rose-3) !important;
 }
 
-/* Ocupado (Rojo Coral) */
-.custom-neumorphic-calendar .rdp-day_booked {
+/* Ocupado (Rojo Coral) — High specificity to beat dark-theme generic selector */
+.custom-neumorphic-calendar .rdp-day_booked,
+.custom-neumorphic-calendar .rdp-day_booked:disabled,
+.custom-neumorphic-calendar .rdp-day.rdp-day_booked,
+.dark-theme-calendar .rdp-day.rdp-day_booked,
+.dark-theme-calendar .rdp-day_booked,
+.dark-theme-calendar .rdp-day_booked:disabled,
+.custom-neumorphic-calendar.dark-theme-calendar .rdp-day.rdp-day_booked,
+.custom-neumorphic-calendar.dark-theme-calendar .rdp-day_booked {
   background: var(--color-coral) !important;
   color: white !important;
   border-color: transparent !important;
   cursor: not-allowed !important;
+  opacity: 1 !important;
 }
-.custom-neumorphic-calendar .rdp-day_booked:hover {
+.custom-neumorphic-calendar .rdp-day_booked:hover,
+.dark-theme-calendar .rdp-day_booked:hover {
   background: var(--color-coral) !important;
   transform: none !important;
   box-shadow: none !important;
 }
 
-/* Limpieza (+1 día, Rose 2) */
-.custom-neumorphic-calendar .rdp-day_cleaning {
+/* Limpieza (+1 día, Rose 2) — High specificity to beat dark-theme generic selector */
+.custom-neumorphic-calendar .rdp-day_cleaning,
+.custom-neumorphic-calendar .rdp-day_cleaning:disabled,
+.custom-neumorphic-calendar .rdp-day.rdp-day_cleaning,
+.dark-theme-calendar .rdp-day.rdp-day_cleaning,
+.dark-theme-calendar .rdp-day_cleaning,
+.dark-theme-calendar .rdp-day_cleaning:disabled,
+.custom-neumorphic-calendar.dark-theme-calendar .rdp-day.rdp-day_cleaning,
+.custom-neumorphic-calendar.dark-theme-calendar .rdp-day_cleaning {
   background: var(--color-rose-2) !important;
   color: white !important;
   border-color: transparent !important;
   cursor: not-allowed !important;
+  opacity: 1 !important;
 }
-.custom-neumorphic-calendar .rdp-day_cleaning:hover {
+.custom-neumorphic-calendar .rdp-day_cleaning:hover,
+.dark-theme-calendar .rdp-day_cleaning:hover {
   background: var(--color-rose-2) !important;
   transform: none !important;
   box-shadow: none !important;
 }
 
-/* Disabled / Past Days (Grayed out) */
-.custom-neumorphic-calendar .rdp-day_disabled {
+/* Disabled / Past Days (Grayed out) — supports both v8 (rdp-day_disabled) and v10 (rdp-disabled) */
+.custom-neumorphic-calendar .rdp-day_disabled:not(.rdp-day_booked):not(.rdp-day_cleaning),
+.custom-neumorphic-calendar .rdp-disabled:not(.rdp-day_booked):not(.rdp-day_cleaning) {
   background-color: #d1d5db !important;
   color: #9ca3af !important;
   border-color: transparent !important;
   cursor: not-allowed !important;
   opacity: 1 !important;
 }
-.custom-neumorphic-calendar .rdp-day_disabled:hover {
+.custom-neumorphic-calendar .rdp-day_disabled:not(.rdp-day_booked):not(.rdp-day_cleaning):hover,
+.custom-neumorphic-calendar .rdp-disabled:not(.rdp-day_booked):not(.rdp-day_cleaning):hover {
   background-color: #d1d5db !important;
   transform: none !important;
   box-shadow: none !important;
@@ -263,11 +292,14 @@ p, h1, h2, h3, h4, span, li {
 .read-only-calendar .rdp-day {
   pointer-events: none !important;
 }
-.read-only-calendar .rdp-nav_button {
+.read-only-calendar .rdp-nav_button,
+.read-only-calendar .rdp-button_previous,
+.read-only-calendar .rdp-button_next {
   pointer-events: auto !important; /* Keep month navigation active */
 }
 
-.custom-neumorphic-calendar .rdp-caption_label {
+.custom-neumorphic-calendar .rdp-caption_label,
+.custom-neumorphic-calendar .rdp-month_caption {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.25rem;
@@ -275,7 +307,52 @@ p, h1, h2, h3, h4, span, li {
   color: var(--color-ink);
 }
 
-.custom-neumorphic-calendar .rdp-head_cell {
+.dark-theme-calendar {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none !important;
+}
+
+.dark-theme-calendar .rdp-caption_label,
+.dark-theme-calendar .rdp-month_caption,
+.dark-theme-calendar .rdp-head_cell,
+.dark-theme-calendar .rdp-weekday {
+  color: var(--color-cream) !important;
+}
+
+.dark-theme-calendar .rdp-day:not(.rdp-day_selected):not(.rdp-day_range_start):not(.rdp-day_range_middle):not(.rdp-day_range_end):not(.rdp-selected):not(.rdp-range_start):not(.rdp-range_middle):not(.rdp-range_end):not(.rdp-day_booked):not(.rdp-day_cleaning) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: transparent !important;
+  color: var(--color-cream) !important;
+}
+
+.dark-theme-calendar .rdp-nav_button,
+.dark-theme-calendar .rdp-button_previous,
+.dark-theme-calendar .rdp-button_next {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--color-cream) !important;
+  border-color: transparent !important;
+}
+
+.dark-theme-calendar .rdp-nav_button:hover,
+.dark-theme-calendar .rdp-button_previous:hover,
+.dark-theme-calendar .rdp-button_next:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark-theme-calendar .rdp-day_disabled:not(.rdp-day_booked):not(.rdp-day_cleaning),
+.dark-theme-calendar .rdp-disabled:not(.rdp-day_booked):not(.rdp-day_cleaning) {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark-theme-calendar .rdp-day:not(.rdp-day_disabled):not(.rdp-disabled):not(.rdp-day_booked):not(.rdp-day_cleaning):not(.rdp-day_selected):not(.rdp-selected):not(.rdp-day_range_start):not(.rdp-range_start):not(.rdp-day_range_middle):not(.rdp-range_middle):not(.rdp-day_range_end):not(.rdp-range_end):hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: var(--color-cream) !important;
+}
+
+.custom-neumorphic-calendar .rdp-head_cell,
+.custom-neumorphic-calendar .rdp-weekday {
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
@@ -284,7 +361,9 @@ p, h1, h2, h3, h4, span, li {
   padding-bottom: 0.5rem;
 }
 
-.custom-neumorphic-calendar .rdp-nav_button {
+.custom-neumorphic-calendar .rdp-nav_button,
+.custom-neumorphic-calendar .rdp-button_previous,
+.custom-neumorphic-calendar .rdp-button_next {
   border-radius: 10px;
   transition: all 0.2s ease;
   color: var(--color-ink);
@@ -297,7 +376,9 @@ p, h1, h2, h3, h4, span, li {
   justify-content: center;
 }
 
-.custom-neumorphic-calendar .rdp-nav_button:hover {
+.custom-neumorphic-calendar .rdp-nav_button:hover,
+.custom-neumorphic-calendar .rdp-button_previous:hover,
+.custom-neumorphic-calendar .rdp-button_next:hover {
   background: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(94,58,80,0.05);
@@ -306,29 +387,32 @@ p, h1, h2, h3, h4, span, li {
 /* Mobile Optimizations for Calendar */
 @media (max-width: 768px) {
   .custom-neumorphic-calendar {
-    --rdp-cell-size: 11vw;
-    padding: 1rem 0.5rem;
+    --rdp-cell-size: 12.5vw;
+    padding: 0.5rem 0;
     border-radius: 1rem;
     border: none;
     background: transparent;
     box-shadow: none;
   }
   
-  .custom-neumorphic-calendar table {
+  .custom-neumorphic-calendar table,
+  .custom-neumorphic-calendar .rdp-month_grid {
     border-spacing: 2px;
   }
 
   .custom-neumorphic-calendar .rdp-day {
     font-size: 1.1rem;
     margin: 1px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
   
-  .custom-neumorphic-calendar .rdp-caption_label {
+  .custom-neumorphic-calendar .rdp-caption_label,
+  .custom-neumorphic-calendar .rdp-month_caption {
     font-size: 1.35rem;
   }
   
-  .custom-neumorphic-calendar .rdp-head_cell {
+  .custom-neumorphic-calendar .rdp-head_cell,
+  .custom-neumorphic-calendar .rdp-weekday {
     font-size: 0.75rem;
   }
 }

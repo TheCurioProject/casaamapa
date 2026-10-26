@@ -18,6 +18,8 @@ export function Stairs() {
   const [showHint, setShowHint] = useState(false);
 
   useGSAP(() => {
+
+    if (window.innerWidth < 768) return;
     linesReveal('.js-lines');
     fadeReveal('.js-fade');
 
@@ -29,7 +31,7 @@ export function Stairs() {
 
     if (stage && mask && wrap && ring) {
       const isMobile = window.innerWidth < 768;
-      gsap.set(mask, { scale: isMobile ? 0.85 : 0.42 });
+      gsap.set(mask, { scale: 0.42 });
 
       const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
         // progress >= 0 so onEnter at top of section also schedules the tour
@@ -58,18 +60,18 @@ export function Stairs() {
             const addStep = (target: number, duration: number, readDelay: number) => {
               const stepDist = target - prevMarker;
               prevMarker = target;
-              
+
               if (virtualY < target - 20) {
                 const ease = isFirstStep ? 'power2.inOut' : 'power3.inOut';
                 isFirstStep = false;
-                
+
                 const speed = stepDist > 0 ? stepDist / duration : 1000;
                 const remainingDist = target - virtualY;
                 const adjDuration = Math.max(0.2, speed > 0 ? remainingDist / speed : duration);
-                
+
                 scrollTween.to(proxy, { y: target, duration: adjDuration, ease });
                 if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
-                
+
                 virtualY = target;
               }
             };
@@ -85,12 +87,12 @@ export function Stairs() {
             if (virtualY < pNext - 20) {
               const pNextDist = pNext - p3;
               const speed = pNextDist > 0 ? pNextDist / 1.8 : 1000;
-              
+
               scrollTween.add(() => {
                 const currentYAtAdd = window.scrollY;
                 const remainingDist = pNext - currentYAtAdd;
                 const adjDuration = Math.max(0.2, speed > 0 ? remainingDist / speed : 1.8);
-                
+
                 AutoScrollManager.rafScroll(pNext, adjDuration, () => {
                   window.dispatchEvent(new CustomEvent('stairs-tour-complete'));
                 });
@@ -112,11 +114,24 @@ export function Stairs() {
           const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'Home', 'End'];
           if (!navKeys.includes(evt.code)) return;
         }
-        
+
         AutoScrollManager.interact();
         setShowHint(false);
+
+        // Do not schedule resume while the user is actively touching/dragging
+        if (e && (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'mousedown')) {
+          return;
+        }
+
         const st = tl.scrollTrigger;
         // Only restart the inactivity timer while still inside the stairs section
+        if (st && st.isActive) {
+          startInactivityTimers(st);
+        }
+      };
+
+      const handleInteractionEnd = () => {
+        const st = tl.scrollTrigger;
         if (st && st.isActive) {
           startInactivityTimers(st);
         }
@@ -125,7 +140,9 @@ export function Stairs() {
       window.addEventListener('wheel', handleUserInteraction, { passive: true });
       window.addEventListener('touchstart', handleUserInteraction, { passive: true });
       window.addEventListener('touchmove', handleUserInteraction, { passive: true });
+      window.addEventListener('touchend', handleInteractionEnd, { passive: true });
       window.addEventListener('mousedown', handleUserInteraction, { passive: true });
+      window.addEventListener('mouseup', handleInteractionEnd, { passive: true });
       window.addEventListener('keydown', handleUserInteraction, { passive: true });
 
       const tl = gsap.timeline({
@@ -149,14 +166,16 @@ export function Stairs() {
             window.removeEventListener('wheel', handleUserInteraction);
             window.removeEventListener('touchstart', handleUserInteraction);
             window.removeEventListener('touchmove', handleUserInteraction);
+            window.removeEventListener('touchend', handleInteractionEnd);
             window.removeEventListener('mousedown', handleUserInteraction);
+            window.removeEventListener('mouseup', handleInteractionEnd);
             window.removeEventListener('keydown', handleUserInteraction);
           }
         }
       });
 
       tl.to(mask, { scale: 1, duration: 1.5, ease: 'power2.out' }, 0)
-        .fromTo(wrap, { scale: 1.06, rotation: isMobile ? -15 : -5 }, { scale: 1.22, rotation: isMobile ? 15 : 5, duration: 5, ease: 'none' }, 0)
+        .fromTo(wrap, { scale: 1.06, rotation: -5 }, { scale: 1.22, rotation: 5, duration: 5, ease: 'none' }, 0)
         .to(ring, { rotation: 150, transformOrigin: '50% 50%', duration: 5, ease: 'none' }, 0);
 
       let t = 0.55;
@@ -191,27 +210,59 @@ export function Stairs() {
   }, { scope: container });
 
   return (
+
     <section
       ref={container}
-      className="bg-[var(--color-rose-3)] text-[var(--color-cream)] pb-[20vh] relative z-3 -mt-[var(--spacing-overlap)]"
+      className="bg-[var(--color-rose-3)] text-[var(--color-cream)] pb-[10vh] md:pb-[20vh] relative z-3 -mt-[var(--spacing-overlap)]"
       id="arquitectura"
       data-theme="rose"
       style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
     >
+      {/* MOBILE VIEW */}
+      <div className="md:hidden flex flex-col items-center text-center px-[var(--spacing-pad-x)] pt-[12vh] pb-[6vh] gap-10">
+        <div className="flex flex-col items-center gap-3">
+          <p className="kicker kicker-light text-[0.75rem]">La arquitectura</p>
+          <h2 className="text-[clamp(3rem,11vw,4rem)] leading-[0.9] font-display js-lines">Inspirado en el<br/>Wabi-Sabi</h2>
+          <p className="text-[0.9rem] opacity-80 max-w-[40ch] mt-2 leading-snug text-balance js-fade">
+            Un caracol de estuco rosa que abraza la belleza de lo imperfecto y lo orgánico. No es solo una escalera: es el corazón de la casa, donde la textura manual y la luz natural celebran la esencia de la filosofía Wabi-Sabi.
+          </p>
+        </div>
+
+        <div className="w-full max-w-[320px] aspect-square relative rounded-full overflow-hidden shadow-[0_20px_60px_rgba(20,8,20,0.3)] js-fade">
+           <Image src="/images/la-arquitectura.webp" alt="Escalera" fill sizes="100vw" className="object-cover" />
+        </div>
+
+        <div className="flex flex-col gap-10 w-full max-w-[400px] text-left mt-4 js-fade">
+          {steps.map((s, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <span className="font-sans font-semibold tracking-wider text-[1rem] text-[var(--color-cream)] opacity-60">{s.n}</span>
+              <h3 className="font-sans font-medium tracking-tight text-[1.7rem] leading-tight">{s.t}</h3>
+              <p className="opacity-80 text-[0.95rem] leading-relaxed font-normal">{s.d}</p>
+              {i === 3 && (
+                 <div className="w-full aspect-[4/3] relative rounded-2xl overflow-hidden mt-4 shadow-lg">
+                    <Image src="/images/el-cielo.webp" alt="El cielo" fill sizes="100vw" className="object-cover" />
+                 </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* DESKTOP VIEW */}
       <div
-        className="spiral-stage h-[100svh] min-h-[100svh] flex flex-col md:grid md:grid-cols-[1fr_1fr] gap-[2vh] md:gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden py-[8vh] max-md:pt-[clamp(90px,14vh,130px)] max-md:pb-[clamp(40px,6vh,80px)] md:py-0"
+        className="hidden md:grid spiral-stage h-[100svh] min-h-[100svh] grid-cols-[1fr_1fr] gap-[6vw] px-[var(--spacing-pad-x)] items-center justify-center relative overflow-hidden"
         style={{ borderRadius: '50% 50% 0 0 / var(--radius-curve-v) var(--radius-curve-v) 0 0' }}
       >
 
-        <div className="relative h-[24vh] max-md:h-[22vh] md:h-[80vh] w-full flex justify-center items-center mt-0 md:-mt-[10vh]">
-          <div className="relative w-[clamp(160px,45vw,22vh)] md:w-[min(70vh,38vw)] aspect-square shrink-0">
+        <div className="relative h-[80vh] w-full flex justify-center items-center -mt-[10vh]">
+          <div className="relative w-[min(70vh,38vw)] aspect-square shrink-0">
             <div className="spiral-mask absolute inset-0 rounded-full overflow-hidden will-change-transform shadow-[0_40px_120px_rgba(20,8,20,0.45)] z-2">
               <div className="spiral-imgwrap absolute inset-0 will-change-transform">
                 <Image
                   src="/images/la-arquitectura.webp"
                   alt="Escalera caracol de estuco rosa vista desde abajo"
                   fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="50vw"
                   className="object-cover img-arq absolute inset-0 z-[1]"
                   priority
                 />
@@ -219,35 +270,35 @@ export function Stairs() {
                   src="/images/la-luz.webp"
                   alt="La luz en la escalera caracol"
                   fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="50vw"
                   className="object-cover img-luz absolute inset-0 z-[2] opacity-0 invisible"
                 />
                 <Image
                   src="/images/el-cielo.webp"
                   alt="El cielo desde la escalera caracol"
                   fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="50vw"
                   className="object-cover img-cielo absolute inset-0 z-[3] opacity-0 invisible"
                 />
               </div>
             </div>
-            
+
             <div className="spiral-ring absolute inset-[-14%] w-[128%] h-[128%] pointer-events-none will-change-transform z-1">
               <svg className="w-full h-full" viewBox="0 0 600 600" aria-hidden="true">
                 <circle cx="300" cy="300" r="262"
-                  fill="none" 
-                  stroke="var(--color-sand)" 
+                  fill="none"
+                  stroke="var(--color-sand)"
                   strokeWidth="1.5"
-                  strokeDasharray="820 1646" 
+                  strokeDasharray="820 1646"
                   strokeDashoffset="0"
                   strokeLinecap="round"
                   className="opacity-60"
                 />
                 <circle cx="300" cy="300" r="248"
-                  fill="none" 
-                  stroke="var(--color-sand)" 
+                  fill="none"
+                  stroke="var(--color-sand)"
                   strokeWidth="1"
-                  strokeDasharray="300 1558" 
+                  strokeDasharray="300 1558"
                   strokeDashoffset="260"
                   strokeLinecap="round"
                   className="opacity-30"
@@ -257,19 +308,19 @@ export function Stairs() {
           </div>
         </div>
 
-        <aside className="relative z-2 flex flex-col gap-[1vh] md:mt-[14vh] max-md:text-center max-md:items-center shrink-0">
-          <p className="kicker kicker-light max-md:text-[0.75rem]">La arquitectura</p>
-          <h2 className="text-[clamp(3rem,11vw,5rem)] md:text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br className="max-lg:hidden" /> Wabi-Sabi</h2>
-          <p className="lede mt-1 max-md:text-[0.85rem] max-md:leading-snug opacity-80 max-md:max-w-[40ch] md:js-fade max-md:text-balance">
+        <aside className="relative z-2 flex flex-col gap-[1vh] mt-[14vh] shrink-0">
+          <p className="kicker kicker-light">La arquitectura</p>
+          <h2 className="text-[clamp(2.4rem,8.4vw,5rem)] leading-[0.9] font-display js-lines">Inspirado en el<br /> Wabi-Sabi</h2>
+          <p className="lede mt-1 opacity-80 js-fade text-balance">
             Un caracol de estuco rosa que abraza la belleza de lo imperfecto y lo orgánico. No es solo una escalera: es el corazón de la casa, donde la textura manual y la luz natural celebran la esencia de la filosofía Wabi-Sabi.
           </p>
-          <div className="relative h-[120px] md:h-[260px] mt-[1vh] md:mt-2 w-full max-w-[400px]">
+          <div className="relative h-[260px] mt-2 w-full max-w-[400px]">
             {steps.map((s, i) => (
-              <div key={i} className={`spiral-step absolute inset-0 flex flex-col md:grid md:grid-cols-[auto_1fr] gap-[0.5vh] md:gap-[1.8vw] content-start ${i === 0 ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-                <span className="font-sans font-semibold tracking-wider text-[1.1rem] md:text-[1.5rem] xl:text-[1.8rem] text-[var(--color-cream)] opacity-60 md:mt-1">{s.n}</span>
+              <div key={i} className={`spiral-step absolute inset-0 grid grid-cols-[auto_1fr] gap-[1.8vw] content-start ${i === 0 ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                <span className="font-sans font-semibold tracking-wider text-[1.5rem] xl:text-[1.8rem] text-[var(--color-cream)] opacity-60 mt-1">{s.n}</span>
                 <div>
-                  <h3 className="font-sans font-medium tracking-tight text-[1.6rem] md:text-[2.2rem] xl:text-[2.8rem] mb-[0.1em] leading-tight">{s.t}</h3>
-                  <p className="opacity-80 max-w-[38ch] text-[0.9rem] md:text-[1.1rem] xl:text-[1.2rem] leading-relaxed font-normal">{s.d}</p>
+                  <h3 className="font-sans font-medium tracking-tight text-[2.2rem] xl:text-[2.8rem] mb-[0.1em] leading-tight">{s.t}</h3>
+                  <p className="opacity-80 max-w-[38ch] text-[1.1rem] xl:text-[1.2rem] leading-relaxed font-normal">{s.d}</p>
                 </div>
               </div>
             ))}
@@ -277,5 +328,6 @@ export function Stairs() {
         </aside>
       </div>
     </section>
+
   );
 }

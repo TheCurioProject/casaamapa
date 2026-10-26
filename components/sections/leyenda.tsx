@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/dist/ScrollTrigger';
 import { useDevice } from '@/hooks/use-device';
+import { AutoScrollManager } from '@/lib/auto-scroll';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,13 +13,14 @@ export function Leyenda() {
   const container = useRef<HTMLElement>(null);
   const [showHint, setShowHint] = useState(false);
   const { isMobile, isHydrated } = useDevice();
-  
+
   useGSAP(() => {
     if (!isHydrated) return;
 
     if (isMobile) {
       ScrollTrigger.config({ ignoreMobileResize: true });
     }
+
 
     let hintTimeout: NodeJS.Timeout;
 
@@ -29,102 +31,221 @@ export function Leyenda() {
     gsap.set('.season-leaf1', { scale: 0.5, svgOrigin: '30 55' });
     gsap.set('.season-leaf2', { scale: 0.5, svgOrigin: '70 55' });
 
+    const startInactivityTimers = (st: globalThis.ScrollTrigger, timeline: gsap.core.Timeline) => {
+      if (st.progress >= 0 && st.progress <= 1) {
+        setShowHint(true);
+        AutoScrollManager.schedule(() => {
+          const currentY = window.scrollY;
+          const totalDist = st.end - st.start;
 
+          const getP = (label: string) => {
+            return st.start + totalDist * (timeline.labels[label] / timeline.duration());
+          };
+
+          const p0 = getP('p0');
+          const p1 = getP('p1');
+          const p2 = getP('p2');
+          const p3 = getP('p3');
+          const p4 = getP('p4');
+          const p5 = getP('p5');
+          const p6 = getP('p6');
+          const pNext = st.end;
+
+          const proxy = { y: currentY };
+          const scrollTween = gsap.timeline({
+            onUpdate: () => AutoScrollManager.setScroll(proxy.y)
+          });
+
+          AutoScrollManager.run(scrollTween);
+
+          let prevMarker = st.start;
+          let virtualY = currentY;
+          let isFirstStep = true;
+          const addStep = (target: number, duration: number, readDelay: number) => {
+            const stepDist = target - prevMarker;
+            prevMarker = target;
+
+            if (virtualY < target - 20) {
+              const ease = 'power2.inOut'; // Smoother, less abrupt ease
+
+              const speed = stepDist > 0 ? stepDist / duration : 1000;
+              const remainingDist = target - virtualY;
+              const adjDuration = Math.max(0.5, speed > 0 ? remainingDist / speed : duration);
+
+              scrollTween.to(proxy, { y: target, duration: adjDuration, ease });
+              if (readDelay > 0) scrollTween.to({}, { duration: readDelay });
+
+              virtualY = target;
+            }
+          };
+
+          // Narrative pacing: matching the scroll duration to the complexity of the SVG animation
+          addStep(p0, 1.5, 3.0); // Intro
+          addStep(p1, 2.0, 3.5); // Seasons appear
+          addStep(p2, 2.0, 3.5); // Winter
+          addStep(p3, 3.0, 3.5); // Tree grows slowly and elegantly
+          addStep(p4, 2.5, 2.5); // Bloom
+          addStep(p5, 1.8, 2.5); // Other trees scared
+          // We stop exactly at p6, so the user can read the final text and enjoy the colored flowers.
+          // The auto-scroll should NOT force them out of the section.
+          addStep(p6, 3.5, 0); // Colors stagger out beautifully
+
+          // Notify completion after the final scene arrives
+          scrollTween.add(() => {
+            setTimeout(() => window.dispatchEvent(new CustomEvent('leyenda-tour-complete')), 100);
+          });
+        });
+      }
+    };
+
+    const handleUserInteraction = (e?: Event) => {
+      if (e && e.type === 'keydown') {
+        const evt = e as KeyboardEvent;
+        const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'Home', 'End'];
+        if (!navKeys.includes(evt.code)) return;
+      }
+
+      AutoScrollManager.interact();
+      setShowHint(false);
+
+      // Do not schedule resume while the user is actively touching/dragging
+      if (e && (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'mousedown')) {
+        return;
+      }
+
+      const st = tl.scrollTrigger;
+      if (st && st.isActive) {
+        startInactivityTimers(st, tl);
+      }
+    };
+
+    const handleInteractionEnd = () => {
+      const st = tl.scrollTrigger;
+      if (st && st.isActive) {
+        startInactivityTimers(st, tl);
+      }
+    };
+
+    window.addEventListener('wheel', handleUserInteraction, { passive: true });
+    window.addEventListener('touchstart', handleUserInteraction, { passive: true });
+    window.addEventListener('touchmove', handleUserInteraction, { passive: true });
+    window.addEventListener('touchend', handleInteractionEnd, { passive: true });
+    window.addEventListener('mousedown', handleUserInteraction, { passive: true });
+    window.addEventListener('mouseup', handleInteractionEnd, { passive: true });
+    window.addEventListener('keydown', handleUserInteraction, { passive: true });
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: container.current,
         start: 'top top',
         end: '+=900%',
-        scrub: 1.5,
+        scrub: 1, // Reduced scrub lag for better synchronization with the slower scrollTween
         pin: true,
         onUpdate: (self) => {
-          setShowHint(false);
-          clearTimeout(hintTimeout);
-          if (self.progress > 0 && self.progress < 0.95) {
-            hintTimeout = setTimeout(() => setShowHint(true), 800);
-          }
+          // interactions caught by event listeners
         },
+        onEnter: (self) => startInactivityTimers(self, tl),
+        onEnterBack: (self) => startInactivityTimers(self, tl),
+        onLeaveBack: () => AutoScrollManager.interact(),
         onLeave: () => {
-          setShowHint(false);
-          clearTimeout(hintTimeout);
-        },
-        onEnter: () => {
-          hintTimeout = setTimeout(() => setShowHint(true), 800);
+          window.removeEventListener('wheel', handleUserInteraction);
+          window.removeEventListener('touchstart', handleUserInteraction);
+          window.removeEventListener('touchmove', handleUserInteraction);
+          window.removeEventListener('mousedown', handleUserInteraction);
+          window.removeEventListener('keydown', handleUserInteraction);
         }
       }
     });
 
     const texts = gsap.utils.toArray('.legend-text');
-    
+
     // Scene 0: Cosmos
     tl.to(container.current, { "--radius-progress": 0, duration: 0.15, ease: "power1.inOut" }, 0)
       .to(texts[0] as HTMLElement, { opacity: 1, duration: 0.15 }, 0)
       .to('.cosmos', { scale: 1, opacity: 1, rotation: 90, duration: 0.15, ease: "power2.out" }, 0)
+      .addLabel('p0')
       .to(texts[0] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15")
       .to('.cosmos', { opacity: 0, scale: 0.9, duration: 0.1 }, "<");
 
     // Scene 1: Seasons
     tl.to(texts[1] as HTMLElement, { opacity: 1, duration: 0.15 })
       .to('.season-sun, .season-leaf1, .season-leaf2', { opacity: 1, scale: 1, stagger: 0.05, duration: 0.2, ease: "back.out(1.5)" }, "<")
+      .addLabel('p1')
       .to(texts[1] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15")
       .to('.season-sun, .season-leaf1, .season-leaf2', { opacity: 0, scale: 0.8, duration: 0.1 }, "<");
 
     // Scene 2: Winter
     tl.to(texts[2] as HTMLElement, { opacity: 1, duration: 0.15 })
       .to('.season-snow', { opacity: 1, scale: 1, rotation: 45, duration: 0.2, ease: "back.out(1.5)" }, "<")
+      .addLabel('p2')
       .to(texts[2] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15")
       .to('.season-snow', { opacity: 0, scale: 0.8, duration: 0.1 }, "<");
 
     // Scene 3: Tree grows
     tl.to(texts[3] as HTMLElement, { opacity: 1, duration: 0.15 })
       .to('.tree-path', { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, "<")
+      .addLabel('p3')
       .to(texts[3] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15");
 
     // Scene 4: Bloom
     tl.to(texts[4] as HTMLElement, { opacity: 1, scale: 1.05, duration: 0.15 })
       .to('.tree-flower', { scale: 1, opacity: 1, stagger: 0.01, duration: 0.3, ease: "back.out(2)" }, "<")
+      .addLabel('p4')
       .to(texts[4] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15");
 
     // Scene 5: Other trees scared
     tl.to(texts[5] as HTMLElement, { opacity: 1, duration: 0.15 })
+      .addLabel('p5')
       .to(texts[5] as HTMLElement, { opacity: 0, duration: 0.1 }, "+=0.15");
 
     // Scene 6: God's gift (Colors)
     tl.to(texts[6] as HTMLElement, { opacity: 1, duration: 0.15 })
-      .to('.tree-flower', { 
+      .to('.tree-flower', {
         fill: (index) => {
           const colors = ["#FFFFFF", "#FDE047", "var(--color-rose-2)", "#D946EF", "#A855F7"];
           return colors[index % colors.length];
         },
-        stagger: { each: 0.01, from: "center" }, 
-        duration: 0.4 
+        stagger: { each: 0.01, from: "center" },
+        duration: 0.4
       }, "<")
-      .to({}, { duration: 0.4 }); // Extended end buffer to account for the extra 100vh scroll
+      .addLabel('p6')
+      .to(texts[6] as HTMLElement, { opacity: 0, duration: 0.15 })
+      .to({}, { duration: 0.25 }); // Extended end buffer to account for the extra 100vh scroll
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('wheel', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
+      window.removeEventListener('touchmove', handleUserInteraction);
+      window.removeEventListener('touchend', handleInteractionEnd);
+      window.removeEventListener('mousedown', handleUserInteraction);
+      window.removeEventListener('mouseup', handleInteractionEnd);
+      window.removeEventListener('keydown', handleUserInteraction);
+    };
 
   }, { scope: container, dependencies: [isHydrated, isMobile] });
 
   return (
-    <section 
+    <section
       ref={container}
       className="bg-[var(--color-ink)] text-[var(--color-sand)] relative z-[6] -mt-[var(--spacing-overlap)] overflow-hidden"
       id="leyenda"
       data-theme="dark"
-      style={{ 
+      style={{
         '--radius-progress': 1,
-        borderRadius: 'calc(50% * var(--radius-progress)) calc(50% * var(--radius-progress)) 0 0 / calc(var(--radius-curve-v) * var(--radius-progress)) calc(var(--radius-curve-v) * var(--radius-progress)) 0 0' 
+        borderRadius: 'calc(50% * var(--radius-progress)) calc(50% * var(--radius-progress)) 0 0 / calc(var(--radius-curve-v) * var(--radius-progress)) calc(var(--radius-curve-v) * var(--radius-progress)) 0 0'
       } as React.CSSProperties}
     >
       <div className="h-[100svh] w-full flex flex-col items-center justify-center pt-[8vh] max-md:pt-[12vh]">
-          
+
 
           <div className="kicker kicker-light opacity-70 mb-4 md:mb-8">La Leyenda de la Amapa</div>
 
           <div className="relative w-[85vmin] h-[85vmin] md:w-[50vmin] md:h-[50vmin] flex-shrink-0">
-            
+
             {/* The Stage */}
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100">
-               
+
                {/* 1. Cosmos */}
                <g className="cosmos opacity-0 will-change-transform" stroke="var(--color-cream)" strokeWidth="0.5" fill="none">
                  <circle cx="50" cy="50" r="18" stroke="var(--color-sand)"/>
@@ -156,30 +277,30 @@ export function Leyenda() {
                </g>
 
                {/* 4. The Tree */}
-               <path 
-                 className="tree-path" 
+               <path
+                 className="tree-path"
                  d="
-                   M50,95 C48,80 49,65 50,55 
-                   M50,55 C43,45 33,40 18,36 
-                   M50,55 C57,45 67,40 82,36 
-                   M45,49 C38,38 28,28 15,22 
-                   M55,49 C62,38 72,28 85,22 
-                   M48,52 C44,38 38,22 30,12 
-                   M52,52 C56,38 62,22 70,12 
+                   M50,95 C48,80 49,65 50,55
+                   M50,55 C43,45 33,40 18,36
+                   M50,55 C57,45 67,40 82,36
+                   M45,49 C38,38 28,28 15,22
+                   M55,49 C62,38 72,28 85,22
+                   M48,52 C44,38 38,22 30,12
+                   M52,52 C56,38 62,22 70,12
                    M50,55 C50,40 50,22 50,8
                    M32,41 C27,33 20,28 12,28
                    M68,41 C73,33 80,28 88,28
                    M25,29 C20,22 15,16 10,12
                    M75,29 C80,22 85,16 90,12
-                 " 
-                 fill="none" 
-                 stroke="var(--color-cream)" 
-                 strokeWidth="1.2" 
-                 strokeLinecap="round" 
+                 "
+                 fill="none"
+                 stroke="var(--color-cream)"
+                 strokeWidth="1.2"
+                 strokeLinecap="round"
                  strokeLinejoin="round"
-                 style={{ strokeDasharray: 400, strokeDashoffset: 400 }} 
+                 style={{ strokeDasharray: 400, strokeDashoffset: 400 }}
                />
-               
+
                {/* 5. Flowers */}
                <g className="flowers" fill="var(--color-rose-2)">
                   {[

@@ -12,17 +12,14 @@ export async function updateSettings(data: FormData) {
   const depositPercentage = parseInt(data.get('depositPercentage') as string);
   const isFullPayment = data.get('paymentMode') === 'full';
 
-  const settings = await prisma.settings.findFirst();
-  if (settings) {
-    await prisma.settings.update({
-      where: { id: settings.id },
-      data: { depositPercentage, isFullPayment }
-    });
-  } else {
-    await prisma.settings.create({
-      data: { depositPercentage, isFullPayment }
-    });
+  if (!Number.isInteger(depositPercentage) || depositPercentage < 10 || depositPercentage > 100) {
+    throw new Error('Invalid deposit percentage');
   }
+  await prisma.settings.upsert({
+    where: { key: 'default' },
+    update: { depositPercentage, isFullPayment },
+    create: { key: 'default', depositPercentage, isFullPayment },
+  });
 
   revalidatePath('/admin/settings');
   return { success: true };
@@ -33,9 +30,9 @@ export async function updatePassword(data: FormData) {
   if (!session) throw new Error('Unauthorized');
 
   const newPassword = data.get('password') as string;
-  if (newPassword.length < 6) throw new Error('Password too short');
+  if (newPassword.length < 12) throw new Error('Password too short');
 
-  const hash = await bcrypt.hash(newPassword, 10);
+  const hash = await bcrypt.hash(newPassword, 12);
   
   await prisma.adminUser.update({
     where: { username: 'admin' },
