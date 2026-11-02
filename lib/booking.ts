@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import type { ExtTxClient } from '@/lib/db';
+import { propertyDateKey } from '@/lib/calendar-dates';
 
 export const ACTIVE_BOOKING_STATUSES = ['pending', 'processing', 'confirmed', 'attention_required'] as const;
 export const CONFIRMED_BOOKING_STATUSES = ['confirmed', 'attention_required'] as const;
@@ -51,26 +52,33 @@ export function nightsBetween(checkIn: Date, checkOut: Date): number {
 }
 
 export function validateStay(checkIn: Date, checkOut: Date) {
+  validateDateRange(checkIn, checkOut);
   const nights = nightsBetween(checkIn, checkOut);
   if (nights < 1) throw new BookingValidationError('La estancia debe ser de al menos una noche.');
   if (nights > 90) throw new BookingValidationError('La estancia no puede superar 90 noches.');
 
-  const today = new Date();
-  const todayDate = parseDateOnly(
-    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
-  );
+  const todayDate = propertyToday();
   if (checkIn < todayDate) throw new BookingValidationError('La fecha de llegada ya pasó.');
 }
 
-export function activeBookingWhere(now = new Date()): Prisma.BookingWhereInput {
-  const legacyCutoff = new Date(now.getTime() - CHECKOUT_HOLD_MINUTES * 60 * 1000);
-  return {
-    OR: [
-      { status: { in: ['processing', 'confirmed', 'attention_required'] } },
-      { status: 'pending', expiresAt: { gt: now } },
-      { status: 'pending', expiresAt: null, createdAt: { gt: legacyCutoff } },
-    ],
-  };
+export function propertyToday(now = new Date()) {
+  return parseDateOnly(propertyDateKey(now));
+}
+
+export function validateDateRange(checkIn: Date, checkOut: Date) {
+  if (!Number.isFinite(checkIn.getTime()) || !Number.isFinite(checkOut.getTime())) {
+    throw new BookingValidationError('Selecciona fechas válidas.');
+  }
+  if (checkOut <= checkIn) {
+    throw new BookingValidationError('La salida debe ser posterior a la llegada.');
+  }
+}
+
+export function activeBookingWhere(): Prisma.BookingWhereInput {
+  // A timer alone cannot release a checkout: Stripe may already have charged it.
+  // Keep the UI and PostgreSQL exclusion constraint in agreement until the
+  // reconciler verifies Stripe and explicitly expires/cancels the reservation.
+  return { status: { in: [...ACTIVE_BOOKING_STATUSES] } };
 }
 
 async function relatedUnitIds(tx: ExtTxClient, apartmentId: string) {
@@ -95,19 +103,17 @@ export async function lockAndAssertAvailability(
   tx: ExtTxClient,
   input: { apartmentId: string; checkIn: Date; checkOut: Date; excludeBookingId?: string },
 ) {
-  // One property-wide transaction lock also serializes whole-house vs sub-unit
-  // reservations, a case a normal per-unit exclusion constraint cannot cover.
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(184247931)`;
+  validateDateRange(input.checkIn, input.checkOut);
+  await acquirePropertyLock(tx);
 
   const ids = await relatedUnitIds(tx, input.apartmentId);
-  const now = new Date();
   const [booking, block] = await Promise.all([
     tx.booking.findFirst({
       where: {
         id: input.excludeBookingId ? { not: input.excludeBookingId } : undefined,
         apartmentId: { in: ids },
         AND: [
-          activeBookingWhere(now),
+          activeBookingWhere(),
           { checkIn: { lt: input.checkOut } },
           { checkOut: { gt: input.checkIn } },
         ],
@@ -127,6 +133,12 @@ export async function lockAndAssertAvailability(
   if (booking || block) {
     throw new BookingValidationError('Las fechas seleccionadas ya no están disponibles.');
   }
+}
+
+export async function acquirePropertyLock(tx: ExtTxClient) {
+  // A property-wide lock also protects whole-house vs apartment reservations and
+  // OTA imports. Prisma cannot deserialize PostgreSQL's `void` return type.
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(184247931)::text`;
 }
 
 export async function calculateBookingQuote(

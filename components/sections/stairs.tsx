@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { linesReveal, fadeReveal } from '@/lib/animations';
@@ -15,7 +15,6 @@ export function Stairs() {
   ];
 
   const container = useRef<HTMLElement>(null);
-  const [showHint, setShowHint] = useState(false);
 
   useGSAP(() => {
 
@@ -30,13 +29,12 @@ export function Stairs() {
     const stepEls = gsap.utils.toArray('.spiral-step') as HTMLElement[];
 
     if (stage && mask && wrap && ring) {
-      const isMobile = window.innerWidth < 768;
       gsap.set(mask, { scale: 0.42 });
 
       const startInactivityTimers = (st: globalThis.ScrollTrigger) => {
         // progress >= 0 so onEnter at top of section also schedules the tour
         if (st.progress >= 0 && st.progress <= 1) {
-          setShowHint(true);
+
           AutoScrollManager.schedule(() => {
             const currentY = window.scrollY;
             const totalDist = st.end - st.start;
@@ -116,7 +114,7 @@ export function Stairs() {
         }
 
         AutoScrollManager.interact();
-        setShowHint(false);
+
 
         // Do not schedule resume while the user is actively touching/dragging
         if (e && (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'mousedown')) {

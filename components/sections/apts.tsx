@@ -12,21 +12,7 @@ import { AptModal, AptData } from '@/components/ui/apt-modal';
 import { useBookingStore } from '@/lib/store';
 import { apartmentsData as c } from '@/lib/data/apartments';
 
-export function Apts() {
-  const container = useRef<HTMLElement>(null);
-  const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
-  const setAptModalOpen = useBookingStore(state => state.setAptModalOpen);
-  
-  const handleOpenApt = (apt: AptData) => {
-    setSelectedApt(apt);
-    setAptModalOpen(true);
-  };
-  const handleCloseApt = () => {
-    setSelectedApt(null);
-    setAptModalOpen(false);
-  };
-
-  const MobileBlock = ({ apt, onOpen }: { apt: typeof c.tierra; onOpen: () => void }) => (
+const MobileBlock = ({ apt, onOpen }: { apt: typeof c.tierra; onOpen: () => void }) => (
     <article className="mb-[7vh] max-w-full">
       <figure className="aspect-[4/5] mx-[var(--spacing-pad-x)] rounded-[var(--radius-arch-img)_var(--radius-arch-img)_22px_22px] overflow-hidden relative">
         <Image src={apt.imgMain} alt={`Departamento ${apt.name}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover h-[118%] will-change-transform" />
@@ -54,7 +40,7 @@ export function Apts() {
     </article>
   );
 
-  const DesktopPanel = ({ apt, onOpen }: { apt: typeof c.tierra; onOpen: () => void }) => (
+const DesktopPanel = ({ apt, onOpen }: { apt: typeof c.tierra; onOpen: () => void }) => (
     <article className="flex-[0_0_84vw] grid grid-cols-[0.85fr_1.15fr] gap-[4vw] items-center">
       <div>
         <span className="font-display text-[var(--color-rose-3)] text-[1rem]">{apt.num}</span>
@@ -80,6 +66,21 @@ export function Apts() {
       </figure>
     </article>
   );
+
+
+export function Apts() {
+  const container = useRef<HTMLElement>(null);
+  const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
+  const setAptModalOpen = useBookingStore(state => state.setAptModalOpen);
+
+  const handleOpenApt = (apt: AptData) => {
+    setSelectedApt(apt);
+    setAptModalOpen(true);
+  };
+  const handleCloseApt = () => {
+    setSelectedApt(null);
+    setAptModalOpen(false);
+  };
 
   useGSAP(() => {
     linesReveal('.js-lines');

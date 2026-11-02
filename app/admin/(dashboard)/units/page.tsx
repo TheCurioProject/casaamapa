@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { updatePrice, updateIcalUrls, createUnit, deleteUnit } from './actions';
-import { Copy, Plus, Trash2, Building } from 'lucide-react';
+import { updatePrice, createUnit, deleteUnit } from './actions';
+import { Plus, Trash2, Building } from 'lucide-react';
 import { SubmitButton } from '@/components/admin/submit-button';
 import { ICalForm } from '@/components/admin/ical-form';
 
@@ -59,7 +59,7 @@ export default async function AdminUnitsPage() {
       </header>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {units.map((unit: any) => (
+        {units.map((unit) => (
           <div key={unit.id} className="bg-white/5 rounded-[24px] p-8 border border-white/10 relative overflow-hidden flex flex-col">
             {unit.isWholeHouse && (
               <div className="absolute top-0 right-0 bg-[var(--color-rose-3)] text-white text-[0.6rem] uppercase tracking-widest px-4 py-2 rounded-bl-[16px] font-medium">

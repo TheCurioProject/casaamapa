@@ -1,8 +1,7 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function Cursor() {
-  const [isVisible, setIsVisible] = useState(false);
   const dotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -10,7 +9,6 @@ export function Cursor() {
     if (window.matchMedia('(pointer: coarse)').matches) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     
-    setIsVisible(true);
 
     let rafId: number;
     let targetX = -100;
@@ -56,7 +54,6 @@ export function Cursor() {
     };
   }, []);
 
-  if (!isVisible) return null;
 
   return (
     <div 

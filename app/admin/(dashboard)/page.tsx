@@ -1,3 +1,4 @@
+import { plainData } from '@/lib/plain-data';
 export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { auth } from '@/auth';
@@ -49,10 +50,10 @@ export default async function AdminDashboard() {
   return (
     <AdminDashboardClient 
       stats={stats} 
-      webBookings={webBookings}
-      manualBookings={manualBookings}
-      otaBlocks={otaBlocks}
-      manualBlocks={manualBlocks}
+      webBookings={plainData(webBookings)}
+      manualBookings={plainData(manualBookings)}
+      otaBlocks={plainData(otaBlocks)}
+      manualBlocks={plainData(manualBlocks)}
     />
   );
 }

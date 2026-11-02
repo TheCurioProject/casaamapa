@@ -1,10 +1,12 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,9 +31,10 @@ export default function LoginPage() {
         setError('Credenciales inválidas. Por favor verifica tu usuario y contraseña.');
         setShake(s => s + 1); // Trigger shake animation
       } else {
-        window.location.href = '/admin';
+        router.replace('/admin');
+        router.refresh();
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
       setError('Ocurrió un error de conexión al intentar acceder.');
       setShake(s => s + 1);

@@ -1,18 +1,21 @@
 'use client';
+import { calendarDate, propertyCalendarDate } from '@/lib/calendar-dates';
 
 import React, { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, Mail, Trash2, FileText, ChevronDown, Phone, Loader2, Globe, FileEdit, Link as LinkIcon, PenTool, ArrowUpRight } from 'lucide-react';
+import { Edit, Mail, Trash2, FileText, ChevronDown, Phone, Loader2, Globe, FileEdit, Link as LinkIcon, PenTool } from 'lucide-react';
 import { useDialogStore } from '@/store/useDialogStore';
+import type { LucideIcon } from 'lucide-react';
+import type { AdminBooking, AdminBlock } from '@/lib/admin-types';
 import { EditBookingModal } from './edit-booking-modal';
 
 function BookingSection({ 
   title, subtitle, icon: Icon, colorClass, bookings, 
   expandedId, toggleExpand, handleEdit, handleDelete, handleSendInvoice, loadingAction 
-}: any) {
+}: { title: string; subtitle: string; icon: LucideIcon; colorClass: string; bookings: AdminBooking[]; expandedId: string | null; toggleExpand: (id: string) => void; handleEdit: (id: string) => void; handleDelete: (id: string) => void; handleSendInvoice: (id: string, email: string) => Promise<void>; loadingAction: string | null }) {
   if (!bookings || bookings.length === 0) return null;
 
   return (
@@ -34,7 +37,7 @@ function BookingSection({
 
       {/* Mobile View */}
       <div className="md:hidden flex flex-col gap-4 p-4">
-        {bookings.map((booking: any) => {
+        {bookings.map((booking) => {
           const isExpanded = expandedId === booking.id;
           return (
             <motion.div 
@@ -79,13 +82,13 @@ function BookingSection({
                 <div className="flex flex-col">
                   <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Fechas</span>
                   <span className="text-xs font-medium text-white/90">
-                    {format(new Date(booking.checkIn), 'd MMM', { locale: es })} - {format(new Date(booking.checkOut), 'd MMM yyyy', { locale: es })}
+                    {format(calendarDate(booking.checkIn), 'd MMM', { locale: es })} - {format(calendarDate(booking.checkOut), 'd MMM yyyy', { locale: es })}
                   </span>
                 </div>
                 <div className="flex flex-col text-right">
                   <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Registro</span>
                   <span className="text-xs font-medium text-white/90">
-                    {format(new Date(booking.createdAt), 'd MMM yyyy', { locale: es })}
+                    {format(propertyCalendarDate(booking.createdAt), 'd MMM yyyy', { locale: es })}
                   </span>
                 </div>
               </motion.div>
@@ -110,7 +113,7 @@ function BookingSection({
                           {(() => {
                             if (booking.totalPrice) return `$${booking.totalPrice.toLocaleString('es-MX')} MXN`;
                             if (!booking.unit) return 'N/A';
-                            const nights = Math.max(1, differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn)));
+                            const nights = Math.max(1, differenceInDays(calendarDate(booking.checkOut), calendarDate(booking.checkIn)));
                             return `$${(nights * booking.unit.price).toLocaleString('es-MX')} MXN (Est.)`;
                           })()}
                         </span>
@@ -213,7 +216,7 @@ function BookingSection({
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {bookings.map((booking: any) => {
+            {bookings.map((booking) => {
               const isExpanded = expandedId === booking.id;
               return (
                 <React.Fragment key={booking.id}>
@@ -233,7 +236,7 @@ function BookingSection({
                     </td>
                     <td className="px-6 py-4 capitalize">{booking.unit?.name || booking.apartmentId}</td>
                     <td className="px-6 py-4">
-                      {format(new Date(booking.checkIn), 'd MMM', { locale: es })} - {format(new Date(booking.checkOut), 'd MMM yyyy', { locale: es })}
+                      {format(calendarDate(booking.checkIn), 'd MMM', { locale: es })} - {format(calendarDate(booking.checkOut), 'd MMM yyyy', { locale: es })}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest ${booking.status === 'confirmed' ? 'bg-[var(--color-rose-3)]/20 text-[var(--color-rose-3)] border border-[var(--color-rose-3)]/30' : 'bg-white/10 text-white/70'}`}>
@@ -241,7 +244,7 @@ function BookingSection({
                       </span>
                     </td>
                     <td className="px-6 py-4 opacity-70">
-                      {format(new Date(booking.createdAt), 'd MMM yyyy', { locale: es })}
+                      {format(propertyCalendarDate(booking.createdAt), 'd MMM yyyy', { locale: es })}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="inline-block opacity-50 group-hover:opacity-100 transition-opacity">
@@ -309,7 +312,7 @@ function BookingSection({
                                     {(() => {
                                       if (booking.totalPrice) return `$${booking.totalPrice.toLocaleString('es-MX')} MXN`;
                                       if (!booking.unit) return 'N/A';
-                                      const nights = Math.max(1, differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn)));
+                                      const nights = Math.max(1, differenceInDays(calendarDate(booking.checkOut), calendarDate(booking.checkIn)));
                                       return `$${(nights * booking.unit.price).toLocaleString('es-MX')} MXN (Est.)`;
                                     })()}
                                   </span>
@@ -370,7 +373,7 @@ function BookingSection({
   );
 }
 
-function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expandedId, toggleExpand, handleDeleteBlock, loadingAction }: any) {
+function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expandedId, toggleExpand, handleDeleteBlock, loadingAction }: { title: string; subtitle: string; icon: LucideIcon; colorClass: string; blocks: AdminBlock[]; expandedId: string | null; toggleExpand: (id: string) => void; handleDeleteBlock: (id: string) => void; loadingAction: string | null }) {
   if (!blocks || blocks.length === 0) return null;
 
   return (
@@ -392,7 +395,7 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expande
 
       {/* Mobile View */}
       <div className="md:hidden flex flex-col gap-4 p-4">
-        {blocks.map((block: any) => {
+        {blocks.map((block) => {
           const isExpanded = expandedId === block.id;
           return (
             <motion.div 
@@ -433,13 +436,13 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expande
                 <div className="flex flex-col">
                   <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Desde</span>
                   <span className="text-xs font-medium text-white/90">
-                    {format(new Date(block.startDate), 'd MMM', { locale: es })}
+                    {format(calendarDate(block.startDate), 'd MMM', { locale: es })}
                   </span>
                 </div>
                 <div className="flex flex-col text-right">
                   <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Hasta</span>
                   <span className="text-xs font-medium text-white/90">
-                    {format(new Date(block.endDate), 'd MMM yyyy', { locale: es })}
+                    {format(calendarDate(block.endDate), 'd MMM yyyy', { locale: es })}
                   </span>
                 </div>
               </motion.div>
@@ -488,7 +491,7 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expande
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {blocks.map((block: any) => {
+            {blocks.map((block) => {
               const isExpanded = expandedId === block.id;
               return (
                 <React.Fragment key={block.id}>
@@ -510,7 +513,7 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expande
                     </td>
                     <td className="px-6 py-4 capitalize">{block.unit?.name || block.apartmentId}</td>
                     <td className="px-6 py-4 opacity-80">
-                      {format(new Date(block.startDate), 'd MMM yyyy', { locale: es })} - {format(new Date(block.endDate), 'd MMM yyyy', { locale: es })}
+                      {format(calendarDate(block.startDate), 'd MMM yyyy', { locale: es })} - {format(calendarDate(block.endDate), 'd MMM yyyy', { locale: es })}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="inline-block opacity-50 group-hover:opacity-100 transition-opacity">
@@ -567,30 +570,25 @@ function BlockSection({ title, subtitle, icon: Icon, colorClass, blocks, expande
 export function BookingsListClient({ 
   webBookings, manualBookings, otaBlocks, manualBlocks 
 }: { 
-  webBookings: any[]; manualBookings: any[]; otaBlocks: any[]; manualBlocks: any[];
+  webBookings: AdminBooking[]; manualBookings: AdminBooking[]; otaBlocks: AdminBlock[]; manualBlocks: AdminBlock[];
 }) {
   const searchParams = useSearchParams();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const editId = searchParams?.get('edit');
+  const initialEditId = editId && [...webBookings, ...manualBookings].some(b => b.id === editId) ? editId : null;
+  const [expandedId, setExpandedId] = useState<string | null>(initialEditId);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(!!initialEditId);
+  const [editingBookingId, setEditingBookingId] = useState<string | null>(initialEditId);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
   
   const dialog = useDialogStore();
 
   React.useEffect(() => {
-    setIsMounted(true);
-    const editId = searchParams?.get('edit');
-    if (editId && (webBookings.some(b => b.id === editId) || manualBookings.some(b => b.id === editId))) {
-      setExpandedId(editId);
-      setEditingBookingId(editId);
-      setIsEditModalOpen(true);
-      
+    if (initialEditId) {
       const url = new URL(window.location.href);
       url.searchParams.delete('edit');
       window.history.replaceState({}, '', url);
     }
-  }, [searchParams, webBookings, manualBookings]);
+  }, [initialEditId]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);
@@ -610,7 +608,8 @@ export function BookingsListClient({
       onConfirm: async () => {
         setLoadingAction(bookingId);
         try {
-          await fetch(`/api/admin/bookings/${bookingId}`, { method: 'DELETE' });
+          const response = await fetch(`/api/admin/bookings/${bookingId}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('La operación no pudo completarse.');
           window.location.reload();
         } catch (err) {
           console.error(err);
@@ -630,7 +629,8 @@ export function BookingsListClient({
       onConfirm: async () => {
         setLoadingAction(blockId);
         try {
-          await fetch(`/api/admin/calendar/${blockId}`, { method: 'DELETE' });
+          const response = await fetch(`/api/admin/calendar/${blockId}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('La operación no pudo completarse.');
           window.location.reload();
         } catch (err) {
           console.error(err);
@@ -665,16 +665,16 @@ export function BookingsListClient({
 
   const hasAnyData = webBookings.length > 0 || manualBookings.length > 0 || otaBlocks.length > 0 || manualBlocks.length > 0;
 
-  if (!isMounted) return null;
 
   return (
     <>
       <AnimatePresence>
         {!hasAnyData && (
-          <div className="p-8 text-center opacity-50 bg-white/5 rounded-2xl border border-white/10">No hay registros para mostrar.</div>
+          <div key="empty" className="p-8 text-center opacity-50 bg-white/5 rounded-2xl border border-white/10">No hay registros para mostrar.</div>
         )}
 
         <BookingSection 
+          key="Reservas Web"
           title="Reservas Web" 
           subtitle="Realizadas directamente desde Casa Amapa" 
           icon={Globe}
@@ -689,6 +689,7 @@ export function BookingsListClient({
         />
 
         <BookingSection 
+          key="Reservas Manuales"
           title="Reservas Manuales" 
           subtitle="Agregadas manualmente por un administrador" 
           icon={FileEdit}
@@ -703,6 +704,7 @@ export function BookingsListClient({
         />
 
         <BlockSection 
+          key="Bloqueos OTA"
           title="Bloqueos OTA" 
           subtitle="Sincronizados vía iCal desde otras plataformas" 
           icon={LinkIcon}
@@ -715,6 +717,7 @@ export function BookingsListClient({
         />
 
         <BlockSection 
+          key="Bloqueos Manuales"
           title="Bloqueos Manuales" 
           subtitle="Fechas cerradas por administración" 
           icon={PenTool}

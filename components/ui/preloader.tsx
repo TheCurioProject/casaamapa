@@ -9,7 +9,6 @@ export function Preloader() {
   
   useGSAP(() => {
     const isMobile = window.innerWidth < 768;
-    const initialPath = `M 0 0 L 100 0 L 100 100 Q 50 100 0 100 Z`;
     const targetPath = isMobile ? `M 0 0 L 100 0 L 100 0 Q 50 8 0 0 Z` : `M 0 0 L 100 0 L 100 0 Q 50 20 0 0 Z`;
     const finalPath = `M 0 0 L 100 0 L 100 0 Q 50 0 0 0 Z`;
 

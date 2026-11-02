@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { parseDateOnly, toDateOnly } from '@/lib/booking';
 import { auth } from '@/auth';
 
 export async function getPricesForDateRange(startDate: Date, endDate: Date) {
@@ -23,7 +24,7 @@ export async function getPricesForDateRange(startDate: Date, endDate: Date) {
   }
 }
 
-export async function setPricesForDates(apartmentId: string, dates: Date[], price: number) {
+export async function setPricesForDates(apartmentId: string, dates: (Date | string)[], price: number) {
   const session = await auth();
   if (!session) throw new Error('Unauthorized');
   try {
@@ -33,7 +34,8 @@ export async function setPricesForDates(apartmentId: string, dates: Date[], pric
     const unit = await prisma.unit.findUnique({ where: { id: apartmentId }, select: { id: true } });
     if (!unit) return { success: false, error: 'La unidad no existe.' };
     await prisma.$transaction(
-      dates.map(date => {
+      dates.map(value => {
+        const date = parseDateOnly(typeof value === 'string' ? value : toDateOnly(value));
         return prisma.dailyPrice.upsert({
           where: {
             apartmentId_date: {
@@ -62,7 +64,7 @@ export async function setPricesForDates(apartmentId: string, dates: Date[], pric
   }
 }
 
-export async function deletePricesForDates(apartmentId: string, dates: Date[]) {
+export async function deletePricesForDates(apartmentId: string, dates: (Date | string)[]) {
   const session = await auth();
   if (!session) throw new Error('Unauthorized');
   try {
@@ -72,7 +74,8 @@ export async function deletePricesForDates(apartmentId: string, dates: Date[]) {
     // Normalize dates to match exactly what is stored in the database
     // We use a transaction of deletes based on the unique compound key
     await prisma.$transaction(
-      dates.map(date => {
+      dates.map(value => {
+        const date = parseDateOnly(typeof value === 'string' ? value : toDateOnly(value));
         return prisma.dailyPrice.deleteMany({
           where: {
             apartmentId,

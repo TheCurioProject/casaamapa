@@ -1,0 +1,39 @@
+name: Production checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: qa
+          POSTGRES_DB: amapa_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qa -d amapa_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://qa:qa@127.0.0.1:5432/amapa_ci
+      AUTH_SECRET: local-ci-placeholder-never-for-production
+      RESEND_API_KEY: re_ci_placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run verify
+      - run: npm run test:db
+      - run: npm run build

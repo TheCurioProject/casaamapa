@@ -19,23 +19,23 @@ export function IcalSyncButton() {
         method: 'POST',
       });
       
-      let data: any = {};
+      let data: { success?: boolean; error?: string; stats?: { sources: number; events: number; errors: number } } = {};
       try {
         data = await res.json();
-      } catch(e) {}
+      } catch {}
       
       if (res.ok && data.success) {
         setStatus('success');
-        setMessage(`Sincronización completada. ${data.stats?.processed || 0} procesados, ${data.stats?.added || 0} nuevos.`);
+        setMessage(`Sincronización completada. ${data.stats?.sources || 0} fuentes, ${data.stats?.events || 0} eventos.`);
         router.refresh();
       } else {
         setStatus('error');
         setMessage(data.error || 'Error desconocido al sincronizar.');
         router.refresh();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
-      setMessage(err.message || 'Error de conexión.');
+      setMessage(err instanceof Error ? err.message : 'Error de conexión.');
     } finally {
       hideLoader();
       setTimeout(() => {

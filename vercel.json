@@ -9,5 +9,6 @@
       "path": "/api/cron/sync-ical",
       "schedule": "35 6 * * *"
     }
-  ]
+  ],
+  "buildCommand": "npm run verify && npm run build"
 }

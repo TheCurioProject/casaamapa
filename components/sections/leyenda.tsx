@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/dist/ScrollTrigger';
@@ -11,7 +11,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function Leyenda() {
   const container = useRef<HTMLElement>(null);
-  const [showHint, setShowHint] = useState(false);
   const { isMobile, isHydrated } = useDevice();
 
   useGSAP(() => {
@@ -22,7 +21,6 @@ export function Leyenda() {
     }
 
 
-    let hintTimeout: NodeJS.Timeout;
 
     // Initial states for SVG elements to avoid transform origin bugs
     gsap.set('.tree-flower', { scale: 0, transformOrigin: '50% 50%' });
@@ -33,7 +31,7 @@ export function Leyenda() {
 
     const startInactivityTimers = (st: globalThis.ScrollTrigger, timeline: gsap.core.Timeline) => {
       if (st.progress >= 0 && st.progress <= 1) {
-        setShowHint(true);
+
         AutoScrollManager.schedule(() => {
           const currentY = window.scrollY;
           const totalDist = st.end - st.start;
@@ -49,7 +47,6 @@ export function Leyenda() {
           const p4 = getP('p4');
           const p5 = getP('p5');
           const p6 = getP('p6');
-          const pNext = st.end;
 
           const proxy = { y: currentY };
           const scrollTween = gsap.timeline({
@@ -60,7 +57,6 @@ export function Leyenda() {
 
           let prevMarker = st.start;
           let virtualY = currentY;
-          let isFirstStep = true;
           const addStep = (target: number, duration: number, readDelay: number) => {
             const stepDist = target - prevMarker;
             prevMarker = target;
@@ -106,7 +102,7 @@ export function Leyenda() {
       }
 
       AutoScrollManager.interact();
-      setShowHint(false);
+
 
       // Do not schedule resume while the user is actively touching/dragging
       if (e && (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'mousedown')) {
@@ -141,9 +137,6 @@ export function Leyenda() {
         end: '+=900%',
         scrub: 1, // Reduced scrub lag for better synchronization with the slower scrollTween
         pin: true,
-        onUpdate: (self) => {
-          // interactions caught by event listeners
-        },
         onEnter: (self) => startInactivityTimers(self, tl),
         onEnterBack: (self) => startInactivityTimers(self, tl),
         onLeaveBack: () => AutoScrollManager.interact(),

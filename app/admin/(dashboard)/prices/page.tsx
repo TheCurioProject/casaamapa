@@ -1,3 +1,5 @@
+import { propertyDateKey } from '@/lib/calendar-dates';
+import { plainData } from '@/lib/plain-data';
 import { prisma } from '@/lib/db';
 import { PricingCalendar } from '@/components/admin/pricing-calendar';
 import { getPricesForDateRange } from '@/app/actions/prices';
@@ -51,10 +53,11 @@ export default async function AdminPricesPage() {
       </div>
 
       <PricingCalendar 
-        units={units} 
-        bookings={bookings} 
-        blockedDates={blockedDates} 
-        dailyPrices={dailyPrices} 
+        units={plainData(units)}
+        bookings={plainData(bookings)}
+        blockedDates={plainData(blockedDates)}
+        dailyPrices={plainData(dailyPrices)}
+        today={propertyDateKey()}
       />
     </div>
   );

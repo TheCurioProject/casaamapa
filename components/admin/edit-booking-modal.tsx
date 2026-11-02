@@ -1,12 +1,14 @@
 'use client';
+import { calendarDate, calendarDateKey, propertyDateKey } from '@/lib/calendar-dates';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, AlertCircle, Calendar as CalendarIcon, User } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { es } from 'date-fns/locale';
-import { differenceInDays, startOfDay, isSameDay } from 'date-fns';
+import { differenceInDays, startOfDay } from 'date-fns';
 import { getBookingById, updateBooking, getAdminCalendarData } from '@/app/actions/admin-calendar';
+import { useModalDialog } from '@/hooks/use-modal-dialog';
 import { useLoaderStore } from '@/store/useLoaderStore';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; dailyPrices?: { date: Date | string; price: number }[] };
@@ -38,7 +40,9 @@ export function EditBookingModal({
   const [depositPercentage, setDepositPercentage] = useState(50);
 
   const [isInteracted, setIsInteracted] = useState(false);
-  const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+  const [priceOverride, setPriceOverride] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const dialogRef = useModalDialog(isOpen, saving ? undefined : onClose);
 
   const [error, setError] = useState('');
   const { showLoader, hideLoader } = useLoaderStore();
@@ -55,19 +59,19 @@ export function EditBookingModal({
 
         const b = bookingRes.booking;
         setBooking(b as unknown as Booking);
-        setRange({ from: new Date(b.checkIn), to: new Date(b.checkOut) });
+        setRange({ from: calendarDate(b.checkIn), to: calendarDate(b.checkOut) });
         setGuestName(b.guestName);
         setGuestEmail(b.guestEmail || '');
         setGuestPhone(b.guestPhone || '');
         setIdPhotoUrl(b.idPhotoUrl || '');
         setDepositPercentage(b.depositPercentage ?? 50);
-        setEstimatedPrice(b.totalPrice || 0);
+        setPriceOverride(b.totalPrice ?? 0);
 
         setUnits(calendarRes.units);
         setAllBookings(calendarRes.bookings as unknown as Booking[]);
         setAllBlocks(calendarRes.blockedDates as unknown as Block[]);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'No se pudo completar la operación.');
       } finally {
         setLoadingData(false);
       }
@@ -76,35 +80,24 @@ export function EditBookingModal({
   }, [isOpen, bookingId]);
 
   const selectedUnit = units.find(u => u.id === booking?.apartmentId);
-  const nights = range?.from && range?.to ? Math.max(1, differenceInDays(range.to, range.from)) : 0;
-
-  useEffect(() => {
-    if (!isInteracted || !selectedUnit || !range?.from || !range?.to) return;
+  const estimatedPrice = useMemo(() => {
+    if (priceOverride !== null) return priceOverride;
+    if (!selectedUnit || !range?.from || !range?.to) return 0;
+    const prices = new Map(selectedUnit.dailyPrices?.map(dp => [calendarDateKey(calendarDate(dp.date)), dp.price]));
+    const current = new Date(range.from);
     let total = 0;
-    const nightsCount = differenceInDays(range.to, range.from);
-    if (nightsCount <= 0) return;
-
-    let currentDate = new Date(range.from);
-    currentDate.setHours(12, 0, 0, 0);
-
-    for (let i = 0; i < nightsCount; i++) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const customPrice = selectedUnit.dailyPrices?.find(dp => {
-        const dpDate = new Date(dp.date);
-        dpDate.setHours(12, 0, 0, 0);
-        return dpDate.toISOString().split('T')[0] === dateStr;
-      });
-      total += customPrice ? customPrice.price : selectedUnit.price;
-      currentDate.setDate(currentDate.getDate() + 1);
+    while (current < range.to) {
+      total += prices.get(calendarDateKey(current)) ?? selectedUnit.price;
+      current.setDate(current.getDate() + 1);
     }
-    setEstimatedPrice(total);
-  }, [range, selectedUnit, isInteracted]);
+    return total;
+  }, [priceOverride, selectedUnit, range]);
 
   // Filter out the current booking dates to allow re-selecting them
   const isDateDisabled = (date: Date) => {
     if (!booking) return false;
     const target = startOfDay(date);
-    if (target < startOfDay(new Date())) return true; // past dates
+    if (target < startOfDay(calendarDate(propertyDateKey()))) return true; // past dates
 
     // Check overlaps with OTHER bookings for this unit
     const unitId = booking.apartmentId;
@@ -112,8 +105,8 @@ export function EditBookingModal({
     for (const b of allBookings) {
       if (b.id === booking.id) continue; // skip self
 
-      const bStart = startOfDay(new Date(b.checkIn));
-      const bEnd = startOfDay(new Date(b.checkOut));
+      const bStart = startOfDay(calendarDate(b.checkIn));
+      const bEnd = startOfDay(calendarDate(b.checkOut));
       const unitMatch = b.apartmentId === unitId ||
         (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
@@ -122,8 +115,8 @@ export function EditBookingModal({
     }
 
     for (const bl of allBlocks) {
-      const blStart = startOfDay(new Date(bl.startDate));
-      const blEnd = startOfDay(new Date(bl.endDate));
+      const blStart = startOfDay(calendarDate(bl.startDate));
+      const blEnd = startOfDay(calendarDate(bl.endDate));
       const unitMatch = bl.apartmentId === unitId ||
         (units.find(u => u.id === bl.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
@@ -134,8 +127,8 @@ export function EditBookingModal({
     return false;
   };
 
-  const currentCheckIn = booking ? startOfDay(new Date(booking.checkIn)) : null;
-  const currentCheckOut = booking ? startOfDay(new Date(booking.checkOut)) : null;
+  const currentCheckIn = booking ? startOfDay(calendarDate(booking.checkIn)) : null;
+  const currentCheckOut = booking ? startOfDay(calendarDate(booking.checkOut)) : null;
 
   const modifiers = {
     currentBooking: (date: Date) => {
@@ -160,17 +153,21 @@ export function EditBookingModal({
 
   const handleSelectRange = (newRange: DateRange | undefined) => {
     setIsInteracted(true);
+    setPriceOverride(null);
     setRange(newRange);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
     showLoader();
     setError('');
 
-    if (!range?.from || !range?.to) {
+    if (!range?.from || !range?.to || differenceInDays(range.to, range.from) < 1) {
       setError('Por favor selecciona un rango de fechas válido.');
       hideLoader();
+      setSaving(false);
       return;
     }
 
@@ -193,8 +190,8 @@ export function EditBookingModal({
       }
 
       const res = await updateBooking(bookingId, {
-        checkIn: range.from,
-        checkOut: range.to,
+        checkIn: calendarDateKey(range.from),
+        checkOut: calendarDateKey(range.to),
         guestName,
         guestEmail,
         guestPhone,
@@ -205,9 +202,10 @@ export function EditBookingModal({
 
       if (res.error) throw new Error(res.error);
       setStep(3); // Success step
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'No se pudo completar la operación.');
     } finally {
+      setSaving(false);
       hideLoader();
     }
   };
@@ -215,27 +213,27 @@ export function EditBookingModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Editar reserva" data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
-        onClick={onClose}
+        onClick={saving ? undefined : onClose}
       />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90dvh]"
       >
         <div className="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar text-[var(--color-ink)] relative">
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors z-10">
+          <button disabled={saving} aria-label="Cerrar" onClick={onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors z-10">
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="font-display text-3xl mb-6 text-[var(--color-rose-3)]">
+          <h2 className="pr-10 font-display text-3xl mb-6 text-[var(--color-rose-3)]">
             {step === 3 ? 'Reserva Actualizada' : 'Editar Reserva'}
           </h2>
 
@@ -264,7 +262,10 @@ export function EditBookingModal({
 
                   <div className="calendar-wrapper bg-white/40 p-4 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] mb-6 flex justify-center">
                     <DayPicker
+                  today={calendarDate(propertyDateKey())}
                       mode="range"
+                        min={1}
+                        excludeDisabled
                       selected={range}
                       onSelect={handleSelectRange}
                       disabled={isDateDisabled}
@@ -286,7 +287,7 @@ export function EditBookingModal({
               {step === 2 && (
                 <motion.form key="step2" onSubmit={handleSubmit} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <div className="space-y-4 mb-8">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Nombre</label>
                         <input type="text" required value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none" />
@@ -305,10 +306,11 @@ export function EditBookingModal({
                       <input type="file" accept="image/*" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-rose-3)] file:text-white hover:file:bg-[var(--color-rose-2)]" />
                       {idPhotoUrl && !idPhotoFile && <a href={idPhotoUrl} target="_blank" className="text-xs text-[var(--color-rose-3)] hover:underline mt-1 block">Ver ID actual</a>}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">% Depósito Anticipo</label>
                         <select value={depositPercentage} onChange={e => setDepositPercentage(Number(e.target.value))} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-white/50 focus:bg-white outline-none">
+                          {![0, 50, 100].includes(depositPercentage) && <option value={depositPercentage}>{depositPercentage}%</option>}
                           <option value={0}>0%</option>
                           <option value={50}>50%</option>
                           <option value={100}>100%</option>
@@ -321,7 +323,7 @@ export function EditBookingModal({
                           min="0"
                           step="any"
                           value={estimatedPrice}
-                          onChange={e => setEstimatedPrice(Number(e.target.value))}
+                          onChange={e => setPriceOverride(Number(e.target.value))}
                           className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)] focus:bg-white outline-none"
                         />
                       </div>
@@ -330,7 +332,7 @@ export function EditBookingModal({
 
                   <div className="flex gap-4">
                     <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 bg-white border border-black/10 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black/5">Atrás</button>
-                    <button type="submit" className="flex-1 py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black flex items-center justify-center gap-2">
+                    <button disabled={saving} type="submit" className="flex-1 py-3 bg-[var(--color-ink)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black flex items-center justify-center gap-2">
                       Guardar Cambios
                     </button>
                   </div>

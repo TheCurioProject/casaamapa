@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { apartmentsData } from '@/lib/data/apartments';
 import { AptPageContent } from '@/components/ui/apt-page-content';
-import { getMessages } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 
 export function generateStaticParams() {
@@ -26,11 +25,10 @@ export default async function DepartmentPage({
 }) {
   const { locale, slug } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.some(supported => supported === locale)) {
     notFound();
   }
 
-  const messages = await getMessages();
 
   const apt = apartmentsData[slug as keyof typeof apartmentsData];
 

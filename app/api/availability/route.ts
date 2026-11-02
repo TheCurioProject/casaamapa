@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { activeBookingWhere } from '@/lib/booking';
+import { activeBookingWhere, propertyToday } from '@/lib/booking';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,14 +30,14 @@ export async function GET(request: Request) {
       prisma.booking.findMany({
         where: {
           apartmentId: { in: idsToCheck },
-          AND: [activeBookingWhere(), { checkOut: { gte: new Date() } }]
+          AND: [activeBookingWhere(), { checkOut: { gte: propertyToday() } }]
         },
         select: { checkIn: true, checkOut: true }
       }),
       prisma.blockedDate.findMany({
         where: {
           apartmentId: { in: idsToCheck },
-          endDate: { gte: new Date() }
+          endDate: { gte: propertyToday() }
         },
         select: { startDate: true, endDate: true }
       })

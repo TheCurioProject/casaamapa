@@ -41,8 +41,8 @@ export const AdminNotificationEmail = ({
         <Section style={detailsContainer}>
           <Text style={sectionTitle}>Detalles de la Reserva</Text>
           <Text style={detailsText}><strong>Unidad:</strong> {apartmentName}</Text>
-          <Text style={detailsText}><strong>Llegada:</strong> {checkIn.toLocaleDateString('es-MX')}</Text>
-          <Text style={detailsText}><strong>Salida:</strong> {checkOut.toLocaleDateString('es-MX')}</Text>
+          <Text style={detailsText}><strong>Llegada:</strong> {checkIn.toLocaleDateString('es-MX', { timeZone: 'UTC' })}</Text>
+          <Text style={detailsText}><strong>Salida:</strong> {checkOut.toLocaleDateString('es-MX', { timeZone: 'UTC' })}</Text>
           <Text style={detailsText}><strong>Total pagado:</strong> {amount.toLocaleString('es-MX')} MXN</Text>
         </Section>
         

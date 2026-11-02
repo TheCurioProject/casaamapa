@@ -1,13 +1,15 @@
 'use client';
+import { calendarDate, calendarDateKey } from '@/lib/calendar-dates';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, 
-  format, isSameDay, startOfDay, isBefore, isAfter, min, max
+  format, isSameDay, startOfDay, isBefore, min, max
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Save, X, Info, RotateCcw, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, X, Info, Loader2 } from 'lucide-react';
+import { useDevice } from '@/hooks/use-device';
 import { useLoaderStore } from '@/store/useLoaderStore';
 import { setPricesForDates, deletePricesForDates } from '@/app/actions/prices';
 import { useDialogStore } from '@/store/useDialogStore';
@@ -15,20 +17,22 @@ import { useDialogStore } from '@/store/useDialogStore';
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean };
 type Booking = { id: string; apartmentId: string; checkIn: Date; checkOut: Date; status: string };
 type BlockedDate = { id: string; apartmentId: string; startDate: Date; endDate: Date };
-type DailyPrice = { date: Date; price: number };
+type DailyPrice = { apartmentId: string; date: Date; price: number };
 
 export function PricingCalendar({
   units,
   bookings,
   blockedDates,
-  dailyPrices
+  dailyPrices,
+  today,
 }: {
   units: Unit[];
   bookings: Booking[];
   blockedDates: BlockedDate[];
   dailyPrices: DailyPrice[];
+  today: string;
 }) {
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState(startOfMonth(calendarDate(today)));
   const [direction, setDirection] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState<string>(units[0]?.id || '');
   
@@ -46,9 +50,10 @@ export function PricingCalendar({
   const handlePrevMonth = () => { setDirection(-1); setCurrentMonth(subMonths(currentMonth, 1)); };
   const handleNextMonth = () => { setDirection(1); setCurrentMonth(addMonths(currentMonth, 1)); };
 
+  const { isMobile } = useDevice();
   const getMonths = () => {
     // Show 2 months on desktop, 1 on mobile
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    if (isMobile) {
       return [currentMonth];
     }
     return [currentMonth, addMonths(currentMonth, 1)];
@@ -62,8 +67,8 @@ export function PricingCalendar({
     
     // Check bookings
     const booking = bookings.find(b => {
-      const start = startOfDay(new Date(b.checkIn));
-      const end = startOfDay(new Date(b.checkOut));
+      const start = startOfDay(calendarDate(b.checkIn));
+      const end = startOfDay(calendarDate(b.checkOut));
       const unitMatch = b.apartmentId === currentUnit.id || currentUnit.isWholeHouse || units.find(u => u.id === b.apartmentId)?.isWholeHouse;
       return unitMatch && targetDate >= start && targetDate < end; 
     });
@@ -72,8 +77,8 @@ export function PricingCalendar({
 
     // Check blocks
     const block = blockedDates.find(b => {
-      const start = startOfDay(new Date(b.startDate));
-      const end = startOfDay(new Date(b.endDate));
+      const start = startOfDay(calendarDate(b.startDate));
+      const end = startOfDay(calendarDate(b.endDate));
       const unitMatch = b.apartmentId === currentUnit.id || currentUnit.isWholeHouse || units.find(u => u.id === b.apartmentId)?.isWholeHouse;
       return unitMatch && targetDate >= start && targetDate <= end;
     });
@@ -85,7 +90,7 @@ export function PricingCalendar({
 
   const getCustomPriceForDay = (date: Date) => {
     const targetDate = startOfDay(date);
-    return dailyPrices.find(p => isSameDay(new Date(p.date), targetDate));
+    return dailyPrices.find(p => p.apartmentId === selectedUnit && isSameDay(calendarDate(p.date), targetDate));
   };
 
   const isSelected = (date: Date) => {
@@ -144,17 +149,24 @@ export function PricingCalendar({
     
     const datesToUpdate = eachDayOfInterval({ start: minDate, end: maxDate }).filter(d => !getStatusForDay(d));
     
-    const res = await setPricesForDates(currentUnit.id, datesToUpdate, parseInt(newPrice));
+    try {
+      const res = await setPricesForDates(currentUnit.id, datesToUpdate.map(calendarDateKey), Number(newPrice));
     
-    hideLoader();
-    setIsSaving(false);
-    if (res.success) {
-      setIsModalOpen(false);
-      setSelectionStart(null);
-      setSelectionEnd(null);
-      window.location.reload(); // simple reload to get new data
-    } else {
-      dialog.alert({ title: 'Error al Guardar', description: res.error || 'Error desconocido', type: 'danger' });
+      hideLoader();
+      setIsSaving(false);
+      if (res.success) {
+        setIsModalOpen(false);
+        setSelectionStart(null);
+        setSelectionEnd(null);
+        window.location.reload(); // simple reload to get new data
+      } else {
+        dialog.alert({ title: 'Error al Guardar', description: res.error || 'Error desconocido', type: 'danger' });
+      }
+    } catch {
+      dialog.alert({ title: 'Error al Guardar', description: 'No se pudo conectar. Intenta de nuevo.', type: 'danger' });
+    } finally {
+      hideLoader();
+      setIsSaving(false);
     }
   };
 
@@ -169,17 +181,24 @@ export function PricingCalendar({
     
     const datesToUpdate = eachDayOfInterval({ start: minDate, end: maxDate }).filter(d => !getStatusForDay(d));
     
-    const res = await deletePricesForDates(currentUnit.id, datesToUpdate);
+    try {
+      const res = await deletePricesForDates(currentUnit.id, datesToUpdate.map(calendarDateKey));
     
-    hideLoader();
-    setIsResetting(false);
-    if (res.success) {
-      setIsModalOpen(false);
-      setSelectionStart(null);
-      setSelectionEnd(null);
-      window.location.reload();
-    } else {
-      dialog.alert({ title: 'Error al Restablecer', description: res.error || 'Error desconocido', type: 'danger' });
+      hideLoader();
+      setIsResetting(false);
+      if (res.success) {
+        setIsModalOpen(false);
+        setSelectionStart(null);
+        setSelectionEnd(null);
+        window.location.reload();
+      } else {
+        dialog.alert({ title: 'Error al Restablecer', description: res.error || 'Error desconocido', type: 'danger' });
+      }
+    } catch {
+      dialog.alert({ title: 'Error al Restablecer', description: 'No se pudo conectar. Intenta de nuevo.', type: 'danger' });
+    } finally {
+      hideLoader();
+      setIsResetting(false);
     }
   };
 
@@ -265,7 +284,7 @@ export function PricingCalendar({
                       const status = getStatusForDay(day);
                       const customPrice = getCustomPriceForDay(day);
                       const selected = isSelected(day);
-                      const isPast = isBefore(startOfDay(day), startOfDay(new Date()));
+                      const isPast = isBefore(startOfDay(day), startOfDay(calendarDate(today)));
                       
                       let cellClass = "relative aspect-square flex flex-col justify-center items-center rounded-xl md:rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ";
                       let displayPrice = customPrice ? customPrice.price : currentUnit?.price;

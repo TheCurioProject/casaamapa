@@ -1,8 +1,8 @@
 'use client';
 
+import NextImage from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence, useInView } from 'framer-motion';
-import { Maximize, Minimize } from 'lucide-react';
+import { motion, useMotionValue, useTransform, AnimatePresence, useInView } from 'framer-motion';
 import tourDataRaw from '@/public/data/tours.json';
 
 interface VirtualTourProps {
@@ -18,6 +18,7 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   
   const [isReady, setIsReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0); // 0 to 100
   const [isFullscreen, setIsFullscreen] = useState(false);
   
@@ -33,18 +34,21 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
 
   useEffect(() => {
     let isCancelled = false;
+    const pendingImages = new Set<HTMLImageElement>();
+    const timers = new Set<ReturnType<typeof setTimeout>>();
 
     if (!isInView) return;
 
     async function loadTour() {
       setIsReady(false);
+      setLoadError(false);
       setLoadProgress(0);
       setProgress(0);
       motionProgress.set(0);
       imagesRef.current = [];
       
       try {
-        const data = tourDataRaw as Record<string, any>;
+        const data = tourDataRaw as Record<string, { duration: number; publicId: string; url: string }>;
         
         const tourData = data[aptId.toLowerCase()];
         if (!tourData) throw new Error(`No video data for ${aptId}`);
@@ -52,7 +56,7 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
         const duration = tourData.duration;
         const fps = 15; // 15 fps gives great smoothness without destroying memory
         const totalFrames = Math.floor(duration * fps);
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'yqxjvhgh'; 
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || new URL(tourData.url).pathname.split('/')[1];
         
         imagesRef.current = new Array(totalFrames).fill(null);
         let loadedCount = 0;
@@ -65,43 +69,34 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
             const img = new Image();
             img.crossOrigin = 'anonymous'; // Critical for canvas drawing
             
-            // Timeout prevents Promise.all from hanging if Cloudinary drops connection
-            const timeoutId = setTimeout(() => {
-              if (!isCancelled) {
-                loadedCount++;
-                setLoadProgress(Math.min((loadedCount / totalFrames) * 100, 100));
-              }
-              resolve();
-            }, 10000); // 10s max per frame
-
-            img.onload = () => {
+            pendingImages.add(img);
+            let settled = false;
+            const finish = (loaded: boolean) => {
+              if (settled) return;
+              settled = true;
               clearTimeout(timeoutId);
+              timers.delete(timeoutId);
+              pendingImages.delete(img);
+              img.onload = null;
+              img.onerror = null;
               if (!isCancelled) {
-                imagesRef.current[i] = img;
-                loadedCount++;
-                setLoadProgress(Math.min((loadedCount / totalFrames) * 100, 100));
-                
-                // If this is the first frame to load, set canvas size
-                if (i === 0 && canvasRef.current) {
-                  const ctx = canvasRef.current.getContext('2d');
-                  if (ctx) {
+                if (loaded) {
+                  imagesRef.current[i] = img;
+                  if (i === 0 && canvasRef.current) {
                     canvasRef.current.width = img.width;
                     canvasRef.current.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    canvasRef.current.getContext('2d')?.drawImage(img, 0, 0);
                   }
                 }
-              }
-              resolve();
-            };
-            
-            img.onerror = () => {
-              clearTimeout(timeoutId);
-              if (!isCancelled) {
-                loadedCount++;
+                loadedCount += 1;
                 setLoadProgress(Math.min((loadedCount / totalFrames) * 100, 100));
               }
               resolve();
             };
+            const timeoutId = setTimeout(() => finish(false), 10000);
+            timers.add(timeoutId);
+            img.onload = () => finish(true);
+            img.onerror = () => finish(false);
 
             const offset = (i / fps).toFixed(2);
             // Tamaño dinámico: 720p para móviles (mucho más rápido), 1080p para desktop. f_auto para formatos de última generación (AVIF/WebP)
@@ -112,9 +107,15 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
 
         // Load frame 0 immediately
         await loadFrame(0);
+        if (isCancelled) return;
+        if (!imagesRef.current[0]) {
+          setLoadError(true);
+          setIsReady(true);
+          return;
+        }
 
         // Concurrency queue for the rest of the frames (loads 24 at a time to saturate HTTP/2)
-        const concurrency = 24;
+        const concurrency = window.matchMedia('(pointer: coarse)').matches ? 6 : 12;
         let index = 1;
         
         const worker = async () => {
@@ -137,13 +138,16 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
 
       } catch (err) {
         console.error(err);
-        if (!isCancelled) setIsReady(true); // Unblock UI on complete failure
+        if (!isCancelled) { setLoadError(true); setIsReady(true); }
       }
     }
     loadTour();
 
     return () => {
       isCancelled = true;
+      timers.forEach(clearTimeout);
+      pendingImages.forEach(img => { img.onload = null; img.onerror = null; img.removeAttribute('src'); });
+      imagesRef.current = [];
     };
   }, [aptId, motionProgress, isInView]);
 
@@ -203,16 +207,6 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
     motionProgress.set(newProgress);
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -261,17 +255,23 @@ export function VirtualTour({ aptId }: VirtualTourProps) {
           )}
         </AnimatePresence>
 
+        {loadError && (
+          <div className="absolute inset-0">
+            <NextImage src={`/images/${aptId.toLowerCase()}.webp`} alt={`Departamento ${aptId}`} fill sizes="(max-width: 768px) 100vw, 1080px" className="object-cover" />
+            <p role="status" className="absolute inset-x-0 bottom-0 bg-black/70 p-4 text-center text-sm text-white">El recorrido no está disponible en este momento.</p>
+          </div>
+        )}
         {/* Canvas Layer */}
         <canvas 
           ref={canvasRef} 
           className="w-full h-full object-cover bg-black"
-          style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.8s ease' }}
+          style={{ opacity: isReady && !loadError ? 1 : 0, transition: 'opacity 0.8s ease' }}
         />
 
         {/* Overlay UI (Controls and Progress) */}
         <div 
           className={`absolute inset-x-0 bottom-0 p-5 md:p-8 pt-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-300 z-10 ${
-            isDragging || loadProgress < 100 || progress === 0 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
+            loadError ? 'hidden' : isDragging || loadProgress < 100 || progress === 0 ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
           }`}
           style={{ pointerEvents: isReady ? 'auto' : 'none' }}
         >

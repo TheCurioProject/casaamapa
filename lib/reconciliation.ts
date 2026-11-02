@@ -48,9 +48,9 @@ export async function reconcilePayments() {
       }
 
       if (intent.status !== 'canceled') {
-        await stripe.paymentIntents.cancel(intent.id).catch((error) => {
-          console.error(`Could not cancel expired PaymentIntent ${intent.id}:`, error);
-        });
+        // If Stripe refuses cancellation (for example a payment just succeeded),
+        // retain the hold and retry later. Never free dates on a failed cancel.
+        await stripe.paymentIntents.cancel(intent.id);
       }
       await prisma.booking.update({
         where: { id: booking.id },
@@ -66,6 +66,7 @@ export async function reconcilePayments() {
   const unsent = await prisma.booking.findMany({
     where: {
       status: 'confirmed',
+      isManual: false,
       OR: [{ confirmationEmailSentAt: null }, { adminNotificationSentAt: null }],
     },
     select: { id: true },

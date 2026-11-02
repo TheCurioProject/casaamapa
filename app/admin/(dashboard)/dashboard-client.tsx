@@ -1,12 +1,19 @@
 'use client';
+import { calendarDate } from '@/lib/calendar-dates';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, DollarSign, Home, ArrowUpRight, Lock, Globe, FileEdit, Link as LinkIcon, PenTool } from 'lucide-react';
+import { DollarSign, ArrowUpRight, Lock, Globe, FileEdit, Link as LinkIcon, PenTool } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import type { LucideIcon } from 'lucide-react';
+import type { AdminBooking, AdminBlock } from '@/lib/admin-types';
 
-function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }: { title: string, subtitle: string, icon: any, data: any[], type: 'booking' | 'block', colorClass: string }) {
+function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }: { title: string, subtitle: string, icon: LucideIcon, data: (AdminBooking | AdminBlock)[], type: 'booking' | 'block', colorClass: string }) {
   if (!data || data.length === 0) return null;
+
+  const rows = data.map(item => 'checkIn' in item
+    ? { ...item, title: item.guestName, email: item.guestEmail, startDate: item.checkIn, endDate: item.checkOut }
+    : { ...item, title: item.reason, email: null, status: null });
 
   return (
     <motion.div 
@@ -29,14 +36,14 @@ function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }
       
       {/* Mobile View */}
       <div className="md:hidden divide-y divide-white/10">
-        {data.map((item: any, index: number) => (
+        {rows.map((item) => (
           <div key={item.id} className="p-6 flex flex-col gap-3">
             <div className="flex justify-between items-start">
               <div>
                 <div className="font-bold text-white text-base mb-0.5">
-                  {type === 'booking' ? item.guestName : item.reason}
+                  {item.title}
                 </div>
-                {type === 'booking' && <div className="opacity-60 text-[10px] uppercase tracking-widest text-white/70">{item.guestEmail}</div>}
+                {type === 'booking' && <div className="opacity-60 text-[10px] uppercase tracking-widest text-white/70">{item.email}</div>}
               </div>
               {type === 'booking' && (
                 <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-bold tracking-widest ${
@@ -54,9 +61,9 @@ function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }
               </span>
             </div>
             <div className="flex items-center gap-2 opacity-80 text-xs text-white bg-black/20 p-2 rounded-lg w-fit mt-1">
-              <span>{format(new Date(type === 'booking' ? item.checkIn : item.startDate), 'dd MMM yyyy', { locale: es })}</span>
+              <span>{format(calendarDate(item.startDate), 'dd MMM yyyy', { locale: es })}</span>
               <ArrowUpRight className="w-3 h-3 opacity-40 mx-1" />
-              <span>{format(new Date(type === 'booking' ? item.checkOut : item.endDate), 'dd MMM yyyy', { locale: es })}</span>
+              <span>{format(calendarDate(item.endDate), 'dd MMM yyyy', { locale: es })}</span>
             </div>
           </div>
         ))}
@@ -78,13 +85,13 @@ function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {data.map((item: any) => (
+            {rows.map((item) => (
               <tr key={item.id} className="hover:bg-white/5 transition-colors group">
                 <td className="px-8 py-5">
                   <div className="font-medium text-white text-base">
-                    {type === 'booking' ? item.guestName : item.reason}
+                    {item.title}
                   </div>
-                  {type === 'booking' && <div className="opacity-60 text-xs mt-0.5 text-white/70">{item.guestEmail}</div>}
+                  {type === 'booking' && <div className="opacity-60 text-xs mt-0.5 text-white/70">{item.email}</div>}
                 </td>
                 <td className="px-8 py-5">
                   <span className="bg-black/20 border border-white/10 text-white/90 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide">
@@ -93,9 +100,9 @@ function ActivitySection({ title, subtitle, icon: Icon, data, type, colorClass }
                 </td>
                 <td className="px-8 py-5">
                   <div className="flex items-center gap-3 opacity-80 text-xs text-white">
-                    <span>{format(new Date(type === 'booking' ? item.checkIn : item.startDate), 'dd MMM yyyy', { locale: es })}</span>
+                    <span>{format(calendarDate(item.startDate), 'dd MMM yyyy', { locale: es })}</span>
                     <ArrowUpRight className="w-3 h-3 opacity-40" />
-                    <span>{format(new Date(type === 'booking' ? item.checkOut : item.endDate), 'dd MMM yyyy', { locale: es })}</span>
+                    <span>{format(calendarDate(item.endDate), 'dd MMM yyyy', { locale: es })}</span>
                   </div>
                 </td>
                 {type === 'booking' && (
@@ -126,10 +133,10 @@ export function AdminDashboardClient({
   manualBlocks
 }: { 
   stats: { total: number; revenue: number; units: number, webBookingsCount: number, manualBookingsCount: number, otaBlocksCount: number, manualBlocksCount: number };
-  webBookings: any[];
-  manualBookings: any[];
-  otaBlocks: any[];
-  manualBlocks: any[];
+  webBookings: AdminBooking[];
+  manualBookings: AdminBooking[];
+  otaBlocks: AdminBlock[];
+  manualBlocks: AdminBlock[];
 }) {
   const container = {
     hidden: { opacity: 0 },
@@ -167,7 +174,7 @@ export function AdminDashboardClient({
           </div>
           <p className="text-[0.65rem] uppercase tracking-widest opacity-60 font-semibold mb-1">Ingresos Potenciales</p>
           <p className="font-display text-5xl text-white">
-            ${stats.revenue.toLocaleString()} <span className="text-sm opacity-50 font-sans">MXN</span>
+            ${stats.revenue.toLocaleString('es-MX')} <span className="text-sm opacity-50 font-sans">MXN</span>
           </p>
         </div>
 
@@ -191,6 +198,7 @@ export function AdminDashboardClient({
       {/* Categorized Sections */}
       <AnimatePresence>
         <ActivitySection 
+          key="Reservas Web"
           title="Reservas Web" 
           subtitle="Realizadas directamente desde Casa Amapa" 
           icon={Globe} 
@@ -200,6 +208,7 @@ export function AdminDashboardClient({
         />
 
         <ActivitySection 
+          key="Reservas Manuales"
           title="Reservas Manuales" 
           subtitle="Agregadas manualmente por un administrador" 
           icon={FileEdit} 
@@ -209,6 +218,7 @@ export function AdminDashboardClient({
         />
 
         <ActivitySection 
+          key="Bloqueos OTA"
           title="Bloqueos OTA" 
           subtitle="Fechas no disponibles por reservas en Airbnb, Booking, etc." 
           icon={LinkIcon} 
@@ -218,6 +228,7 @@ export function AdminDashboardClient({
         />
 
         <ActivitySection 
+          key="Bloqueos Manuales"
           title="Bloqueos Manuales" 
           subtitle="Fechas cerradas por mantenimiento o uso personal" 
           icon={PenTool} 

@@ -63,8 +63,9 @@ body {
 
 body.modal-open {
   overflow: hidden !important;
-  touch-action: none !important;
 }
+
+[role="dialog"] { overscroll-behavior: contain; }
 
 /* Base resets para tipografía */
 p, h1, h2, h3, h4, span, li {
@@ -133,6 +134,8 @@ p, h1, h2, h3, h4, span, li {
 
 /* Custom Solid DayPicker Styling */
 .custom-neumorphic-calendar {
+  width: 100%;
+  min-width: 0;
   --rdp-cell-size: 44px;
   --rdp-accent-color: var(--color-rose-3);
   
@@ -145,6 +148,8 @@ p, h1, h2, h3, h4, span, li {
 
 .custom-neumorphic-calendar table,
 .custom-neumorphic-calendar .rdp-month_grid {
+  width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 4px;
   margin: 0 auto;
@@ -387,7 +392,9 @@ p, h1, h2, h3, h4, span, li {
 /* Mobile Optimizations for Calendar */
 @media (max-width: 768px) {
   .custom-neumorphic-calendar {
-    --rdp-cell-size: 12.5vw;
+    --rdp-cell-size: clamp(28px, 8vw, 44px);
+    --rdp-day-width: var(--rdp-cell-size);
+    --rdp-day-height: var(--rdp-cell-size);
     padding: 0.5rem 0;
     border-radius: 1rem;
     border: none;

@@ -2,7 +2,8 @@ import { isIP } from 'node:net';
 import { resolve4, resolve6 } from 'node:dns/promises';
 import ical from 'node-ical';
 import { prisma } from '@/lib/db';
-import { addDays, toDateOnly } from '@/lib/booking';
+import { acquirePropertyLock, addDays, toDateOnly } from '@/lib/booking';
+import { withBookingTransaction } from '@/lib/booking-transaction';
 
 type CalendarEvent = {
   type?: string;
@@ -118,7 +119,8 @@ export async function syncIcalCalendars() {
       stats.sources += 1;
       try {
         const blocks = parseIcalBlocks(await fetchIcal(sourceUrl), unit.id, sourceUrl);
-        await prisma.$transaction(async (tx) => {
+        await withBookingTransaction(async (tx) => {
+          await acquirePropertyLock(tx);
           await tx.blockedDate.deleteMany({
             where: { apartmentId: unit.id, isOtaBlock: true, otaSource: sourceUrl },
           });

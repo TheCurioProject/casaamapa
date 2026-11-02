@@ -6,7 +6,7 @@ import ScrollTrigger from 'gsap/dist/ScrollTrigger';
 
 declare global {
   interface Window {
-    appLenis: Lenis;
+    appLenis?: Lenis;
   }
 }
 
@@ -16,28 +16,28 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
+
 
     gsap.registerPlugin(ScrollTrigger);
 
     // Initialize Lenis
-    const lenis = new Lenis({
+    const lenis = prefersReducedMotion ? null : new Lenis({
       lerp: 0.09, // Similar to desktop mode in original prototype
       smoothWheel: true,
       touchMultiplier: 1.3,
     });
     lenisRef.current = lenis;
-    window.appLenis = lenis;
+    if (lenis) window.appLenis = lenis;
 
     // Synchronize Lenis scrolling with GSAP ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
+    lenis?.on('scroll', ScrollTrigger.update);
 
     // Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
     const tick = (time: number) => {
-      lenis.raf(time * 1000);
+      lenis?.raf(time * 1000);
     };
 
-    gsap.ticker.add(tick);
+    if (lenis) gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
 
     const handleBookingClick = (e: MouseEvent) => {
@@ -73,9 +73,8 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       themeObserver.disconnect();
       document.removeEventListener('click', handleBookingClick);
       gsap.ticker.remove(tick);
-      lenis.destroy();
+      lenis?.destroy();
       lenisRef.current = null;
-      // @ts-ignore
       delete window.appLenis;
     };
   }, []);

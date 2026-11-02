@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, Loader2, CheckCircle2, AlertCircle, Copy } from 'lucide-react';
 import { updateIcalUrls } from '@/app/admin/(dashboard)/units/actions';
 
@@ -11,13 +11,7 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [exportUrl, setExportUrl] = useState(`https://www.casaamapa.com/api/ical/export/${unitId}/calendar.ics`);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setExportUrl(`${window.location.origin}/api/ical/export/${unitId}/calendar.ics`);
-    }
-  }, [unitId]);
+  const exportUrl = `https://www.casaamapa.com/api/ical/export/${unitId}/calendar.ics`;
 
   const handleAdd = () => {
     setUrls([...urls, '']);
@@ -38,8 +32,8 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
     setSuccess(false);
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(exportUrl);
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(exportUrl); } catch { setError('No se pudo copiar. Copia la URL manualmente.'); return; }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -67,8 +61,8 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
           setLoading(false);
           return;
         }
-      } catch (err: any) {
-        setError(`Error al verificar ${url}: ${err.message}`);
+      } catch (err: unknown) {
+        setError(`Error al verificar ${url}: ${err instanceof Error ? err.message : 'Error de conexión'}`);
         setLoading(false);
         return;
       }
@@ -88,7 +82,7 @@ export function ICalForm({ unitId, initialUrls }: { unitId: string; initialUrls:
       } else {
         setUrls(validUrls);
       }
-    } catch (err: any) {
+    } catch {
       setError('Error al guardar en la base de datos.');
     } finally {
       setLoading(false);

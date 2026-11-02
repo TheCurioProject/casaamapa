@@ -20,5 +20,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
+  // Static files and metadata routes must keep their root URL. Localizing
+  // /icon.svg, /robots.txt, or /sitemap.xml sends them to nonexistent pages.
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

@@ -110,3 +110,21 @@ PaymentIntent antes de expirar el registro. Si Stripe muestra un cobro que no es
 en la base, conserva el PaymentIntent y el correo del cliente, revisa sus metadata
 y los eventos del webhook, y crea la reserva manual solo después de comprobar que
 no haya solapamientos.
+
+## Control de calidad y revisión del 2 de noviembre de 2026
+
+```bash
+npm run verify  # lint, tipos, pruebas y esquema; no escribe en la base
+npm run build
+npm run test:db # opcional: comprueba el advisory lock en PostgreSQL, sin escribir filas
+```
+
+GitHub verifica PRs y cambios en `main`; Vercel exige `verify` antes de compilar.
+No se deben omitir estos controles al publicar. El detalle del incidente de
+reservas manuales, las correcciones, las pruebas y los límites de verificación
+está en [AUDIT_2026-11-02.md](AUDIT_2026-11-02.md).
+
+Las reservas pendientes retienen sus fechas hasta que la reconciliación verifica
+Stripe y cambia su estado. La hora de expiración por sí sola no libera fechas.
+Con el cron diario de Hobby, una retención abandonada puede durar hasta la
+siguiente ejecución; esto evita liberar una estancia que podría estar pagada.

@@ -1,4 +1,5 @@
 'use client';
+import { calendarDate } from '@/lib/calendar-dates';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,13 +19,15 @@ export function AdminCalendar({
   bookings,
   blockedDates,
   manualDepositPercentage,
+  today,
 }: {
   units: Unit[];
   bookings: Booking[];
   blockedDates: BlockedDate[];
   manualDepositPercentage: number;
+  today: string;
 }) {
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState(startOfMonth(calendarDate(today)));
   const [isSyncing, setIsSyncing] = useState(false);
   const hasIcalUrls = units.some(u => u.icalUrls && u.icalUrls.length > 0);
   const [direction, setDirection] = useState(1);
@@ -50,10 +53,12 @@ export function AdminCalendar({
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await fetch('/api/ical/sync', { method: 'POST' });
+      const response = await fetch('/api/ical/sync', { method: 'POST' });
+          if (!response.ok) throw new Error('La operación no pudo completarse.');
       window.location.reload();
     } catch (e) {
       console.error(e);
+      dialog.alert({ title: 'Error de sincronización', description: 'No se pudo sincronizar el calendario. Intenta de nuevo.', type: 'danger' });
     } finally {
       setIsSyncing(false);
     }
@@ -68,7 +73,8 @@ export function AdminCalendar({
       onConfirm: async () => {
         setLoadingAction(blockId);
         try {
-          await fetch(`/api/admin/calendar/${blockId}`, { method: 'DELETE' });
+          const response = await fetch(`/api/admin/calendar/${blockId}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('La operación no pudo completarse.');
           window.location.reload();
         } catch (err) {
           console.error(err);
@@ -84,8 +90,8 @@ export function AdminCalendar({
 
     // Check bookings
     const booking = bookings.find(b => {
-      const start = startOfDay(new Date(b.checkIn));
-      const end = startOfDay(new Date(b.checkOut));
+      const start = startOfDay(calendarDate(b.checkIn));
+      const end = startOfDay(calendarDate(b.checkOut));
       const unitMatch = b.apartmentId === unitId ||
         (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
@@ -100,8 +106,8 @@ export function AdminCalendar({
 
     // Check blocks
     const block = blockedDates.find(b => {
-      const start = startOfDay(new Date(b.startDate));
-      const end = startOfDay(new Date(b.endDate));
+      const start = startOfDay(calendarDate(b.startDate));
+      const end = startOfDay(calendarDate(b.endDate));
       const unitMatch = b.apartmentId === unitId ||
         (units.find(u => u.id === b.apartmentId)?.isWholeHouse) ||
         (units.find(u => u.id === unitId)?.isWholeHouse);
@@ -202,22 +208,22 @@ export function AdminCalendar({
           const end = endOfMonth(currentMonth);
 
           const monthBookings = bookings.filter(b => {
-            const bStart = new Date(b.checkIn);
-            const bEnd = new Date(b.checkOut);
+            const bStart = calendarDate(b.checkIn);
+            const bEnd = calendarDate(b.checkOut);
             const inMonth = (bStart <= end && bEnd >= start);
             const matchSearch = searchQuery ? b.guestName.toLowerCase().includes(searchQuery.toLowerCase()) : true;
             const matchUnit = filterUnit !== 'all' ? b.apartmentId === filterUnit : true;
             return inMonth && matchSearch && matchUnit;
-          }).map(b => ({ ...b, sortDate: new Date(b.checkIn), type: 'booking' as const }));
+          }).map(b => ({ ...b, sortDate: calendarDate(b.checkIn), type: 'booking' as const }));
 
           const monthBlocks = blockedDates.filter(b => {
-            const bStart = new Date(b.startDate);
-            const bEnd = new Date(b.endDate);
+            const bStart = calendarDate(b.startDate);
+            const bEnd = calendarDate(b.endDate);
             const inMonth = (bStart <= end && bEnd >= start);
             const matchSearch = searchQuery ? false : true;
             const matchUnit = filterUnit !== 'all' ? b.apartmentId === filterUnit : true;
             return inMonth && matchSearch && matchUnit;
-          }).map(b => ({ ...b, sortDate: new Date(b.startDate), type: 'block' as const }));
+          }).map(b => ({ ...b, sortDate: calendarDate(b.startDate), type: 'block' as const }));
 
           const activities = [...monthBookings, ...monthBlocks].sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
 
@@ -263,13 +269,13 @@ export function AdminCalendar({
                     <div className="flex flex-col">
                       <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Check-in</span>
                       <span className="text-xs font-medium text-white/90">
-                        {format(new Date(b.checkIn), 'd MMM', { locale: es })}
+                        {format(calendarDate(b.checkIn), 'd MMM', { locale: es })}
                       </span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Check-out</span>
                       <span className="text-xs font-medium text-white/90">
-                        {format(new Date(b.checkOut), 'd MMM', { locale: es })}
+                        {format(calendarDate(b.checkOut), 'd MMM', { locale: es })}
                       </span>
                     </div>
                   </div>
@@ -301,13 +307,13 @@ export function AdminCalendar({
                     <div className="flex flex-col">
                       <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Desde</span>
                       <span className="text-xs font-medium text-white/90">
-                        {format(new Date(b.startDate), 'd MMM', { locale: es })}
+                        {format(calendarDate(b.startDate), 'd MMM', { locale: es })}
                       </span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[9px] opacity-50 uppercase tracking-widest mb-1">Hasta</span>
                       <span className="text-xs font-medium text-white/90">
-                        {format(new Date(b.endDate), 'd MMM', { locale: es })}
+                        {format(calendarDate(b.endDate), 'd MMM', { locale: es })}
                       </span>
                     </div>
                   </div>
@@ -385,19 +391,19 @@ export function AdminCalendar({
                             cellColor = isManual ? 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]' : 'bg-red-500 border-red-500';
                             const textColor = isManual ? 'text-[var(--color-ink)]' : 'text-white';
 
-                            const isStart = isSameDay(new Date((status.data as Booking).checkIn), day) || day.getDate() === 1;
+                            const isStart = isSameDay(calendarDate((status.data as Booking).checkIn), day) || day.getDate() === 1;
                             content = isStart ? <User className={`w-4 h-4 ${textColor}`} /> : null;
                           } else if (status?.type === 'block') {
                             const isOta = (status.data as BlockedDate).isOtaBlock;
                             cellColor = isOta ? 'bg-[#9b4b62] border-[#9b4b62]' : 'bg-[var(--color-rose-1)] border-[var(--color-rose-1)]'; // manual block same as manual booking or white/20
                             const textColor = isOta ? 'text-white' : 'text-[var(--color-ink)]';
 
-                            const isStart = isSameDay(new Date((status.data as BlockedDate).startDate), day) || day.getDate() === 1;
+                            const isStart = isSameDay(calendarDate((status.data as BlockedDate).startDate), day) || day.getDate() === 1;
                             content = isStart ? <Lock className={`w-3 h-3 ${textColor} opacity-80`} /> : null;
                           }
 
                           const dimmedClass = status?.isDimmed ? 'opacity-20 grayscale' : '';
-                          const isPast = day.getTime() < startOfDay(new Date()).getTime();
+                          const isPast = day.getTime() < startOfDay(calendarDate(today)).getTime();
                           const pastOverlay = isPast ? 'bg-black/30 opacity-60 grayscale' : '';
 
                           return (
@@ -514,11 +520,11 @@ export function AdminCalendar({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5">
                     <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Check-in</p>
-                    <p className="font-semibold">{format(new Date(selectedBooking.checkIn), 'd MMM', { locale: es })}</p>
+                    <p className="font-semibold">{format(calendarDate(selectedBooking.checkIn), 'd MMM', { locale: es })}</p>
                   </div>
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5">
                     <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Check-out</p>
-                    <p className="font-semibold">{format(new Date(selectedBooking.checkOut), 'd MMM', { locale: es })}</p>
+                    <p className="font-semibold">{format(calendarDate(selectedBooking.checkOut), 'd MMM', { locale: es })}</p>
                   </div>
                 </div>
 
@@ -582,11 +588,11 @@ export function AdminCalendar({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5">
                     <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Desde</p>
-                    <p className="font-semibold">{format(new Date(selectedBlock.startDate), 'd MMM', { locale: es })}</p>
+                    <p className="font-semibold">{format(calendarDate(selectedBlock.startDate), 'd MMM', { locale: es })}</p>
                   </div>
                   <div className="bg-black/5 p-3 rounded-xl border border-black/5">
                     <p className="text-[10px] uppercase tracking-widest font-bold opacity-60 mb-1">Hasta</p>
-                    <p className="font-semibold">{format(new Date(selectedBlock.endDate), 'd MMM', { locale: es })}</p>
+                    <p className="font-semibold">{format(calendarDate(selectedBlock.endDate), 'd MMM', { locale: es })}</p>
                   </div>
                 </div>
 

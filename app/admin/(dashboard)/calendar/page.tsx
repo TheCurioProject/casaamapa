@@ -13,7 +13,7 @@ export default async function AdminCalendarPage() {
   const session = await auth();
   if (!session) redirect('/admin/login');
 
-  const { units, bookings, blockedDates, manualDepositPercentage } = await getAdminCalendarData();
+  const { units, bookings, blockedDates, manualDepositPercentage, today } = await getAdminCalendarData();
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -27,6 +27,7 @@ export default async function AdminCalendarPage() {
         bookings={bookings}
         blockedDates={blockedDates}
         manualDepositPercentage={manualDepositPercentage}
+        today={today}
       />
     </div>
   );

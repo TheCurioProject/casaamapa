@@ -16,9 +16,6 @@ export function Header() {
   const [reserveTheme, setReserveTheme] = useState('dark');
   const [menuBtnTheme, setMenuBtnTheme] = useState('dark');
 
-  const logoThemeRef = useRef('dark');
-  const reserveThemeRef = useRef('dark');
-  const menuBtnThemeRef = useRef('dark');
 
   const logoRef = useRef<HTMLAnchorElement>(null);
   const reserveRef = useRef<HTMLButtonElement>(null);
@@ -28,15 +25,6 @@ export function Header() {
 
   // Simplest way for now to observe the current theme set by sections
   useEffect(() => {
-    // Initial theme setup in case it's already set on body
-    const initialTheme = document.body.dataset.theme || 'dark';
-    setTheme(initialTheme);
-    setLogoTheme(initialTheme);
-    setReserveTheme(initialTheme);
-    setMenuBtnTheme(initialTheme);
-    logoThemeRef.current = initialTheme;
-    reserveThemeRef.current = initialTheme;
-    menuBtnThemeRef.current = initialTheme;
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'data-theme') {
@@ -172,7 +160,7 @@ export function Header() {
         transition={{ duration: 1.2, delay: 2.0, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pointer-events-auto relative">
-          <Link ref={logoRef as any} href={isDeptPage ? '/' : '#llegada'} className="flex flex-col group">
+          <Link ref={logoRef} href={isDeptPage ? '/' : '#llegada'} className="flex flex-col group">
             <span className={`font-display text-[clamp(2.2rem,4vw,2.3rem)] leading-none transition-all duration-300 ${logoTheme === 'light' ? 'text-[var(--color-ink-2)]' : 'text-[var(--color-cream)]'} ${isOpen ? 'max-md:opacity-0 max-md:pointer-events-none' : 'max-md:opacity-100'}`}>
               Casa Amapa
             </span>

@@ -50,5 +50,3 @@ const nextConfig: NextConfig = {
 };
 
 export default withNextIntl(nextConfig);
-
-// Trigger Next.js dev server restart

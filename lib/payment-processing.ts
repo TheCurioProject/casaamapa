@@ -1,6 +1,7 @@
 import type Stripe from 'stripe';
 import { prisma, type ExtTxClient } from '@/lib/db';
 import { BookingValidationError, lockAndAssertAvailability } from '@/lib/booking';
+import { withBookingTransaction } from '@/lib/booking-transaction';
 
 function paymentIntentId(paymentIntent: Stripe.PaymentIntent) {
   return paymentIntent.id;
@@ -33,7 +34,7 @@ async function findBooking(tx: ExtTxClient, paymentIntent: Stripe.PaymentIntent)
 }
 
 export async function applyPaymentIntentState(paymentIntent: Stripe.PaymentIntent) {
-  return prisma.$transaction(async (tx) => {
+  return withBookingTransaction(async (tx) => {
     const booking = await findBooking(tx, paymentIntent);
     if (!booking) throw new Error(`No booking found for PaymentIntent ${paymentIntent.id}`);
 
@@ -115,7 +116,9 @@ export async function applyPaymentIntentState(paymentIntent: Stripe.PaymentInten
       });
     }
 
-    const failed = paymentIntent.status === 'canceled' || paymentIntent.status === 'requires_payment_method';
+    // A declined card can be retried on the same PaymentIntent. Keep its dates
+    // reserved until the intent is canceled by Stripe/the reconciler.
+    const failed = paymentIntent.status === 'canceled';
     return tx.booking.update({
       where: { id: booking.id },
       data: {
@@ -127,7 +130,7 @@ export async function applyPaymentIntentState(paymentIntent: Stripe.PaymentInten
       },
       include: { unit: true },
     });
-  }, { isolationLevel: 'Serializable', maxWait: 5_000, timeout: 10_000 });
+  });
 }
 
 export async function processStripeEvent(event: Stripe.Event, intentOverride?: Stripe.PaymentIntent) {

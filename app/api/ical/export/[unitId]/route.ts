@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import ical from 'ical-generator';
+import ical, { ICalCalendarMethod } from 'ical-generator';
 
 export async function GET(
   request: NextRequest,
@@ -61,7 +61,7 @@ export async function GET(
       prodId: { company: 'CasaAmapa', product: 'Calendar', language: 'EN' },
       timezone: 'America/Mexico_City',
       scale: 'GREGORIAN',
-      method: 'PUBLISH' as any
+      method: ICalCalendarMethod.PUBLISH
     });
 
     // Add bookings (Web reservations) - export exact checkIn and checkOut
@@ -86,7 +86,7 @@ export async function GET(
         start: block.startDate,
         end: blockEnd,
         allDay: true,
-        summary: block.reason || 'Bloqueado',
+        summary: 'Bloqueado',
         id: `block-${block.id}@amapachacala.com`,
       });
     });

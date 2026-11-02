@@ -11,6 +11,7 @@ import {
   validateStay,
 } from '@/lib/booking';
 import { getStripe } from '@/lib/stripe';
+import { withBookingTransaction } from '@/lib/booking-transaction';
 
 type CheckoutInput = {
   apartmentId: string;
@@ -48,7 +49,7 @@ export async function createCheckout(input: CheckoutInput) {
     const checkOut = parseDateOnly(input.checkOut);
     validateStay(checkIn, checkOut);
 
-    const booking = await prisma.$transaction(async (tx) => {
+    const booking = await withBookingTransaction(async (tx) => {
       await lockAndAssertAvailability(tx, {
         apartmentId: input.apartmentId,
         checkIn,
@@ -71,7 +72,7 @@ export async function createCheckout(input: CheckoutInput) {
         },
         include: { unit: true },
       });
-    }, { isolationLevel: 'Serializable', maxWait: 5_000, timeout: 10_000 });
+    });
 
     try {
       const stripe = getStripe();

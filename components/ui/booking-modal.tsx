@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useModalDialog } from '@/hooks/use-modal-dialog';
 import { useBookingStore } from '@/lib/store';
-import { useLoaderStore } from '@/store/useLoaderStore';
 import { getApartmentBookings, getUnits } from '@/app/actions/bookings';
 import dynamic from 'next/dynamic';
 import { es } from 'date-fns/locale';
@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import 'react-day-picker/src/style.css';
 import { createCheckout } from '@/app/actions/payments';
+import { calendarDate, calendarDateKey, propertyDateKey } from '@/lib/calendar-dates';
 import type { DateRange } from 'react-day-picker';
 
 interface BookingUnit {
@@ -43,8 +44,6 @@ const LADAS = [
 
 export function BookingModal() {
   const { isOpen, closeBooking, preselectedUnit } = useBookingStore();
-  const { showLoader, hideLoader } = useLoaderStore();
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   // State
   const [step, setStep] = useState(1);
@@ -76,11 +75,11 @@ export function BookingModal() {
   const [chargeAmount, setChargeAmount] = useState(0);
   const [serverTotalPrice, setServerTotalPrice] = useState<number | null>(null);
 
-  // GSAP logic for modal open/close (kept to maintain current behavior)
-  const { contextSafe } = useGSAP({ scope: overlayRef });
+  const overlayRef = useModalDialog(isOpen, loading ? undefined : closeBooking);
 
-  const toggleModal = contextSafe((open: boolean) => {
-    if (open) {
+  // GSAP logic for modal open/close (kept to maintain current behavior)
+  useGSAP(() => {
+    if (isOpen) {
       document.body.classList.add('modal-open');
       gsap.set(overlayRef.current, { display: 'flex' });
       gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.4 });
@@ -98,7 +97,7 @@ export function BookingModal() {
         autoAlpha: 0, duration: 0.4, delay: 0.1, onComplete: () => {
           gsap.set(overlayRef.current, { display: 'none' });
           // Reset state after close
-          setTimeout(() => {
+          if (!useBookingStore.getState().isOpen) {
             setStep(1);
             setSelectedUnit(null);
             setRange(undefined);
@@ -107,16 +106,18 @@ export function BookingModal() {
             setGuestPhone('');
             setError('');
             setUnitsError(null);
+            setUnits([]);
+            setIsLoadingUnits(true);
             setDatesError(null);
             setSuccess(false);
             setBookingId('');
             setClientSecret('');
             setServerTotalPrice(null);
-          }, 300);
+          }
         }
       });
     }
-  });
+  }, { scope: overlayRef, dependencies: [isOpen], revertOnUpdate: true });
 
   // Comprehensive scroll lock for mobile/iOS
   useEffect(() => {
@@ -140,90 +141,66 @@ export function BookingModal() {
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    toggleModal(isOpen);
-    if (isOpen && units.length === 0) {
-      setIsLoadingUnits(true);
-      setUnitsError(null);
-      showLoader();
-      getUnits().then(res => {
-        if (res && res.units) {
-          setUnits(res.units);
-        } else if (res && res.error) {
-          setUnitsError(res.error);
-        }
-      }).catch(err => {
-        console.error("Failed to load units", err);
-        setUnitsError(err instanceof Error ? err.message : String(err));
-      }).finally(() => {
-        setIsLoadingUnits(false);
-        hideLoader();
-      });
-    }
-  }, [isOpen]);
-
-  const hasAutoAdvanced = useRef(false);
+  const chooseUnit = useCallback((unit: BookingUnit) => {
+    setSelectedUnit(unit);
+    setRange(undefined);
+    setBookedDates([]);
+    setCleaningDates([]);
+    setDatesError(null);
+    setIsLoadingDates(true);
+    setStep(2);
+  }, []);
 
   useEffect(() => {
-    if (!isOpen) {
-      hasAutoAdvanced.current = false;
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen && preselectedUnit && units.length > 0 && step === 1 && !hasAutoAdvanced.current) {
-      const unit = units.find(u => u.name.toLowerCase() === preselectedUnit.toLowerCase());
-      if (unit) {
-        setSelectedUnit(unit);
-        setStep(2);
-        hasAutoAdvanced.current = true;
-      }
-    }
-  }, [isOpen, preselectedUnit, units, step]);
+    if (!isOpen) return;
+    let cancelled = false;
+    getUnits().then(res => {
+      if (cancelled) return;
+      if (!res.units) throw new Error('No se pudieron cargar los espacios. Intenta de nuevo.');
+      setUnits(res.units);
+      const preset = res.units.find(unit => unit.name.toLowerCase() === preselectedUnit?.toLowerCase());
+      if (preset) chooseUnit(preset);
+    }).catch(() => {
+      if (!cancelled) setUnitsError('No se pudieron cargar los espacios. Intenta de nuevo.');
+    }).finally(() => {
+      if (!cancelled) setIsLoadingUnits(false);
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, preselectedUnit, chooseUnit]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
   useEffect(() => {
-    if (step === 2 && selectedUnit) {
-      setIsLoadingDates(true);
-      showLoader();
-      getApartmentBookings(selectedUnit.id)
-        .then(res => {
-          if (res && res.bookings) {
-            const booked: Date[] = [];
-            const cleaning: Date[] = [];
-            res.bookings.forEach((b: BookingDateInfo) => {
-              const checkIn = new Date(b.checkIn);
-              const checkOut = new Date(b.checkOut);
-              checkIn.setHours(12, 0, 0, 0);
-              checkOut.setHours(12, 0, 0, 0);
-
-              const current = new Date(checkIn);
-              while (current < checkOut) {
-                booked.push(new Date(current));
-                current.setDate(current.getDate() + 1);
-              }
-              cleaning.push(new Date(checkOut));
-            });
-            setBookedDates(booked);
-            setCleaningDates(cleaning);
-          }
-        })
-        .catch(err => {
-          console.error("Failed to load dates", err);
-        })
-        .finally(() => {
-          setIsLoadingDates(false);
-          hideLoader();
-        });
-    }
-  }, [step, selectedUnit]);
+    if (!isOpen || step !== 2 || !selectedUnit) return;
+    let cancelled = false;
+    getApartmentBookings(selectedUnit.id).then(res => {
+      if (cancelled) return;
+      if (!res.bookings) throw new Error('No se pudo comprobar la disponibilidad. Vuelve a seleccionar el espacio.');
+      const booked: Date[] = [];
+      const cleaning: Date[] = [];
+      res.bookings.forEach((b: BookingDateInfo) => {
+        const checkIn = calendarDate(b.checkIn);
+        const checkOut = calendarDate(b.checkOut);
+        const current = new Date(checkIn);
+        while (current < checkOut) {
+          booked.push(new Date(current));
+          current.setDate(current.getDate() + 1);
+        }
+        cleaning.push(checkOut);
+      });
+      setBookedDates(booked);
+      setCleaningDates(cleaning);
+      setDatesError(null);
+    }).catch(() => {
+      if (!cancelled) setDatesError('No se pudo comprobar la disponibilidad. Vuelve a seleccionar el espacio.');
+    }).finally(() => {
+      if (!cancelled) setIsLoadingDates(false);
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, step, selectedUnit]);
 
   // Derived state
   const nights = range?.to && range?.from ? Math.max(1, differenceInDays(range.to, range.from)) : (range?.from ? 1 : 0);
@@ -268,31 +245,35 @@ export function BookingModal() {
     const checkOutDate = !range.to || isSameDay(range.from, range.to)
       ? new Date(range.from.getTime() + 24 * 60 * 60 * 1000)
       : range.to;
-    const localDate = (date: Date) =>
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-    const payment = await createCheckout({
-      apartmentId: selectedUnit!.id,
-      checkIn: localDate(range.from),
-      checkOut: localDate(checkOutDate),
-      guestName,
-      guestEmail,
-      guestPhone: `${lada.code} ${guestPhone}`,
-      guests: 2,
-    });
+    try {
+      const payment = await createCheckout({
+        apartmentId: selectedUnit!.id,
+        checkIn: calendarDateKey(range.from),
+        checkOut: calendarDateKey(checkOutDate),
+        guestName,
+        guestEmail,
+        guestPhone: `${lada.code} ${guestPhone}`,
+        guests: 2,
+      });
 
-    if (payment.error || !payment.clientSecret || !payment.bookingId) {
-      setError(payment.error || 'Error iniciando el pago');
+      if (payment.error || !payment.clientSecret || !payment.bookingId) {
+        setError(payment.error || 'Error iniciando el pago');
+        setLoading(false);
+        return;
+      }
+
+      setBookingId(payment.bookingId);
+      setClientSecret(payment.clientSecret);
+      setChargeAmount(payment.chargeAmount || 0);
+      setServerTotalPrice(payment.totalPrice || 0);
       setLoading(false);
-      return;
+      setStep(4);
+    } catch {
+      setError('No se pudo conectar para iniciar el pago. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
-
-    setBookingId(payment.bookingId);
-    setClientSecret(payment.clientSecret);
-    setChargeAmount(payment.chargeAmount || 0);
-    setServerTotalPrice(payment.totalPrice || 0);
-    setLoading(false);
-    setStep(4);
   };
 
   // Animation variants
@@ -346,13 +327,13 @@ export function BookingModal() {
   };
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 z-[10000] bg-[rgba(20,8,20,0.85)] hidden place-items-end md:place-items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark" role="dialog" aria-modal="true" aria-label="Reservar en Casa Amapa">
+    <div ref={overlayRef} className="fixed inset-0 z-[10000] bg-[rgba(20,8,20,0.85)] hidden items-end justify-center md:items-center md:p-[var(--spacing-pad-x)] backdrop-blur-sm" data-theme="dark" data-lenis-prevent role="dialog" aria-modal="true" aria-label="Reservar en Casa Amapa">
       <div
         ref={scrollContainerRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="bg-[var(--color-cream)] w-full h-[85vh] md:h-auto md:max-h-[90vh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
+        className="bg-[var(--color-cream)] w-full h-[85dvh] md:h-auto md:max-h-[90dvh] md:max-w-[550px] rounded-[32px_32px_0_0] md:rounded-[32px] p-[clamp(2rem,6vw,3.5rem)] pt-6 shadow-2xl relative text-[var(--color-ink)] flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform-gpu"
       >
 
         {/* Drag handle pill (Mobile only) */}
@@ -391,12 +372,12 @@ export function BookingModal() {
                 <p className="text-[0.7rem] tracking-[0.2em] uppercase text-[var(--color-rose-3)] mb-2 font-semibold">Paso 1 de 4</p>
                 <h2 className="font-sans font-bold text-[2.5rem] mb-8 leading-none">Elige tu espacio</h2>
 
-                {isLoadingUnits ? null : units.length > 0 ? (
+                {isLoadingUnits ? <div role="status" className="py-12 text-center">Cargando espacios…</div> : units.length > 0 ? (
                   <div className="grid gap-3">
                     {units.map((unit: BookingUnit) => (
                       <button
                         key={unit.id}
-                        onClick={() => { setSelectedUnit(unit); setStep(2); }}
+                        onClick={() => chooseUnit(unit)}
                         className="group flex flex-col md:flex-row justify-between items-start md:items-center border border-[rgba(94,58,80,0.15)] rounded-2xl p-5 md:p-6 text-left hover:border-[var(--color-rose-3)] hover:bg-[var(--color-rose-3)]/5 transition-all duration-300 relative overflow-hidden"
                       >
                         <div>
@@ -432,9 +413,12 @@ export function BookingModal() {
                 <p className="opacity-70 mb-6">En <strong className="capitalize">{selectedUnit!.name}</strong> ({unitPrice.toLocaleString('es-MX')} MXN / noche)</p>
 
                 <div className="flex flex-col justify-center items-center mb-6 relative w-full">
-                  {isOpen && !isLoadingDates && (
+                  {isLoadingDates && <p role="status" className="py-8">Consultando disponibilidad…</p>}
+                  {datesError && <p role="alert" className="text-red-600 mb-4">{datesError}</p>}
+                  {isOpen && !isLoadingDates && !datesError && (
                     <div className="calendar-wrapper bg-white/40 p-2 md:p-6 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] w-full flex flex-col items-center relative">
                       <DayPicker
+                  today={calendarDate(propertyDateKey())}
                         mode="range"
                         selected={range}
                         onSelect={(newRange, selectedDay) => {
@@ -459,7 +443,7 @@ export function BookingModal() {
                         }}
                         disabled={(date) => {
                           const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-                          const today = new Date();
+                          const today = calendarDate(propertyDateKey());
                           const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
                           if (d < t) return true;
                           
@@ -535,7 +519,7 @@ export function BookingModal() {
                 </div>
 
                 <button
-                  disabled={!range?.from}
+                  disabled={!range?.from || isLoadingDates || !!datesError}
                   onClick={() => setStep(3)}
                   className="mt-auto bg-[var(--color-ink)] text-[var(--color-cream)] rounded-full px-8 py-4 text-sm tracking-[0.2em] uppercase font-medium hover:bg-black disabled:opacity-30 disabled:hover:bg-[var(--color-ink)] transition-all flex justify-center w-full shrink-0"
                 >

@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { es } from 'date-fns/locale';
 import { differenceInDays } from 'date-fns';
 import { createManualBooking, createManualBlock } from '@/app/actions/admin-calendar';
+import { calendarDate, calendarDateKey, propertyDateKey } from '@/lib/calendar-dates';
+import { useModalDialog } from '@/hooks/use-modal-dialog';
 
 type Unit = { id: string; name: string; price: number; isWholeHouse: boolean; dailyPrices?: { date: Date | string; price: number }[] };
 
-export function ManualBookingModal({
+function ManualBookingForm({
   isOpen,
   onClose,
   units,
@@ -21,8 +23,8 @@ export function ManualBookingModal({
   isOpen: boolean;
   onClose: () => void;
   units: Unit[];
-  bookings: any[];
-  blockedDates: any[];
+  bookings: { apartmentId: string; checkIn: Date; checkOut: Date }[];
+  blockedDates: { apartmentId: string; startDate: Date; endDate: Date }[];
   defaultDepositPercentage: number;
 }) {
   const [step, setStep] = useState(1);
@@ -44,38 +46,21 @@ export function ManualBookingModal({
 
   const [bookingResultId, setBookingResultId] = useState('');
 
-  const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+  const [priceOverride, setPriceOverride] = useState<number | null>(null);
+  const dialogRef = useModalDialog(isOpen, loading ? undefined : onClose);
 
-  useEffect(() => {
-    if (!selectedUnit || !range?.from || !range?.to) {
-      setEstimatedPrice(0);
-      return;
-    }
+  const calculatedPrice = useMemo(() => {
+    if (!selectedUnit || !range?.from || !range?.to) return 0;
+    const prices = new Map(selectedUnit.dailyPrices?.map(dp => [calendarDateKey(calendarDate(dp.date)), dp.price]));
+    const current = new Date(range.from);
     let total = 0;
-    const nightsCount = differenceInDays(range.to, range.from);
-    if (nightsCount <= 0) {
-      setEstimatedPrice(0);
-      return;
+    while (current < range.to) {
+      total += prices.get(calendarDateKey(current)) ?? selectedUnit.price;
+      current.setDate(current.getDate() + 1);
     }
-
-    let currentDate = new Date(range.from);
-    currentDate.setHours(12, 0, 0, 0);
-
-    for (let i = 0; i < nightsCount; i++) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      
-      const customPrice = selectedUnit.dailyPrices?.find(dp => {
-        const dpDate = new Date(dp.date);
-        dpDate.setHours(12, 0, 0, 0);
-        return dpDate.toISOString().split('T')[0] === dateStr;
-      });
-
-      total += customPrice ? customPrice.price : selectedUnit.price;
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    setEstimatedPrice(total);
+    return total;
   }, [selectedUnit, range]);
+  const estimatedPrice = priceOverride ?? calculatedPrice;
 
   const computedDates = useMemo(() => {
     if (!selectedUnit) return { booked: [], cleaning: [] };
@@ -86,11 +71,11 @@ export function ManualBookingModal({
     const unitBlocks = blockedDates.filter(b => b.apartmentId === selectedUnit.id || selectedUnit.isWholeHouse || units.find(u => u.id === b.apartmentId)?.isWholeHouse);
 
     unitBookings.forEach(b => {
-      const checkIn = new Date(b.checkIn);
-      const checkOut = new Date(b.checkOut);
+      const checkIn = calendarDate(b.checkIn);
+      const checkOut = calendarDate(b.checkOut);
       checkIn.setHours(12, 0, 0, 0);
       checkOut.setHours(12, 0, 0, 0);
-      let current = new Date(checkIn);
+      const current = new Date(checkIn);
       while (current < checkOut) {
         booked.push(new Date(current));
         current.setDate(current.getDate() + 1);
@@ -99,11 +84,11 @@ export function ManualBookingModal({
     });
 
     unitBlocks.forEach(b => {
-      const start = new Date(b.startDate);
-      const end = new Date(b.endDate);
+      const start = calendarDate(b.startDate);
+      const end = calendarDate(b.endDate);
       start.setHours(12, 0, 0, 0);
       end.setHours(12, 0, 0, 0);
-      let current = new Date(start);
+      const current = new Date(start);
       while (current <= end) {
         booked.push(new Date(current));
         current.setDate(current.getDate() + 1);
@@ -118,7 +103,7 @@ export function ManualBookingModal({
     setLoading(true);
     setError('');
 
-    if (!range?.from || !range?.to) {
+    if (!selectedUnit || !range?.from || !range?.to || (type === 'booking' && differenceInDays(range.to, range.from) < 1)) {
       setError('Por favor selecciona un rango de fechas válido.');
       setLoading(false);
       return;
@@ -145,8 +130,8 @@ export function ManualBookingModal({
 
         const res = await createManualBooking({
           apartmentId: selectedUnit!.id,
-          checkIn: range.from,
-          checkOut: range.to,
+          checkIn: calendarDateKey(range.from),
+          checkOut: calendarDateKey(range.to),
           guestName,
           guestEmail,
           guestPhone,
@@ -162,16 +147,16 @@ export function ManualBookingModal({
       } else {
         const res = await createManualBlock({
           apartmentId: selectedUnit!.id,
-          startDate: range.from,
-          endDate: range.to,
+          startDate: calendarDateKey(range.from),
+          endDate: calendarDateKey(range.to),
           reason
         });
         
         if (res.error) throw new Error(res.error);
         window.location.reload();
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'No se pudo completar la operación.');
     } finally {
       setLoading(false);
     }
@@ -180,15 +165,17 @@ export function ManualBookingModal({
   const handleSendInvoice = async () => {
     setLoading(true);
     try {
-      await fetch('/api/admin/send-invoice', {
+      const response = await fetch('/api/admin/send-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookingId: bookingResultId })
       });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'No se pudo enviar el invoice.');
       window.location.reload();
     } catch (err) {
       console.error(err);
-      setError('Error al enviar el correo.');
+      setError(err instanceof Error ? err.message : 'Error al enviar el correo.');
       setLoading(false);
     }
   };
@@ -196,32 +183,32 @@ export function ManualBookingModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="manual-booking-title" data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
         exit={{ opacity: 0 }} 
         className="absolute inset-0 bg-black/60 backdrop-blur-md"
-        onClick={onClose}
+        onClick={loading ? undefined : onClose}
       />
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }} 
         animate={{ opacity: 1, scale: 1, y: 0 }} 
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-lg bg-[var(--color-cream)] rounded-[2rem] shadow-2xl border border-[rgba(94,58,80,0.08)] relative z-50 overflow-hidden flex flex-col max-h-[90dvh]"
       >
         <div className="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar text-[var(--color-ink)] relative">
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors z-10">
+          <button disabled={loading} aria-label="Cerrar" onClick={loading ? undefined : onClose} className="absolute top-6 right-6 p-2 bg-[rgba(94,58,80,0.06)] rounded-full hover:bg-[rgba(94,58,80,0.12)] transition-colors z-10">
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="font-display text-3xl mb-6 text-[var(--color-rose-3)]">
+          <h2 id="manual-booking-title" className="pr-10 font-display text-3xl mb-6 text-[var(--color-rose-3)]">
             {step === 4 ? 'Reserva Creada' : 'Nueva Operación'}
           </h2>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 flex items-start gap-2">
+          <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 flex items-start gap-2">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p>{error}</p>
           </div>
@@ -243,7 +230,7 @@ export function ManualBookingModal({
                 {units.map(unit => (
                   <button
                     key={unit.id}
-                    onClick={() => { setSelectedUnit(unit); setStep(2); }}
+                    onClick={() => { setSelectedUnit(unit); setRange(undefined); setPriceOverride(null); setStep(2); }}
                     className="p-4 rounded-2xl border border-black/10 hover:border-[var(--color-rose-3)] hover:bg-[var(--color-rose-3)]/5 text-left transition-colors"
                   >
                     <span className="block font-bold text-lg capitalize">{unit.name}</span>
@@ -262,19 +249,13 @@ export function ManualBookingModal({
               
               <div className="calendar-wrapper bg-white/40 p-4 rounded-[2rem] shadow-sm border border-[rgba(94,58,80,0.08)] mb-6 flex justify-center">
                 <DayPicker
+                  today={calendarDate(propertyDateKey())}
+                  defaultMonth={calendarDate(propertyDateKey())}
                   mode="range"
+                  min={type === 'booking' ? 1 : 0}
+                  excludeDisabled
                   selected={range}
-                  onSelect={(newRange, selectedDay) => {
-                    if (!newRange) {
-                      setRange(undefined);
-                      return;
-                    }
-                    if (range?.from && !range?.to && new Date(selectedDay).getTime() === new Date(range.from).getTime()) {
-                      setRange({ from: range.from, to: range.from });
-                    } else {
-                      setRange(newRange);
-                    }
-                  }}
+                  onSelect={(newRange) => { setRange(newRange); setPriceOverride(null); }}
                   modifiers={{
                     booked: computedDates.booked,
                     cleaning: computedDates.cleaning
@@ -285,7 +266,7 @@ export function ManualBookingModal({
                   }}
                   disabled={(date) => {
                     const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-                    const today = new Date();
+                    const today = calendarDate(propertyDateKey());
                     const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
                     if (d < t) return true;
                     
@@ -317,7 +298,7 @@ export function ManualBookingModal({
 
               <div className="flex gap-4">
                 <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 bg-white border border-black/10 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-black/5">Atrás</button>
-                <button disabled={!range?.from || !range?.to} onClick={() => setStep(3)} className="flex-1 py-3 bg-[var(--color-rose-3)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-[var(--color-rose-2)] disabled:opacity-50">Continuar</button>
+                <button disabled={!range?.from || !range?.to || (type === 'booking' && differenceInDays(range.to, range.from) < 1)} onClick={() => setStep(3)} className="flex-1 py-3 bg-[var(--color-rose-3)] text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-colors hover:bg-[var(--color-rose-2)] disabled:opacity-50">Continuar</button>
               </div>
             </motion.div>
           )}
@@ -326,7 +307,7 @@ export function ManualBookingModal({
             <motion.form key="step3" onSubmit={handleSubmit} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               {type === 'booking' ? (
                 <div className="space-y-4 mb-8">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Nombre</label>
                       <input type="text" required value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none" />
@@ -344,10 +325,11 @@ export function ManualBookingModal({
                     <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Foto ID (Opcional)</label>
                     <input type="file" accept="image/*" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2 bg-white/50 focus:bg-white outline-none file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-rose-3)] file:text-white hover:file:bg-[var(--color-rose-2)]" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">% Anticipo manual</label>
                       <select value={depositPercentage} onChange={e => setDepositPercentage(Number(e.target.value))} className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-white/50 focus:bg-white outline-none">
+                        {![0, 50, 100].includes(defaultDepositPercentage) && <option value={defaultDepositPercentage}>{defaultDepositPercentage}%</option>}
                         <option value={0}>0%</option>
                         <option value={50}>50%</option>
                         <option value={100}>100%</option>
@@ -360,7 +342,7 @@ export function ManualBookingModal({
                         min="0"
                         step="any"
                         value={estimatedPrice}
-                        onChange={e => setEstimatedPrice(Number(e.target.value))}
+                        onChange={e => setPriceOverride(Number(e.target.value))}
                         className="w-full border border-[rgba(94,58,80,0.2)] rounded-xl px-3 py-2.5 bg-black/5 font-bold text-lg text-[var(--color-rose-3)] focus:bg-white outline-none"
                       />
                     </div>
@@ -405,4 +387,10 @@ export function ManualBookingModal({
       </motion.div>
     </div>
   );
+}
+
+// A fresh form for every opening prevents an old range, guest, or success screen
+// from being accidentally submitted again.
+export function ManualBookingModal(props: Parameters<typeof ManualBookingForm>[0]) {
+  return props.isOpen ? <ManualBookingForm {...props} /> : null;
 }

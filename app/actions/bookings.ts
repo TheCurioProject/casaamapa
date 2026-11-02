@@ -1,7 +1,8 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { activeBookingWhere } from '@/lib/booking';
+import { activeBookingWhere, propertyToday } from '@/lib/booking';
+import { plainData } from '@/lib/plain-data';
 
 export async function getApartmentBookings(apartmentId: string) {
   try {
@@ -19,14 +20,14 @@ export async function getApartmentBookings(apartmentId: string) {
       prisma.booking.findMany({
         where: {
           apartmentId: { in: idsToCheck },
-          AND: [activeBookingWhere(), { checkOut: { gte: new Date() } }]
+          AND: [activeBookingWhere(), { checkOut: { gte: propertyToday() } }]
         },
         select: { checkIn: true, checkOut: true }
       }),
       prisma.blockedDate.findMany({
         where: {
           apartmentId: { in: idsToCheck },
-          endDate: { gte: new Date() }
+          endDate: { gte: propertyToday() }
         },
         select: { startDate: true, endDate: true }
       })
@@ -37,7 +38,7 @@ export async function getApartmentBookings(apartmentId: string) {
       checkOut: new Date(new Date(b.endDate).getTime() + 24 * 60 * 60 * 1000)
     }));
 
-    return { bookings: [...bookings, ...mappedBlocks] };
+    return { bookings: plainData([...bookings, ...mappedBlocks]) };
   } catch (error) {
     console.error(`Error fetching bookings for ${apartmentId}:`, error);
     return { error: 'Failed to fetch bookings' };
@@ -50,12 +51,12 @@ export async function getUnits() {
       orderBy: { price: 'asc' },
       include: {
         dailyPrices: {
-          where: { date: { gte: new Date() } },
+          where: { date: { gte: propertyToday() } },
           orderBy: { date: 'asc' },
         },
       },
     });
-    return { units };
+    return { units: plainData(units) };
   } catch (error) {
     console.error('Error fetching units:', error);
     return { error: 'Failed to fetch units' };

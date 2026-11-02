@@ -1,8 +1,5 @@
 import '../globals.css';
 import { ReactNode } from 'react';
-import Link from 'next/link';
-import { Calendar, Building, Settings, LogOut } from 'lucide-react';
-import { signOut } from '@/auth'; 
 
 export const metadata = {
   title: 'Admin - Casa Amapa',

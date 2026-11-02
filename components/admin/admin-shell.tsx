@@ -8,7 +8,6 @@ import {
   Calendar, Building, Settings, LogOut, LayoutDashboard, 
   BookOpen, Link as LinkIcon, CreditCard, X, Menu, Globe, DollarSign
 } from 'lucide-react';
-import { useLoaderStore } from '@/store/useLoaderStore';
 
 export function AdminShell({ 
   children, 
@@ -18,7 +17,6 @@ export function AdminShell({
   onSignOut: () => void;
 }) {
   const pathname = usePathname();
-  const showLoader = useLoaderStore(state => state.showLoader);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const dragControls = useDragControls();
 
@@ -33,10 +31,7 @@ export function AdminShell({
     { name: 'Ajustes', href: '/admin/settings', icon: Settings, desc: 'Configuración' },
   ];
 
-  const handleNavigation = (href: string) => {
-    if (pathname !== href) {
-      showLoader();
-    }
+  const handleNavigation = () => {
     setIsToolsOpen(false);
   };
 
@@ -61,7 +56,7 @@ export function AdminShell({
               <Link 
                 key={item.href} 
                 href={item.href}
-                onClick={() => handleNavigation(item.href)}
+                onClick={() => handleNavigation()}
                 className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group ${
                   isActive ? 'text-[var(--color-ink)]' : 'text-[var(--color-cream)] hover:text-white'
                 }`}
@@ -167,7 +162,7 @@ export function AdminShell({
                     <Link
                       key={item.name}
                       href={item.href}
-                      onClick={() => handleNavigation(item.href)}
+                      onClick={() => handleNavigation()}
                       className={`flex flex-col p-4 rounded-2xl border transition-all duration-200 ${
                         isActive 
                           ? 'bg-[var(--color-cream)] border-[var(--color-cream)] text-[var(--color-ink)] shadow-lg' 
@@ -211,15 +206,15 @@ export function AdminShell({
       {/* Mobile Bottom Navigation */}
       <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-[900] bg-[var(--color-ink)] border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around px-2 py-3">
-          <Link href="/admin" onClick={() => handleNavigation('/admin')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+          <Link href="/admin" onClick={() => handleNavigation()} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[9px] font-medium tracking-wide">Inicio</span>
           </Link>
-          <Link href="/admin/bookings" onClick={() => handleNavigation('/admin/bookings')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/bookings' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+          <Link href="/admin/bookings" onClick={() => handleNavigation()} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/bookings' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
             <BookOpen className="w-5 h-5" />
             <span className="text-[9px] font-medium tracking-wide">Reservas</span>
           </Link>
-          <Link href="/admin/calendar" onClick={() => handleNavigation('/admin/calendar')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/calendar' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
+          <Link href="/admin/calendar" onClick={() => handleNavigation()} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${pathname === '/admin/calendar' ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream)]/50 hover:text-[var(--color-cream)]/80'}`}>
             <Calendar className="w-5 h-5" />
             <span className="text-[9px] font-medium tracking-wide">Calendario</span>
           </Link>

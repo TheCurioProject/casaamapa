@@ -26,7 +26,7 @@ async function uploadVideos() {
 
   const files = fs.readdirSync(videosDir).filter(f => f.toLowerCase().endsWith('.mov') || f.toLowerCase().endsWith('.mp4'));
   
-  const toursData: Record<string, any> = {};
+  const toursData: Record<string, { publicId: string; url: string; duration: number; format: string }> = {};
 
   console.log(`Found ${files.length} videos. Starting upload...`);
 

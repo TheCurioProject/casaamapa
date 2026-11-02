@@ -2,6 +2,10 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+// @db.Date is a calendar date, not an instant. Noon UTC keeps existing display
+// conventions while remaining idempotent if a computed result is read twice.
+const dateAtNoon = (date: Date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12));
+
 const createPrismaClient = () => {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -16,27 +20,27 @@ const createPrismaClient = () => {
       booking: {
         checkIn: {
           needs: { checkIn: true },
-          compute(b) { return new Date(b.checkIn.getTime() + 12 * 60 * 60 * 1000); }
+          compute(b) { return dateAtNoon(b.checkIn); }
         },
         checkOut: {
           needs: { checkOut: true },
-          compute(b) { return new Date(b.checkOut.getTime() + 12 * 60 * 60 * 1000); }
+          compute(b) { return dateAtNoon(b.checkOut); }
         }
       },
       blockedDate: {
         startDate: {
           needs: { startDate: true },
-          compute(b) { return new Date(b.startDate.getTime() + 12 * 60 * 60 * 1000); }
+          compute(b) { return dateAtNoon(b.startDate); }
         },
         endDate: {
           needs: { endDate: true },
-          compute(b) { return new Date(b.endDate.getTime() + 12 * 60 * 60 * 1000); }
+          compute(b) { return dateAtNoon(b.endDate); }
         }
       },
       dailyPrice: {
         date: {
           needs: { date: true },
-          compute(b) { return new Date(b.date.getTime() + 12 * 60 * 60 * 1000); }
+          compute(b) { return dateAtNoon(b.date); }
         }
       }
     }

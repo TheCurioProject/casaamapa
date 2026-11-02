@@ -1,8 +1,7 @@
 'use client';
+import { calendarDate, propertyDateKey } from '@/lib/calendar-dates';
 
 import { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { VirtualTour } from '@/components/ui/virtual-tour';
 import { Users, BedDouble, Square, Bath, Wifi, Calendar as CalendarIcon, Utensils, ArrowRightLeft } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -22,23 +21,25 @@ export function AptPageContent({ apt }: { apt: AptData }) {
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [cleaningDates, setCleaningDates] = useState<Date[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [bookingsError, setBookingsError] = useState(false);
 
   useEffect(() => {
     async function loadBookings() {
       setIsLoadingBookings(true);
       try {
         const res = await getApartmentBookings(apt.name.toLowerCase());
-        if (res && res.bookings) {
+        if (!res.bookings) throw new Error('No se pudo consultar la disponibilidad.');
+        if (res.bookings) {
           const booked: Date[] = [];
           const cleaning: Date[] = [];
 
-          res.bookings.forEach((booking: any) => {
-            const checkIn = new Date(booking.checkIn);
-            const checkOut = new Date(booking.checkOut);
+          res.bookings.forEach((booking) => {
+            const checkIn = calendarDate(booking.checkIn);
+            const checkOut = calendarDate(booking.checkOut);
             checkIn.setHours(12, 0, 0, 0);
             checkOut.setHours(12, 0, 0, 0);
 
-            let current = new Date(checkIn);
+            const current = new Date(checkIn);
             while (current < checkOut) {
               booked.push(new Date(current));
               current.setDate(current.getDate() + 1);
@@ -51,6 +52,7 @@ export function AptPageContent({ apt }: { apt: AptData }) {
         }
       } catch (err) {
         console.error("Error loading bookings:", err);
+        setBookingsError(true);
       } finally {
         setIsLoadingBookings(false);
       }
@@ -148,12 +150,13 @@ export function AptPageContent({ apt }: { apt: AptData }) {
                 </div>
               )}
               <div className="flex flex-col items-center w-full max-w-full overflow-x-auto pb-4 md:pb-0">
-                <DayPicker
+                {bookingsError ? <p role="alert" className="p-6 text-center">No se pudo consultar la disponibilidad. Intenta de nuevo antes de reservar.</p> : <DayPicker
+                  today={calendarDate(propertyDateKey())}
                   modifiers={{ booked: bookedDates, cleaning: cleaningDates }}
                   modifiersClassNames={{ booked: 'rdp-day_booked', cleaning: 'rdp-day_cleaning' }}
                   disabled={(date) => {
                     const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-                    const today = new Date();
+                    const today = calendarDate(propertyDateKey());
                     const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
                     if (d < t) return true;
                     return [...bookedDates, ...cleaningDates].some(bd =>
@@ -162,7 +165,7 @@ export function AptPageContent({ apt }: { apt: AptData }) {
                   }}
                   className="font-sans custom-neumorphic-calendar dark-theme-calendar read-only-calendar !m-0"
                   locale={es}
-                />
+                />}
 
                 <div className="flex justify-center gap-4 mt-6 text-[0.65rem] uppercase tracking-widest font-semibold opacity-70 flex-wrap w-full px-4">
                   <div className="flex items-center gap-2">
